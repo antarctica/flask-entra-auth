@@ -13,7 +13,6 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from flask_azure_oauth import FlaskAzureOauth, AzureTokenValidator
-from flask_azure_oauth.errors import ApiAuthError
 
 
 class TestJwk:

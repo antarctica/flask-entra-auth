@@ -1,5 +1,3 @@
-import unittest
-
 from tests.test_base import FlaskOAuthProviderBaseTestCase
 from flask_azure_oauth.errors import ApiAuthTokenDecodeError, ApiAuthTokenHeaderKidMissingError, \
     ApiAuthTokenKeyUntrustedError, ApiAuthTokenKeyDecodeError, ApiAuthTokenSignatureInvalidError

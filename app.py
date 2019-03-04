@@ -37,7 +37,6 @@ def create_app(**kwargs):
         elif kwargs['AUTH_MODE'] == 'restored-jwks':
             app.auth.use_restored_jwks()
 
-
     @app.route('/meta/auth/introspection')
     @app.auth()
     def meta_auth_introspection():
