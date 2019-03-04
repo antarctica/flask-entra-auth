@@ -3,7 +3,7 @@
 # == Notes ==
 
 # - GitLab automatically passes artifacts from previous stages by default
-# - Set required secret variables at: https://gitlab.data.bas.ac.uk/web-apps/flask-middleware/flask-azure-oauth/settings/ci_cd
+# - Set required secret variables at: https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/settings/ci_cd
 
 # = Secret variables
 # - Variables are grouped by section in KEY: "value" format (e.g. FOO: "bar")
@@ -34,7 +34,7 @@ variables:
   PYPI_TEST_USERNAME: british-antarctic-survey
 
 image:
-  name: docker-registry.data.bas.ac.uk/web-apps/flask-middleware/flask-azure-oauth:0.1.0-alpine
+  name: docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:0.1.0-alpine
   entrypoint: [""]
 
 # == Jobs ==
