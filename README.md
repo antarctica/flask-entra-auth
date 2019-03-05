@@ -1,10 +1,37 @@
-# Flask Azure AD OAuth Middleware
+# Flask Azure AD OAuth Provider
 
 Python Flask extension for using Azure Active Directory with OAuth to protect applications
 
 ## Purpose
 
-This middleware ...
+This provider defines an [AuthLib](https://authlib.org) 
+[Resource Protector](https://docs.authlib.org/en/latest/flask/2/resource-server.html) to authenticate and authorise 
+users and other applications to access features or resources within a Flask application using the OAuth functionality
+provided by [Azure Active Directory](https://azure.microsoft.com/en-us/services/active-directory/) as part of the
+[Microsoft identity platform](https://docs.microsoft.com/en-us/azure/active-directory/develop/about-microsoft-identity-platform).
+
+This provider depends on Azure Active Directory, acting as a identity provider, to issue 
+[OAuth access tokens](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens) which contain the 
+identity of a user or application and any permissions they have been assigned through the Azure Portal and management
+APIs. These permissions are declared in Azure Active Directory 
+[application registrations](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals).
+
+This provider enables Flask applications, acting as service providers, to validate access tokens to check the identity 
+of the user or application (authentication), and the permissions required to access the Flask route being accessed.
+
+Specifically this provider supports these scenarios:
+
+1. *application to application* 
+   * supports authentication and authorisation
+   * used to allow a client application access to some functionality or resources in another application
+   * can be used to allow background tasks between applications where a user is not routinely involved (e.g. a nightly 
+    data synchronisation)
+   * uses the identity of the application acting as a client for authentication
+   * uses the permissions assigned to the application acting as a client for authorisation
+   * based on the [Client Credentials](https://tools.ietf.org/html/rfc6749#section-4.4) OAuth2 grant type
+   * [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow)
+
+Other scenarios may be added in future versions of this provider.
 
 ## Installation
 
@@ -16,19 +43,154 @@ $ pip install flask-azure-oauth
 
 ## Usage
 
-This middleware ...
+This provider provides an [AuthLib](https://authlib.org) 
+[Resource Protector](https://docs.authlib.org/en/latest/flask/2/resource-server.html) which can be used as a decorator
+on Flask routes.
 
 A minimal application would look like this:
 
 ```python
 from flask import Flask
 
+from flask_azure_oauth import FlaskAzureOauth
+
 app = Flask(__name__)
 
-@app.route('/')
-def hello_world():
+app.config['AZURE_OAUTH_TENANCY'] = 'xxx'
+app.config['AZURE_OAUTH_APPLICATION_ID'] = 'xxx'
+app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS'] = ['xxx']
+
+app.auth = FlaskAzureOauth(
+  azure_tenancy_id=app.config['AZURE_OAUTH_TENANCY'],
+  azure_application_id=app.config['AZURE_OAUTH_APPLICATION_ID'],
+  azure_client_application_ids=app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS']
+)
+
+@app.route('/unprotected')
+def unprotected():
     return 'hello world'
+
+@app.route('/protected')
+@app.auth()
+def protected():
+    return 'hello authenticated entity'
+
+@app.route('/protected-with-single-scope')
+@app.auth('required-scope')
+def protected():
+    return 'hello authenticated and authorised entity'
+
+@app.route('/protected-with-multiple-scope')
+@app.auth('required-scope1 required-scope2')
+def protected():
+    return 'hello authenticated and authorised entity'
 ```
+
+When the decorator (`app.auth` in this example) is used by itself any authenticated user or application will be able to
+access the decorated route. See the `/protected` route above for an example.
+
+To require one or more [Scopes](#permissions-roles-and-scopes), add them to the decorator call. Only users or 
+applications with all of the scopes specified will be able to access the decorated route. See the 
+`/protected-with-single-scope` and `/protected-with-multiple-scopes` routes above for examples.
+
+### Configuration options
+
+The resource protector requires some configuration options to validate tokens correctly. These are typically defined in
+the [Flask config object](http://flask.pocoo.org/docs/1.0/config/) and passed to the `FlaskAzureOauth` class.
+
+Before these options can be set you will need to:
+
+1. [register the application to be protected](#registering-an-application-in-azure)
+2. [define the permissions this application supports](#defining-permissions-within-an-application-registration)
+3. [register the application(s) that will granted these permissions](#registering-an-application-in-azure)
+4. [assign permissions to this/these application(s)](#assigning-permissions-for-one-application-to-use-another)
+
+| Configuration Option           | Data Type | Required | Description                                                                                                                |
+| ------------------------------ | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `azure_tenancy_id`             | Str       | Yes      | ID of the Azure AD tenancy all applications and users are registered within                                                |
+| `azure_application_id`         | Str       | Yes      | ID of the Azure AD application registration for the application being protected                                            |
+| `azure_client_application_ids` | List[Str] | Yes      | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected |  
+| `azure_jwks`                   | Dict      | No       | Optional, a [JSON Web Key Set](https://tools.ietf.org/html/rfc7517#section-5) used to validate access tokens               |
+
+**Note:** The `azure_jwks` option should only be set if your application needs to process JSON Web Key Set (JWKS) in a 
+non-standard way. By default, this provider will retrieve the JWKS automatically from the configured AD tenancy's 
+well-known OpenID Connect configuration endpoint.
+
+### Permissions, roles and scopes
+
+Permissions, roles and scopes can all be considered things 
+[Applications, users or groups](#applications-users-groups-and-tenancies) can do within an application - such as using 
+a feature or acting on a resource. In the context of this provider, they define which routes and resources can be used 
+within a Flask application. 
+
+**Note:** This provider currently does not support or discuss assigning permissions to users or groups. This is 
+planned for a future release.
+
+*Permissions* are defined in the 
+[application manifest](https://docs.microsoft.com/en-us/azure/active-directory/develop/reference-app-manifest) of each
+application being protected. These can then be assigned to either other applications and/or users (or groups of users) 
+as *roles*. Roles are expressed within 
+[access tokens issued by Azure](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens) in the
+non-standard `roles` claim, which is otherwise equivalent to standard
+[OAuth scopes](https://tools.ietf.org/html/rfc6749#section-3.3).
+
+#### Defining permissions within an application registration
+
+**Note:** You need to have already [Registered](#registering-an-application-in-azure) the application to be protected 
+within Azure before following these instructions.
+
+[Follow these instructions](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps).
+
+**Note:** This provider currently does not support or discuss assigning permissions to users or groups, therefore, 
+ensure all roles use `Application` for the `allowedMemberTypes` property.
+
+For example:
+
+```json
+"appRoles": [
+  {
+    "allowedMemberTypes": [
+      "Application"
+    ],
+    "displayName": "List all Foo resources",
+    "id": "112b3a76-2dd0-4d09-9976-9f94b2ed965d",
+    "isEnabled": true,
+    "description": "Allows access to basic information for all Foo resources",
+    "value": "Foo.List.All"
+  }
+],
+```
+
+#### Assigning permissions for one application to use another
+
+**Note:** You need to have already [Registered](#registering-an-application-in-azure) both the application to be 
+protected and the application that will be granted permissions within Azure. You also need to 
+[define the permissions](#defining-permissions-within-an-application-registration) in the protected application you 
+wish to assign to the other application.
+
+[Follow these instructions](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow#request-the-permissions-in-the-app-registration-portal).
+
+**Note:** This provider currently does not support or discuss assigning permissions to users or groups, therefore, do
+not follow the instructions to sign users into an application or use other user related functionality.
+
+### Applications, users, groups and tenancies
+
+Applications, users and groups of users can all be considered things that [Permissions](#permissions-roles-and-scopes)
+can be assigned to and will be generically referred to as entities. All of these entities reside in a single Azure
+tenancy.
+
+**Note:** This provider currently does not support or discuss using users or groups of users as entities. This is 
+planned for a future release.
+
+*Applications* include services being protected by this provider, and those that will be granted access to use such 
+applications as a client. Within Azure, all applications are represented by application registrations.
+
+#### Registering an application in Azure
+
+[Follow these instructions](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app).
+
+**Note:** These instructions apply both to applications that will be protected by this provider, and those that will be
+granted access to use such applications as a client.
 
 ## Developing
 
