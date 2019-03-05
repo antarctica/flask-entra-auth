@@ -60,33 +60,30 @@ app.config['AZURE_OAUTH_TENANCY'] = 'xxx'
 app.config['AZURE_OAUTH_APPLICATION_ID'] = 'xxx'
 app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS'] = ['xxx']
 
-app.auth = FlaskAzureOauth(
-  azure_tenancy_id=app.config['AZURE_OAUTH_TENANCY'],
-  azure_application_id=app.config['AZURE_OAUTH_APPLICATION_ID'],
-  azure_client_application_ids=app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS']
-)
+auth = FlaskAzureOauth()
+auth.init_app(app=app)
 
 @app.route('/unprotected')
 def unprotected():
     return 'hello world'
 
 @app.route('/protected')
-@app.auth()
+@auth()
 def protected():
     return 'hello authenticated entity'
 
 @app.route('/protected-with-single-scope')
-@app.auth('required-scope')
+@auth('required-scope')
 def protected():
     return 'hello authenticated and authorised entity'
 
 @app.route('/protected-with-multiple-scope')
-@app.auth('required-scope1 required-scope2')
+@auth('required-scope1 required-scope2')
 def protected():
     return 'hello authenticated and authorised entity'
 ```
 
-When the decorator (`app.auth` in this example) is used by itself any authenticated user or application will be able to
+When the decorator (`auth` in this example) is used by itself any authenticated user or application will be able to
 access the decorated route. See the `/protected` route above for an example.
 
 To require one or more [Scopes](#permissions-roles-and-scopes), add them to the decorator call. Only users or 
@@ -95,8 +92,8 @@ applications with all of the scopes specified will be able to access the decorat
 
 ### Configuration options
 
-The resource protector requires some configuration options to validate tokens correctly. These are typically defined in
-the [Flask config object](http://flask.pocoo.org/docs/1.0/config/) and passed to the `FlaskAzureOauth` class.
+The resource protector requires some configuration options to validate tokens correctly. These are read from the
+[config object](http://flask.pocoo.org/docs/1.0/config/) of a Flask application using the `init_app()` method.
 
 Before these options can be set you will need to:
 
@@ -105,16 +102,11 @@ Before these options can be set you will need to:
 3. [register the application(s) that will granted these permissions](#registering-an-application-in-azure)
 4. [assign permissions to this/these application(s)](#assigning-permissions-for-one-application-to-use-another)
 
-| Configuration Option           | Data Type | Required | Description                                                                                                                |
-| ------------------------------ | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `azure_tenancy_id`             | Str       | Yes      | ID of the Azure AD tenancy all applications and users are registered within                                                |
-| `azure_application_id`         | Str       | Yes      | ID of the Azure AD application registration for the application being protected                                            |
-| `azure_client_application_ids` | List[Str] | Yes      | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected |  
-| `azure_jwks`                   | Dict      | No       | Optional, a [JSON Web Key Set](https://tools.ietf.org/html/rfc7517#section-5) used to validate access tokens               |
-
-**Note:** The `azure_jwks` option should only be set if your application needs to process JSON Web Key Set (JWKS) in a 
-non-standard way. By default, this provider will retrieve the JWKS automatically from the configured AD tenancy's 
-well-known OpenID Connect configuration endpoint.
+| Configuration Option                 | Data Type | Required | Description                                                                                                                |
+| ------------------------------------ | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `AZURE_OAUTH_TENANCY`                | Str       | Yes      | ID of the Azure AD tenancy all applications and users are registered within                                                |
+| `AZURE_OAUTH_APPLICATION_ID`         | Str       | Yes      | ID of the Azure AD application registration for the application being protected                                            |
+| `AZURE_OAUTH_CLIENT_APPLICATION_IDS` | List[Str] | Yes      | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected |  
 
 ### Permissions, roles and scopes
 
