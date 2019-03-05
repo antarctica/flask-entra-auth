@@ -256,7 +256,7 @@ $ docker-compose push
 ### Dependency vulnerability scanning
 
 To ensure the security of this API, all dependencies are checked against 
-[Snyk]() for vulnerabilities. 
+[Snyk](https://app.snyk.io/org/antarctica/project/31a18ab1-7942-4044-9616-dce4837c9b16) for vulnerabilities. 
 
 **Warning:** Snyk relies on known vulnerabilities and can't check for issues that are not in it's database. As with all 
 security tools, Snyk is an aid for spotting common mistakes, not a guarantee of secure code.
