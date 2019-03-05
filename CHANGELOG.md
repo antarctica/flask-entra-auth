@@ -1,4 +1,4 @@
-# Flask Azure AD OAuth Middleware - Change log
+# Flask Azure AD OAuth Provider - Change log
 
 All notable changes to this project will be documented in this file.
 
