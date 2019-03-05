@@ -197,7 +197,7 @@ class FlaskOAuthProviderJWTTestCase(FlaskOAuthProviderBaseTestCase):
 
         # Auth introspection used as a stable test endpoint
         response = self.client.get('/meta/auth/introspection', headers={'authorization': f"Bearer {token}"})
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(HTTPStatus.OK, response.status_code)
 
     def test_auth_multiple_token_client_applications(self):
         azps = ['test', 'test2']

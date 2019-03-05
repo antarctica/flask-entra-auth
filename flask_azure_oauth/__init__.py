@@ -1,38 +1,32 @@
 import requests
 
-from typing import List, Optional
-
+from flask import Flask as App
 from flask_azure_oauth.resource_protector import ResourceProtector
 from flask_azure_oauth.tokens import AzureTokenValidator, AzureToken
 
 
 class FlaskAzureOauth(ResourceProtector):
-    def __init__(
+    def __init__(self):
+        self.validator = None
+
+        self.azure_tenancy_id = None
+        self.azure_application_id = None
+        self.azure_client_application_ids = []
+        self.jwks = {}
+
+    def init_app(
         self,
         *,
-        azure_tenancy_id: str,
-        azure_application_id: str,
-        azure_client_application_ids: List[str],
-        azure_jwks: Optional[dict] = None
+        app: App
     ):
         """
-        :type azure_tenancy_id: str
-        :param azure_tenancy_id: Azure Active Directory tenancy ID
-        :type azure_application_id: str
-        :param azure_application_id: ID of the Azure Active Directory application registration representing this app
-        :type azure_client_application_ids: List[str]
-        :param azure_client_application_ids: IDs of Azure Active Directory application registrations representing
-        clients of this app
-        :type azure_jwks: Optional[dict]
-        :param azure_jwks: trusted JWKs formatted as a JSON Web Key Set
+        :type app: App
+        :param app: Flask application
         """
-        self.azure_tenancy_id = azure_tenancy_id
-        self.azure_application_id = azure_application_id
-        self.azure_client_application_ids = azure_client_application_ids
-        self.jwks = azure_jwks
-
-        if self.jwks is None:
-            self.jwks = self._get_jwks()
+        self.azure_tenancy_id = app.config['AZURE_OAUTH_TENANCY']
+        self.azure_application_id = app.config['AZURE_OAUTH_APPLICATION_ID']
+        self.azure_client_application_ids = app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS']
+        self.jwks = self._get_jwks()
 
         self.validator = AzureTokenValidator(
             azure_tenancy_id=self.azure_tenancy_id,

@@ -5,14 +5,14 @@ from http import HTTPStatus
 # noinspection PyPackageRequirements
 from werkzeug.wrappers import Response
 
-from app import create_app
+from app import create_test_app
 from tests.utils import TestJwt
 from flask_azure_oauth.errors import ApiAuthError
 
 
 class FlaskOAuthProviderBaseTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app()
+        self.app = create_test_app()
         self.app_context = self.app.app_context()
         self.app_context.push()
         self.client = self.app.test_client()
@@ -60,9 +60,9 @@ class FlaskOAuthProviderBaseTestCase(unittest.TestCase):
         self.app_context.pop()
 
         if mode is not None:
-            self.app = create_app(AUTH_MODE=mode)
+            self.app = create_test_app(AUTH_MODE=mode)
         else:
-            self.app = create_app()
+            self.app = create_test_app()
 
         self.app_context = self.app.app_context()
         self.app_context.push()
