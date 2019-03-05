@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from flask import Flask, request, jsonify
 
+from flask_azure_oauth import FlaskAzureOauth
 from tests.utils import TestJwk, TestFlaskAzureOauth
 
 config = {
@@ -11,8 +12,37 @@ config = {
     'TEST_JWKS': TestJwk()
 }
 
+auth = FlaskAzureOauth()
 
-def create_app(**kwargs):
+
+def create_app():
+    app = Flask(__name__)
+
+    # Configure and load provider
+    app.config['AZURE_OAUTH_TENANCY'] = config['AZURE_OAUTH_TENANCY']
+    app.config['AZURE_OAUTH_APPLICATION_ID'] = config['AZURE_OAUTH_APPLICATION_ID']
+    app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS'] = config['AZURE_OAUTH_CLIENT_APPLICATION_IDS']
+    auth.init_app(app=app)
+
+    @app.route('/meta/auth/introspection')
+    @auth()
+    def meta_auth_introspection():
+        authorization_header = request.headers.get('authorization')
+        token_string = authorization_header.split('Bearer ')[1]
+
+        payload = {
+            'data': {
+                'token': auth.introspect_token(token_string=token_string),
+                'token-string': token_string
+            }
+        }
+
+        return jsonify(payload)
+
+    return app
+
+
+def create_test_app(**kwargs):
     app = Flask(__name__)
     app.config['AZURE_OAUTH_TENANCY'] = config['AZURE_OAUTH_TENANCY']
     app.config['AZURE_OAUTH_APPLICATION_ID'] = config['AZURE_OAUTH_APPLICATION_ID']

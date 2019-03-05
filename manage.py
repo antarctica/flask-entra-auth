@@ -1,10 +1,10 @@
 import os
 import unittest
 
-from app import create_app
+from app import create_test_app
 
 
-app = create_app()
+app = create_test_app()
 
 
 # Support running integration tests
