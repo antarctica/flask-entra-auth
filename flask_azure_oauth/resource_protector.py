@@ -1,5 +1,6 @@
 from authlib.flask.oauth2 import ResourceProtector as _ResourceProtector
 from authlib.specs.rfc6749 import MissingAuthorizationError, UnsupportedTokenTypeError
+from authlib.specs.rfc6750 import BearerTokenValidator
 
 from flask_azure_oauth.errors import auth_error_missing_authorization, auth_error_token_type_unsupported, \
     auth_error_fallback
@@ -14,14 +15,15 @@ class ResourceProtector(_ResourceProtector):
     """
 
     @classmethod
-    def deregister_token_validator(cls, validator) -> None:
+    def deregister_token_validator(cls, token_validator: BearerTokenValidator) -> None:
         """
         This method adds a counterpart to the 'register_token_validator' in the 'ResourceProtector' class to allow a
-        previously registered token validator to be removed
+        previously registered token validator type to be removed
 
-        :param validator: previously registered token validator
+        :type token_validator: BearerTokenValidator
+        :param token_validator: Previously registered token validator
         """
-        del cls.TOKEN_VALIDATORS[validator.TOKEN_TYPE]
+        del cls.TOKEN_VALIDATORS[token_validator.TOKEN_TYPE]
 
     def raise_error_response(self, error):
         """
