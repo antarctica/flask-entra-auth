@@ -74,12 +74,12 @@ def protected():
 
 @app.route('/protected-with-single-scope')
 @auth('required-scope')
-def protected():
+def protected_with_scope():
     return 'hello authenticated and authorised entity'
 
-@app.route('/protected-with-multiple-scope')
+@app.route('/protected-with-multiple-scopes')
 @auth('required-scope1 required-scope2')
-def protected():
+def protected_with_multiple_scopes():
     return 'hello authenticated and authorised entity'
 ```
 
@@ -107,6 +107,61 @@ Before these options can be set you will need to:
 | `AZURE_OAUTH_TENANCY`                | Str       | Yes      | ID of the Azure AD tenancy all applications and users are registered within                                                |
 | `AZURE_OAUTH_APPLICATION_ID`         | Str       | Yes      | ID of the Azure AD application registration for the application being protected                                            |
 | `AZURE_OAUTH_CLIENT_APPLICATION_IDS` | List[Str] | Yes      | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected |  
+
+### Testing support
+
+When a Flask application is in testing mode (i.e. `app.config['TESTING']=True`), this provider will generate a local 
+JSON Web Key Set, containing a single key, which can be used to sign tokens with arbitrary scopes.
+
+This can be used to test routes that require a scope or scopes, by allowing tokens to be generated with or without 
+required scopes to test both authorised and unauthorised responses.
+
+For example:
+
+```python
+import unittest
+
+from http import HTTPStatus
+from flask_azure_oauth.tokens import TestJwt
+
+
+class AppTestCase(unittest.TestCase):
+    def test_protected_route_with_multiple_scopes_authorised(self):
+        # 'create_app()' should return a Flask application where `app.config['TESTING'] = True` has been set
+        self.app = create_app('testing')
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        self.client = self.app.test_client()
+
+        # Generate token with required scopes
+        token = TestJwt(app=self.app, scopes=['required-scope1', 'required-scope2'])
+        
+        # Make request to protected route with token
+        response = self.client.get(
+            '/protected-with-multiple-scopes',
+            headers={'authorization': f"bearer { token }"}
+        )
+        self.assertEqual(HTTPStatus.OK, response.status_code)
+        self.app_context.pop()
+    
+    def test_protected_route_with_multiple_scopes_unauthorised(self):
+        # 'create_app()' should return a Flask application where `app.config['TESTING'] = True` has been set
+        self.app = create_app('testing')
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        self.client = self.app.test_client()
+
+        # Generate token with no scopes
+        token = TestJwt(app=self.app)
+        
+        # Make request to protected route with token
+        response = self.client.get(
+            '/protected-with-multiple-scopes',
+            headers={'authorization': f"bearer { token }"}
+        )
+        self.assertEqual(HTTPStatus.FORBIDDEN, response.status_code)
+        self.app_context.pop()
+```
 
 ### Permissions, roles and scopes
 
