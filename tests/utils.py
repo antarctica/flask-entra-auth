@@ -1,37 +1,22 @@
-import random
-import string
-import time
 from typing import Optional, List
 
-from authlib.specs.rfc7517 import JWK
-from authlib.specs.rfc7518 import JWK_ALGORITHMS
-from authlib.specs.rfc7519 import JWT
-# noinspection PyPackageRequirements
-from cryptography.hazmat.backends import default_backend
-# noinspection PyPackageRequirements
-from cryptography.hazmat.primitives import serialization
-# noinspection PyPackageRequirements
-from cryptography.hazmat.primitives.asymmetric import rsa
+from flask import Flask as App
 
-from flask_azure_oauth import FlaskAzureOauth, AzureTokenValidator
+from flask_azure_oauth import FlaskAzureOauth
+from flask_azure_oauth.tokens import AzureTokenValidator, TestJwt as _TestJwt
+from flask_azure_oauth.keys import TestJwk as _TestJwk
 
 
-class TestJwk:
+class TestJwk(_TestJwk):
     """
-    Class to create JSON Web Keys (JWKs) for testing purposes
+    Class to create JSON Web Keys (JWKs) for more extreme testing purposes
 
-    Supports generating unique RSA 256 bit keys for signing JSON Web Tokens. As the key-pair is unique to each JWK
-    instance, this class allows the private key to be retrieved for signing test tokens. Normally this isn't possible.
+    This class builds upon the main TestJwk class, intended for using this extension in other applications, by adding
+    methods for testing this extension itself, such as generating JWKs that are intentionally broken.
 
     By default a unique Key ID is generated for each key, but this can be specified when this should equal another key
     in order to fail token signature validation during tests.
     """
-    _jwk = JWK(algorithms=JWK_ALGORITHMS)
-
-    algorithm = 'RS256'
-    key_type = 'RSA'
-    key_use = 'sig'
-
     def __init__(self, *, kid: str = None, null_jwks: bool = False):
         """
         :type kid: str
@@ -39,72 +24,18 @@ class TestJwk:
         :type null_jwks: bool
         :param null_jwks: whether an empty JWKS should be returned
         """
-        self.private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
-        self.public_key = self.private_key.public_key()
-        self.key_id = kid
+        super().__init__()
+
+        if kid is not None:
+            self.key_id = kid
         self.null_jwks = null_jwks
-
-        if kid is None:
-            self.key_id = 'test-' + ''.join(
-                random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=7)
-            )
-
-    def private_key_pem(self) -> str:
-        """
-        Returns the private key of the unique key-pair generated for the JWK for signing JSON Web Tokens
-
-        The private key is returned in a typical form - i.e. '--- Begin Private Key --- ...'
-
-        :rtype str
-        :return: Private key as PEM encoded, OpenSSL formatted, string
-        """
-        return self.private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption()
-        ).decode()
-
-    def public_key_pem(self) -> str:
-        """
-        Returns the public key contained in the JWK, based on the unique key-pair generated for the JWK, for verifying
-        JSON Web Tokens
-
-        The public key is returned in a typical form - i.e. '--- Begin Public Key --- ...'
-
-        :rtype str
-        :return: Public key as PEM encoded, OpenSSL formatted, string
-        """
-        return self.public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        ).decode()
-
-    def kid(self) -> str:
-        """
-        Returns the Key ID contained in the JWK
-
-        :rtype str
-        :return: key ID
-        """
-        return self.key_id
-
-    def dumps(self) -> dict:
-        """
-        Returns the JWK as a Python dictionary, suitable for encoding with JSON for exchange
-
-        :rtype: dict
-        :return: JWK
-        """
-        jwk = self._jwk.dumps(self.public_key_pem(), kty=self.key_type, use=self.key_use, kid=self.key_id)
-
-        return jwk
 
     def jwks(self) -> dict:
         """
         Returns the JWK as a Python dictionary, as part of a JSON Web Key Set (JWKS), suitable for encoding with JSON
         for exchange
 
-        Key sets are used to establish the signing keys that may be used to sign tokens, identified by their Key IDs.
+        Extends the regular TestJwk class to support returning an empty key set for testing
 
         :rtype dict
         :return: JWK as a JWK Set
@@ -115,18 +46,29 @@ class TestJwk:
         return {'keys': [self.dumps()]}
 
 
-class TestJwt:
+class TestJwt(_TestJwt):
     """
-    Class to create JSON Web Tokens (JWTs) for testing purposes
+    Class to create JSON Web Tokens (JWTs) for more extreme testing purposes
+
+    This class builds upon the main TestJwt class, intended for using this extension in other applications, by adding
+    methods for testing this extension itself, such as generating JWTs that intentionally omit required elements.
 
     Supports generating tokens with a configurable header, payload, including scopes, and signing key. Defaults are
-    provided for the header and payload to create tokens compatible with JSON Web Keys (signing keys) generated by the
-    TestJwk class. Payload claims are fake/testing values compatible with this auth middleware.
+    provided for the header and payload to create tokens compatible with a JSON Web Key (signing keys) generated by the
+    TestJwk class.
     """
-    _jwt = JWT()
-
-    def __init__(self, *, header: dict = None, payload: dict = None, scopes: list = None, signing_key: TestJwk):
+    def __init__(
+        self,
+        *,
+        app: App,
+        header: dict = None,
+        payload: dict = None,
+        scopes: list = None,
+        signing_key: TestJwk = None
+    ):
         """
+        :type app: App
+        :type app: Flask application
         :type header: dict
         :param header: header fields to include in token, overrides default values if given
         :type payload: dict
@@ -134,38 +76,17 @@ class TestJwt:
         :type scopes: list
         :param scopes: Optional scopes to include in the token (as a 'roles' claim) for testing authorisation
         :type signing_key: TestJwk
-        :param signing_key: TestJwk instance for setting the token Key ID, signing algorithm and private key for signing
+        :param signing_key: Optional TestJwk instance for setting the token Key ID, signing algorithm and private key
+        for signing
         """
-        self.header = header
-        self.payload = payload
-        self.signing_key = signing_key
+        super().__init__(app=app, scopes=scopes)
 
-        if header is None:
-            self.header = {
-                'alg': signing_key.algorithm,
-                'kid': signing_key.kid()
-            }
-        if payload is None:
-            self.payload = {
-                'aud': 'test',
-                'exp': int(time.time() + 10000),
-                'iat': int(time.time()),
-                'iss': 'https://login.microsoftonline.com/test/v2.0',
-                'nbf': int(time.time()),
-                'sub': None,
-                'azp': 'test'
-            }
-        if scopes is not None:
-            self.payload['roles'] = ' '.join(scopes)
-
-    def dumps(self) -> str:
-        """
-        Returns a signed/issued JWT encoded as a string for exchange
-
-        :rtype str
-        :return: Signed JWT
-        """
-        return self._jwt.encode(self.header, self.payload, self.signing_key.private_key_pem()).decode()
+        if signing_key is not None:
+            self.signing_key = signing_key
+        if header is not None:
+            self.header = header
+        if payload is not None:
+            self.payload = payload
 
 
 class TestFlaskAzureOauth(FlaskAzureOauth):
