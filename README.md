@@ -116,6 +116,10 @@ JSON Web Key Set, containing a single key, which can be used to sign tokens with
 This can be used to test routes that require a scope or scopes, by allowing tokens to be generated with or without 
 required scopes to test both authorised and unauthorised responses.
 
+Typically the instance of this provider will be defined outside of an application, and therefore persist between 
+application instances and tests. To prevent issues where signing keys generated in one application instance 'leak' into
+another, this provider should be reset after each test using the `reset_app()` method.  
+
 For example:
 
 ```python
@@ -126,13 +130,18 @@ from flask_azure_oauth.tokens import TestJwt
 
 
 class AppTestCase(unittest.TestCase):
-    def test_protected_route_with_multiple_scopes_authorised(self):
+    def setUp(self):
         # 'create_app()' should return a Flask application where `app.config['TESTING'] = True` has been set
         self.app = create_app('testing')
         self.app_context = self.app.app_context()
         self.app_context.push()
         self.client = self.app.test_client()
 
+    def tearDown(self):
+        # 'auth ' should refer to the instance of this provider
+        auth.reset_app()
+
+    def test_protected_route_with_multiple_scopes_authorised(self):
         # Generate token with required scopes
         token = TestJwt(app=self.app, scopes=['required-scope1', 'required-scope2'])
         
@@ -145,12 +154,6 @@ class AppTestCase(unittest.TestCase):
         self.app_context.pop()
     
     def test_protected_route_with_multiple_scopes_unauthorised(self):
-        # 'create_app()' should return a Flask application where `app.config['TESTING'] = True` has been set
-        self.app = create_app('testing')
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        self.client = self.app.test_client()
-
         # Generate token with no scopes
         token = TestJwt(app=self.app)
         
