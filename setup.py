@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-version = '0.1.0'
+version = '0.2.0'
 
 # If a tagged commit, don't make a pre-release
 if 'CI_COMMIT_TAG' not in os.environ:
