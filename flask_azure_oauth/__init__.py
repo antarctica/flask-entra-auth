@@ -55,9 +55,9 @@ class FlaskAzureOauth(ResourceProtector):
         :return: JSON Web Key Set
         """
         if 'TESTING' in app.config and app.config['TESTING']:
-            test_jwks = TestJwk().jwks()
+            test_jwks = TestJwk()
             app.config['TEST_JWKS'] = test_jwks
-            return test_jwks
+            return test_jwks.jwks()
 
         jwks_request = requests.get(f"https://login.microsoftonline.com/{self.azure_tenancy_id}/discovery/v2.0/keys")
         jwks_request.raise_for_status()
