@@ -49,7 +49,7 @@ class FlaskAzureOauth(ResourceProtector):
         marked as untrusted.
         """
 
-        self.deregister_token_validator(self.validator.TOKEN_TYPE)
+        self.deregister_token_validator(self.validator)
 
     def _get_jwks(self, app: App) -> dict:
         """
