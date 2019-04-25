@@ -1,8 +1,7 @@
 import random
 import string
 
-from authlib.specs.rfc7517 import JWK
-from authlib.specs.rfc7518 import JWK_ALGORITHMS
+from authlib.jose import JWK, JWK_ALGORITHMS
 
 # noinspection PyPackageRequirements
 from cryptography.hazmat.backends import default_backend

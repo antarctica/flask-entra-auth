@@ -6,14 +6,13 @@ from typing import List, Union, Callable
 # noinspection PyPackageRequirements
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from flask import Request, Flask as App
-from authlib.specs.rfc6749.util import scope_to_list
-from authlib.specs.rfc6750 import BearerTokenValidator, InsufficientScopeError
-from authlib.specs.rfc7515 import DecodeError, InvalidHeaderParameterName, BadSignatureError
-from authlib.specs.rfc7515.util import extract_header
-from authlib.specs.rfc7517 import JWK
-from authlib.specs.rfc7518 import JWK_ALGORITHMS
-from authlib.specs.rfc7519 import jwt, JWTClaims, InvalidClaimError, ExpiredTokenError, \
-    MissingClaimError, InvalidTokenError, JWT
+
+from authlib.jose import JWTClaims, JWK, JWK_ALGORITHMS, jwt, JWT
+from authlib.jose.errors import MissingClaimError, InvalidClaimError, InvalidTokenError, ExpiredTokenError, \
+    DecodeError, BadSignatureError, InvalidHeaderParameterName
+from authlib.jose.util import extract_header
+from authlib.oauth2.rfc6749.util import scope_to_list
+from authlib.oauth2.rfc6750 import BearerTokenValidator, InsufficientScopeError
 
 from flask_azure_oauth.errors import auth_error_token_decode, auth_error_token_missing_kid, \
     auth_error_token_untrusted_jwk, auth_error_token_key_decode, auth_error_token_signature_invalid, \

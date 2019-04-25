@@ -6,4 +6,8 @@ ignore:
     - '*':
         reason: 'Required by other dependency, no known resolution'
         expires: 2019-10-28T00:00:00.000Z
+  SNYK-PYTHON-URLLIB3-174323:
+    - '*':
+        reason: 'Required by other dependency, no released fix version yet'
+        expires: 2019-10-25T00:00:00.000Z
 patch: {}

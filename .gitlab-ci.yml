@@ -34,7 +34,7 @@ variables:
   PYPI_TEST_USERNAME: british-antarctic-survey
 
 image:
-  name: docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:0.1.0-alpine
+  name: docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:latest
   entrypoint: [""]
 
 # == Jobs ==
