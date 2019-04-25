@@ -1,6 +1,6 @@
 from authlib.flask.oauth2 import ResourceProtector as _ResourceProtector
-from authlib.specs.rfc6749 import MissingAuthorizationError, UnsupportedTokenTypeError
-from authlib.specs.rfc6750 import BearerTokenValidator
+from authlib.oauth2.rfc6749 import MissingAuthorizationError, UnsupportedTokenTypeError
+from authlib.oauth2.rfc6750 import BearerTokenValidator
 
 from flask_azure_oauth.errors import auth_error_missing_authorization, auth_error_token_type_unsupported, \
     auth_error_fallback
@@ -25,6 +25,7 @@ class ResourceProtector(_ResourceProtector):
         """
         del cls.TOKEN_VALIDATORS[token_validator.TOKEN_TYPE]
 
+    # noinspection PyMethodMayBeStatic
     def raise_error_response(self, error):
         """
         This method overloads the default method in the 'ResourceProtector' class to catch exceptions as API errors
