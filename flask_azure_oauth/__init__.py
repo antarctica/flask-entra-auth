@@ -9,6 +9,8 @@ from flask_azure_oauth.keys import TestJwk
 
 class FlaskAzureOauth(ResourceProtector):
     def __init__(self):
+        super().__init__()
+
         self.validator = None
 
         self.azure_tenancy_id = None
@@ -36,8 +38,6 @@ class FlaskAzureOauth(ResourceProtector):
         )
 
         self.register_token_validator(self.validator)
-
-        super().__init__()
 
     def reset_app(self) -> None:
         """
