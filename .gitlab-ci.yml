@@ -46,19 +46,6 @@ test-app:
   script:
     - "flask test"
 
-dependencies-app:
-  stage: lint
-  image:
-    name: antarctica/snyk-cli:python-3
-    entrypoint: [""]
-  script:
-   - "pip install --upgrade pip"
-   - "pip install -r requirements.txt"
-   - "snyk test"
-   - "snyk monitor --project-name=$SNYK_PROJECT --org=$SNYK_ORG"
-  only:
-    - master
-
 pep8-app:
   stage: lint
   script:

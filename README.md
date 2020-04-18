@@ -303,31 +303,6 @@ $ docker login docker-registry.data.bas.ac.uk
 $ docker-compose push
 ```
 
-### Dependency vulnerability scanning
-
-To ensure the security of this API, all dependencies are checked against 
-[Snyk](https://app.snyk.io/org/antarctica/project/31a18ab1-7942-4044-9616-dce4837c9b16) for vulnerabilities. 
-
-**Warning:** Snyk relies on known vulnerabilities and can't check for issues that are not in it's database. As with all 
-security tools, Snyk is an aid for spotting common mistakes, not a guarantee of secure code.
-
-Some vulnerabilities have been ignored in this project, see `.snyk` for definitions and the 
-[Dependency exceptions](#dependency-vulnerability-exceptions) section for more information.
-
-Through [Continuous Integration](#continuous-integration), on each commit current dependencies are tested and a snapshot
-uploaded to Snyk. This snapshot is then monitored for vulnerabilities.
-
-#### Dependency vulnerability exceptions
-
-This project contains known vulnerabilities that have been ignored for a specific reason.
-
-* [Py-Yaml `yaml.load()` function allows Arbitrary Code Execution](https://snyk.io/vuln/SNYK-PYTHON-PYYAML-42159)
-    * currently no known or planned resolution
-    * indirect dependency, required through the `bandit` package
-    * severity is rated *high*
-    * risk judged to be *low* as we don't use the Yaml module in this application
-    * ignored for 1 year for re-review
-
 ### Static security scanning
 
 To ensure the security of this API, source code is checked against [Bandit](https://github.com/PyCQA/bandit) for issues 
@@ -382,8 +357,6 @@ In *Configuration* tab:
 All commits will trigger a Continuous Integration process using GitLab's CI/CD platform, configured in `.gitlab-ci.yml`.
 
 This process will run the application [Integration tests](#integration-tests).
-
-Pip dependencies are also [checked and monitored for vulnerabilities](#dependency-vulnerability-scanning).
 
 ## Distribution
  

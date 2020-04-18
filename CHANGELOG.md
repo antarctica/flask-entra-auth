@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Updating to Requests 2.23.0
 * Updating development dependencies
 
+### Removed
+
+* Synk support - too unreliable
+
 ## [0.3.0] - 2019-04-25
 
 ### Added
