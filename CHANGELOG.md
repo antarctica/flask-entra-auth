@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 * Incorporating @maxgubler's contribution for Authlib 0.12
-* Updating to Authlib 0.12
+* Updating to Authlib 0.14.1
 
 ## [0.3.0] - 2019-04-25
 

@@ -1,9 +1,9 @@
-authlib==0.12
 bandit==1.5.1
 flake8==3.6.0
 Flask==1.0.2
 requests==2.21.0
 setuptools==40.8.0
 twine==1.13.0
+authlib==0.14.1
 wheel==0.33.1
 urllib3==1.24.2

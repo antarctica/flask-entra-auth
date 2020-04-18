@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from flask import make_response, jsonify, Response
 from authlib.common.errors import AuthlibHTTPError
-from authlib.flask.error import raise_http_exception
+from authlib.integrations.flask_oauth2.errors import raise_http_exception
 from authlib.jose.errors import MissingClaimError
 
 
