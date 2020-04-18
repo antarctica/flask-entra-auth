@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 * Incorporating @maxgubler's contribution for Authlib 0.12
 * Updating to Authlib 0.14.1
+* Updating to Flask 1.1.2
+* Updating to Requests 2.23.0
 * Updating development dependencies
 
 ## [0.3.0] - 2019-04-25
