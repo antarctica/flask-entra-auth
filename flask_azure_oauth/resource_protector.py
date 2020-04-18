@@ -14,8 +14,7 @@ class ResourceProtector(_ResourceProtector):
     - overloading the 'raise_error_response' method to catch exceptions as API errors and return them to the client
     """
 
-    @classmethod
-    def deregister_token_validator(cls, token_validator: BearerTokenValidator) -> None:
+    def deregister_token_validator(self, token_validator: BearerTokenValidator) -> None:
         """
         This method adds a counterpart to the 'register_token_validator' in the 'ResourceProtector' class to allow a
         previously registered token validator type to be removed
@@ -23,7 +22,7 @@ class ResourceProtector(_ResourceProtector):
         :type token_validator: BearerTokenValidator
         :param token_validator: Previously registered token validator
         """
-        del cls.TOKEN_VALIDATORS[token_validator.TOKEN_TYPE]
+        del self._token_validators[token_validator.TOKEN_TYPE]
 
     # noinspection PyMethodMayBeStatic
     def raise_error_response(self, error):
