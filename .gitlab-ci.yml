@@ -15,6 +15,8 @@
 # - PyPi (staging) - create tokens at https://test.pypi.org/manage/account/
 # > PYPI_TEST_TOKEN (protected): "[Sensitive]"
 #
+# - GitLab - create token as the 'bot_magic_ci' user
+# > GITLAB_ACCESS_TOKEN: "[Sensitive]"
 
 # == Global settings ==
 
@@ -22,6 +24,7 @@ stages:
   - 🧪 test
   - 🏗 build
   - 🚚 publish
+  - 🚀 release
 
 variables:
   APP_NAME: flask-azure-oauth
@@ -98,3 +101,22 @@ publish-app-prod:
   environment:
     name: production
     url: https://pypi.org/project/flask-azure-oauth/
+
+gitlab-prod:
+  stage: 🚀 release
+  image:
+    name: byrnedo/alpine-curl:0.1.8
+    entrypoint: [""]
+  script:
+    - curl --request POST
+      --header 'Content-Type:application/json'
+      --header "PRIVATE-TOKEN:$GITLAB_ACCESS_TOKEN"
+      --data '{"name":"'$CI_COMMIT_TAG'","tag_name":"'$CI_COMMIT_TAG'","description":"...","milestones":["'$CI_COMMIT_TAG'"]}'
+      "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases"
+    - curl --request POST
+      --header "PRIVATE-TOKEN:$GITLAB_ACCESS_TOKEN"
+      --data name="PyPi package"
+      --data url="https://pypi.org/project/$APP_NAME/${CI_COMMIT_TAG:1}"
+      "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases/$CI_COMMIT_TAG/assets/links"
+  only:
+    - tags
