@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Update project dates
 * Switching to Poetry for dependency management and package publishing
 * Switching to Black for code formatting/linting
+* Switching to multi-stage Docker image
 
 ### Removed
 
