@@ -1,6 +1,6 @@
 # Flask Azure AD OAuth Provider
 
-Python Flask extension for using Azure Active Directory with OAuth to protect applications
+Python Flask extension for using Azure Active Directory with OAuth to protect applications.
 
 ## Purpose
 
@@ -244,63 +244,71 @@ granted access to use such applications as a client.
 
 ## Developing
 
-A docker container ran through Docker Compose is used as a development environment for this project. It includes 
-development only dependencies listed in `requirements.txt`, a local Flask application in `app.py` and 
-[Integration tests](#integration-tests).
-
-Ensure classes and methods are defined within the `flask_azure_oauth` package.
-
-Ensure [Integration tests](#integration-tests) are written for any new feature, or changes to existing features.
-
-If you have access to the BAS GitLab instance, pull the Docker image from the BAS Docker Registry:
+This project is developed as a Python library. A bundled Flask application is used to simulate its usage and to act as
+framework for running tests etc.
 
 ```shell
+$ git clone https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth.git
+$ cd flask-azure-oauth
+```
+
+### Development environment
+
+Docker and Docker Compose are required to setup a local development environment of this application.
+
+If you have access to the [BAS GitLab instance](https://gitlab.data.bas.ac.uk), you can pull the application Docker
+image from the BAS Docker Registry. Otherwise you will need to build the Docker image locally.
+
+```shell
+# If you have access to gitlab.data.bas.ac.uk:
 $ docker login docker-registry.data.bas.ac.uk
 $ docker-compose pull
-
-# To run the local Flask application using the Flask development server
-$ docker-compose up
-
-# To start a shell
-$ docker-compose run app ash
+# If you don't have access:
+$ docker-compose build
 ```
 
 ### Code Style
 
 PEP-8 style and formatting guidelines must be used for this project, with the exception of the 80 character line limit.
 
-[Flake8](http://flake8.pycqa.org/) is used to ensure compliance, and is ran on each commit through 
-[Continuous Integration](#continuous-integration).
+[Black](https://github.com/psf/black) is used to ensure compliance, configured in `pyproject.toml`.
 
-To check compliance locally:
+Black can be [integrated](https://black.readthedocs.io/en/stable/editor_integration.html#pycharm-intellij-idea) with a
+range of editors, such as PyCharm, to perform formatting automatically.
+
+To apply formatting manually:
 
 ```shell
-$ docker-compose run app flake8 . --ignore=E501
+$ docker-compose run app black flask_azure_oauth/
 ```
+
+To check compliance manually:
+
+```shell
+$ docker-compose run app black --check flask_azure_oauth/
+```
+
+Checks are ran automatically in [Continuous Integration](#continuous-integration).
 
 ### Dependencies
 
-Development Python dependencies should be declared in `requirements.txt` to be included in the development environment.
+Python dependencies for this project are managed with [Poetry](https://python-poetry.org) in `pyproject.toml`.
 
-Runtime Python dependencies should be declared in `requirements.txt` and `setup.py` to also be installed as dependencies
-of this package in other applications.
+Non-code files, such as static files, can also be included in the [Python package](#python-package) using the
+`include` key in `pyproject.toml`.
 
-All dependencies should be periodically reviewed and update as new versions are released.
+To add a new (development) dependency:
 
 ```shell
 $ docker-compose run app ash
-$ pip install [dependency]==
-# this will display a list of available versions, add the latest to `requirements.txt` and or `setup.py`
-$ exit
-$ docker-compose down
-$ docker-compose build
+$ poetry add [dependency] (--dev)
 ```
 
-If you have access to the BAS GitLab instance, push the Docker image to the BAS Docker Registry:
+Then rebuild the development container, and if you can, push to GitLab:
 
 ```shell
-$ docker login docker-registry.data.bas.ac.uk
-$ docker-compose push
+$ docker-compose build app
+$ docker-compose push app
 ```
 
 ### Static security scanning
@@ -311,13 +319,13 @@ such as not sanitising user inputs or using weak cryptography.
 **Warning:** Bandit is a static analysis tool and can't check for issues that are only be detectable when running the 
 application. As with all security tools, Bandit is an aid for spotting common mistakes, not a guarantee of secure code.
 
-Through [Continuous Integration](#continuous-integration), each commit is tested.
-
-To check locally:
+To check manually from the command line:
 
 ```shell
 $ docker-compose run app bandit -r .
 ```
+
+Checks are ran automatically in [Continuous Integration](#continuous-integration).
 
 ## Testing
 
@@ -327,10 +335,8 @@ This project uses integration tests to ensure features work as expected and to g
 vulnerabilities.
 
 The Python [UnitTest](https://docs.python.org/3/library/unittest.html) library is used for running tests using Flask's 
-test framework. Test cases are defined in files within `tests/` and are automatically loaded when using the 
-`test` Flask CLI command included in the local Flask application in the development environment.
-
-Tests are automatically ran on each commit through [Continuous Integration](#continuous-integration).
+test framework. Test cases are defined in files within `tests/` and are automatically loaded when using the `test` 
+Flask CLI command included in the local Flask application in the development environment.
 
 To run tests manually:
 
@@ -338,83 +344,36 @@ To run tests manually:
 $ docker-compose run -e FLASK_ENV=testing app flask test
 ```
 
-To run tests using PyCharm:
+To run tests manually using PyCharm, use the included *App (Tests)* run/debug configuration.
 
-* *Run* -> *Edit Configurations*
-* *Add New Configuration* -> *Python Tests* -> *Unittests*
-
-In *Configuration* tab:
-
-* Script path: `[absolute path to project]/tests`
-* Python interpreter: *Project interpreter* (*app* service in project Docker Compose)
-* Working directory: `[absolute path to project]`
-* Path mappings: `[absolute path to project]=/usr/src/app`
-
-**Note:** This configuration can be also be used to debug tests (by choosing *debug* instead of *run*).
+Tests are ran automatically in [Continuous Integration](#continuous-integration).
 
 ### Continuous Integration
 
 All commits will trigger a Continuous Integration process using GitLab's CI/CD platform, configured in `.gitlab-ci.yml`.
 
-This process will run the application [Integration tests](#integration-tests).
+## Deployment
 
-## Distribution
- 
-Both source and binary versions of the package are build using [SetupTools](https://setuptools.readthedocs.io), which 
-can then be published to the [Python package index](https://pypi.org/project/flask-azure-oauth/) for use in other 
-applications. Package settings are defined in `setup.py`.
+### Python package
 
-This project is built and published to PyPi automatically through [Continuous Deployment](#continuous-deployment).
+This project is distributed as a Python package, hosted in [PyPi](https://pypi.org/project/flask-azure-oauth).
 
-To build the source and binary artefacts for this project manually:
+Source and binary packages are built and published automatically using
+[Poetry](https://python-poetry.org/docs/cli/#publish) in [Continuous Delivery](#continuous-deployment).
 
-```shell
-$ docker-compose run app ash
-# build package to /build, /dist and /flask_azure_oauth.egg-info
-$ python setup.py sdist bdist_wheel
-$ exit
-$ docker-compose down
-```
-
-To publish built artefacts for this project manually to [PyPi testing](https://test.pypi.org):
-
-```shell
-$ docker-compose run app ash
-$ python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-# project then available at: https://test.pypi.org/project/flask-azure-oauth/
-$ exit
-$ docker-compose down
-```
-
-To publish manually to [PyPi](https://pypi.org):
-
-```shell
-$ docker-compose run app ash
-$ python -m twine upload --repository-url https://pypi.org/legacy/ dist/*
-# project then available at: https://pypi.org/project/flask-azure-oauth/
-$ exit
-$ docker-compose down
-```
+Package versions are determined automatically using the `support/python-packaging/parse_version.py` script.
 
 ### Continuous Deployment
 
-A Continuous Deployment process using GitLab's CI/CD platform is configured in `.gitlab-ci.yml`. This will:
-
-* build the source and binary artefacts for this project
-* publish built artefacts for this project to the relevant PyPi repository
-
-This process will deploy changes to [PyPi testing](https://test.pypi.org) on all commits to the *master* branch.
-
-This process will deploy changes to [PyPi](https://pypi.org) on all tagged commits.
+A Continuous Deployment process using GitLab's CI/CD platform is configured in `.gitlab-ci.yml`.
 
 ## Release procedure
 
-### At release
+For all releases:
 
 1. create a `release` branch
-2. bump version in `setup.py` as per SemVer
-3. close release in `CHANGELOG.md`
-4. push changes, merge the `release` branch into `master` and tag with version
+2. close release in `CHANGELOG.md`
+3. push changes, merge the `release` branch into `master` and tag with version
 
 The project will be built and published to PyPi automatically through [Continuous Deployment](#continuous-deployment).
 
@@ -432,7 +391,7 @@ This project uses issue tracking, see the
 
 ## License
 
-© UK Research and Innovation (UKRI), 2019, British Antarctic Survey.
+© UK Research and Innovation (UKRI), 2019 - 2020, British Antarctic Survey.
 
 You may use and re-use this software and associated documentation files free of charge in any format or medium, under 
 the terms of the Open Government Licence v3.0.

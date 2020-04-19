@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+* Bandit configuration file
+* Sharing PyCharm test configuration through version control
+* Adding GitLab release management
+
 ### Changed
 
 * Incorporating @maxgubler's contribution for Authlib 0.12
@@ -14,6 +20,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Updating to Flask 1.1.2
 * Updating to Requests 2.23.0
 * Updating development dependencies
+* Update project dates
+* Switching to Poetry for dependency management and package publishing
+* Switching to Black for code formatting/linting
+* Switching to multi-stage Docker image
+* Tidying up README
+* Tidying up GitLab CI
 
 ### Removed
 

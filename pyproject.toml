@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "flask-azure-oauth"
+version = "0.0.0"
+license = "OGL-UK-3.0"
+description = "Python Flask extension for using Azure Active Directory with OAuth to protect applications"
+authors = [
+    "Felix Fennell <felnne@bas.ac.uk>"
+]
+readme = "README.md"
+homepage = "https://github.com/antarctica/flask-azure-oauth"
+repository = "https://github.com/antarctica/flask-azure-oauth"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Framework :: Flask",
+    "Development Status :: 5 - Production/Stable",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers"
+]
+
+packages = [
+    {include = "flask_azure_oauth"},
+]
+
+[tool.poetry.dependencies]
+authlib = "^0.14.1"
+Flask = "^1.1.2"
+requests = "^2.23.0"
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+black = "^19.10b0"
+bandit = "^1.6.2"
+tomlkit = "^0.5.8"
+
+[tool.black]
+line-length = 120
+target-version = ['py38']
+include = '\.pyi?$'
+exclude = ''
+
+[build-system]
+requires = ["poetry>=1.0.0"]
+build-backend = "poetry.masonry.api"

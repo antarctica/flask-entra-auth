@@ -8,18 +8,34 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from flask import Request, Flask as App
 
 from authlib.jose import JWTClaims, JWK, JWK_ALGORITHMS, jwt, JWT
-from authlib.jose.errors import MissingClaimError, InvalidClaimError, InvalidTokenError, ExpiredTokenError, \
-    DecodeError, BadSignatureError, InvalidHeaderParameterName
+from authlib.jose.errors import (
+    MissingClaimError,
+    InvalidClaimError,
+    InvalidTokenError,
+    ExpiredTokenError,
+    DecodeError,
+    BadSignatureError,
+    InvalidHeaderParameterName,
+)
 from authlib.jose.util import extract_header
 from authlib.oauth2.rfc6749.util import scope_to_list
 from authlib.oauth2.rfc6750 import BearerTokenValidator, InsufficientScopeError
 
-from flask_azure_oauth.errors import auth_error_token_decode, auth_error_token_missing_kid, \
-    auth_error_token_untrusted_jwk, auth_error_token_key_decode, auth_error_token_signature_invalid, \
-    auth_error_token_missing_claim, auth_error_token_untrusted_claim_issuer, auth_error_token_invalid_claim_audience, \
-    auth_error_token_invalid_claim_expiry, auth_error_token_invalid_claim_client_application, \
-    auth_error_token_invalid_claim_issued_at, auth_error_token_invalid_claim_not_before, \
-    auth_error_token_scopes_insufficient
+from flask_azure_oauth.errors import (
+    auth_error_token_decode,
+    auth_error_token_missing_kid,
+    auth_error_token_untrusted_jwk,
+    auth_error_token_key_decode,
+    auth_error_token_signature_invalid,
+    auth_error_token_missing_claim,
+    auth_error_token_untrusted_claim_issuer,
+    auth_error_token_invalid_claim_audience,
+    auth_error_token_invalid_claim_expiry,
+    auth_error_token_invalid_claim_client_application,
+    auth_error_token_invalid_claim_issued_at,
+    auth_error_token_invalid_claim_not_before,
+    auth_error_token_scopes_insufficient,
+)
 
 
 class AzureJWTClaims(JWTClaims):
@@ -45,44 +61,17 @@ class AzureJWTClaims(JWTClaims):
     [1] https://tools.ietf.org/html/rfc7519#section-4.1.6
     [2] https://tools.ietf.org/html/rfc7519#section-4.1.7
     """
-    REGISTERED_CLAIMS = ['iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'azp', 'roles']
+
+    REGISTERED_CLAIMS = ["iss", "sub", "aud", "exp", "nbf", "iat", "azp", "roles"]
 
     claim_details = {
-        'aud': {
-            'claim': 'aud',
-            'name': 'Audience',
-            'type': 'standard'
-        },
-        'exp': {
-            'claim': 'exp',
-            'name': 'Expires at',
-            'type': 'standard'
-        },
-        'iat': {
-            'claim': 'iat',
-            'name': 'Issued at',
-            'type': 'standard'
-        },
-        'iss': {
-            'claim': 'iss',
-            'name': 'Issuer',
-            'type': 'standard'
-        },
-        'nbf': {
-            'claim': 'nbf',
-            'name': 'Not before',
-            'type': 'standard'
-        },
-        'sub': {
-            'claim': 'sub',
-            'name': 'Subject',
-            'type': 'standard'
-        },
-        'azp': {
-            'claim': 'azp',
-            'name': 'Azure client application ID',
-            'type': 'custom'
-        }
+        "aud": {"claim": "aud", "name": "Audience", "type": "standard"},
+        "exp": {"claim": "exp", "name": "Expires at", "type": "standard"},
+        "iat": {"claim": "iat", "name": "Issued at", "type": "standard"},
+        "iss": {"claim": "iss", "name": "Issuer", "type": "standard"},
+        "nbf": {"claim": "nbf", "name": "Not before", "type": "standard"},
+        "sub": {"claim": "sub", "name": "Subject", "type": "standard"},
+        "azp": {"claim": "azp", "name": "Azure client application ID", "type": "custom"},
     }
 
     def __init__(self, *, payload: dict, header: dict, tenancy_id: str, service_app_id: str, client_app_ids: List[str]):
@@ -101,30 +90,13 @@ class AzureJWTClaims(JWTClaims):
         service/API, used for validating the 'Azure client applications' (azp) custom claim
         """
         options = {
-            "iss": {
-                "essential": True,
-                "values": [f"https://login.microsoftonline.com/{ tenancy_id }/v2.0"]
-            },
-            "sub": {
-                "essential": True
-            },
-            "aud": {
-                "essential": True,
-                "value": service_app_id
-            },
-            "exp": {
-                "essential": True
-            },
-            "nbf": {
-                "essential": True
-            },
-            "iat": {
-                "essential": True
-            },
-            "azp": {
-                "essential": True,
-                "values": client_app_ids
-            }
+            "iss": {"essential": True, "values": [f"https://login.microsoftonline.com/{ tenancy_id }/v2.0"]},
+            "sub": {"essential": True},
+            "aud": {"essential": True, "value": service_app_id},
+            "exp": {"essential": True},
+            "nbf": {"essential": True},
+            "iat": {"essential": True},
+            "azp": {"essential": True, "values": client_app_ids},
         }
         params = None
 
@@ -198,9 +170,9 @@ class AzureJWTClaims(JWTClaims):
         :type leeway: float
         :param leeway: a time delta in seconds to allow for clock skew between servers (i.e. a margin of error)
         """
-        iat = self.get('iat')
+        iat = self.get("iat")
         if iat and not isinstance(iat, int):
-            raise InvalidClaimError('iat')
+            raise InvalidClaimError("iat")
         if iat > (now + leeway):
             raise InvalidTokenError()
 
@@ -219,10 +191,10 @@ class AzureJWTClaims(JWTClaims):
         if now is None:
             now = int(time.time())
 
-        exp = self.get('exp')
+        exp = self.get("exp")
         if exp:
             if not isinstance(exp, int):
-                raise InvalidClaimError('exp')
+                raise InvalidClaimError("exp")
             if exp < (now - leeway):
                 raise ExpiredTokenError()
 
@@ -249,7 +221,7 @@ class AzureJWTClaims(JWTClaims):
         For more information see:
         https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens#claims-in-access-tokens
         """
-        self._validate_claim_value('azp')
+        self._validate_claim_value("azp")
 
 
 class AzureToken:
@@ -266,6 +238,7 @@ class AzureToken:
     Where an error arises validating or decoding a token, exceptions and errors are caught API errors and returned to
     the client.
     """
+
     _jwk_lib = JWK(algorithms=JWK_ALGORITHMS)
 
     def __init__(
@@ -275,7 +248,7 @@ class AzureToken:
         azure_tenancy_id: str,
         azure_application_id: str,
         azure_client_application_ids: List[str],
-        azure_jwks: dict
+        azure_jwks: dict,
     ):
         """
         :type token_string: str
@@ -298,7 +271,7 @@ class AzureToken:
             header=self._header,
             tenancy_id=azure_tenancy_id,
             service_app_id=azure_application_id,
-            client_app_ids=azure_client_application_ids
+            client_app_ids=azure_client_application_ids,
         )
         self.scopes = self._get_scopes()
 
@@ -309,7 +282,7 @@ class AzureToken:
         :rtype dict
         :return: token header
         """
-        token_header = self._token_string.split('.')[0].encode()
+        token_header = self._token_string.split(".")[0].encode()
         try:
             return extract_header(token_header, DecodeError)
         except DecodeError:
@@ -341,12 +314,12 @@ class AzureToken:
         """
         try:
             self._header = self._get_header()
-            if 'kid' not in self._header.keys():
-                raise InvalidHeaderParameterName('kid')
+            if "kid" not in self._header.keys():
+                raise InvalidHeaderParameterName("kid")
         except InvalidHeaderParameterName:
             auth_error_token_missing_kid()
 
-        return self._header['kid']
+        return self._header["kid"]
 
     def _get_jwk(self, jwks: dict) -> dict:
         """
@@ -367,8 +340,8 @@ class AzureToken:
         jwk = None
         self._kid = self._get_kid()
 
-        for key in jwks['keys']:
-            if key['kid'] == self._kid:
+        for key in jwks["keys"]:
+            if key["kid"] == self._kid:
                 jwk = key
         if jwk is None:
             auth_error_token_untrusted_jwk()
@@ -404,16 +377,16 @@ class AzureToken:
         :rtype set
         :return: set of scopes present in the token
         """
-        scopes = self.claims.get('roles')
+        scopes = self.claims.get("roles")
 
         if scopes is None:
             return set()
-        if scopes == '':
+        if scopes == "":
             return set()
         if isinstance(scopes, list):
             return set(scopes)
 
-        scopes = set(str(scopes).split(' '))
+        scopes = set(str(scopes).split(" "))
         return scopes
 
     def introspect(self) -> dict:
@@ -427,19 +400,19 @@ class AzureToken:
 
         for claim in self.claims.claim_details:
             claims[claim] = {
-                'claim': self.claims.claim_details[claim]['claim'],
-                'name': self.claims.claim_details[claim]['name'],
-                'type': self.claims.claim_details[claim]['type'],
-                'value': self.claims[claim]
+                "claim": self.claims.claim_details[claim]["claim"],
+                "name": self.claims.claim_details[claim]["name"],
+                "type": self.claims.claim_details[claim]["type"],
+                "value": self.claims[claim],
             }
 
-            if claim == 'iat' or claim == 'nbf' or claim == 'exp':
-                claims[claim]['value_iso_8601'] = datetime.utcfromtimestamp(int(claims[claim]['value'])).isoformat()
+            if claim == "iat" or claim == "nbf" or claim == "exp":
+                claims[claim]["value_iso_8601"] = datetime.utcfromtimestamp(int(claims[claim]["value"])).isoformat()
 
         return {
-            'header': self._header,
-            'payload': claims,
-            'scopes': list(self._get_scopes()),
+            "header": self._header,
+            "payload": claims,
+            "scopes": list(self._get_scopes()),
         }
 
 
@@ -461,7 +434,7 @@ class AzureTokenValidator(BearerTokenValidator):
         azure_tenancy_id: str,
         azure_application_id: str,
         azure_client_application_ids: List[str],
-        azure_jwks: dict
+        azure_jwks: dict,
     ):
         """
         :type azure_tenancy_id: str
@@ -481,7 +454,7 @@ class AzureTokenValidator(BearerTokenValidator):
 
         super().__init__(realm=None)
 
-    def __call__(self, token_string: str, scope: str, request: Request, scope_operator: str = 'AND'):
+    def __call__(self, token_string: str, scope: str, request: Request, scope_operator: str = "AND"):
         """
         Overloaded method to catch exceptions as API errors returned to the client
 
@@ -503,7 +476,7 @@ class AzureTokenValidator(BearerTokenValidator):
                 azure_tenancy_id=self.tenancy_id,
                 azure_application_id=self.application_id,
                 azure_client_application_ids=self.client_application_ids,
-                azure_jwks=self.jwks
+                azure_jwks=self.jwks,
             )
             auth_error_token_scopes_insufficient(resource_scopes=scope, token_scopes=list(token.scopes))
 
@@ -524,7 +497,7 @@ class AzureTokenValidator(BearerTokenValidator):
             azure_tenancy_id=self.tenancy_id,
             azure_application_id=self.application_id,
             azure_client_application_ids=self.client_application_ids,
-            azure_jwks=self.jwks
+            azure_jwks=self.jwks,
         )
         token.claims.validate()
 
@@ -585,7 +558,7 @@ class AzureTokenValidator(BearerTokenValidator):
         except (InvalidClaimError, ExpiredTokenError):
             auth_error_token_invalid_claim_expiry()
 
-    def scope_insufficient(self, token: AzureToken, scope: str, operator: Union[str, Callable] = 'AND') -> bool:
+    def scope_insufficient(self, token: AzureToken, scope: str, operator: Union[str, Callable] = "AND") -> bool:
         """
         Determines whether a token has sufficient scopes to interact with a resource
 
@@ -611,9 +584,9 @@ class AzureTokenValidator(BearerTokenValidator):
         token_scopes = token.scopes
         resource_scopes = set(scope_to_list(scope))
 
-        if operator == 'AND':
+        if operator == "AND":
             return not token_scopes.issuperset(resource_scopes)
-        if operator == 'OR':
+        if operator == "OR":
             for resource_scope in resource_scopes:
                 if resource_scope in token_scopes:
                     return False
@@ -629,6 +602,7 @@ class TestJwt:
     Supports generating tokens with a set of requested scopes using a testing signing key generated by the TestJwk
     class. Values for the `aud`, `iss` and `azp` claims in the payment will values from the current Flask application.
     """
+
     _jwt = JWT()
 
     def __init__(self, *, app: App, scopes: list = None):
@@ -638,23 +612,20 @@ class TestJwt:
         :type scopes: list
         :param scopes: Optional scopes to include in the token (as a 'roles' claim) for testing authorisation
         """
-        self.signing_key = app.config['TEST_JWKS']
+        self.signing_key = app.config["TEST_JWKS"]
 
-        self.header = {
-            'alg': self.signing_key.algorithm,
-            'kid': self.signing_key.kid()
-        }
+        self.header = {"alg": self.signing_key.algorithm, "kid": self.signing_key.kid()}
         self.payload = {
-            'aud': app.config['AZURE_OAUTH_APPLICATION_ID'] or 'testing',
-            'exp': int(time.time() + 10000),
-            'iat': int(time.time()),
-            'iss': f"https://login.microsoftonline.com/{ app.config['AZURE_OAUTH_TENANCY'] or 'testing' }/v2.0",
-            'nbf': int(time.time()),
-            'sub': None,
-            'azp': app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS'][0] or 'testing'
+            "aud": app.config["AZURE_OAUTH_APPLICATION_ID"] or "testing",
+            "exp": int(time.time() + 10000),
+            "iat": int(time.time()),
+            "iss": f"https://login.microsoftonline.com/{ app.config['AZURE_OAUTH_TENANCY'] or 'testing' }/v2.0",
+            "nbf": int(time.time()),
+            "sub": None,
+            "azp": app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"][0] or "testing",
         }
         if scopes is not None:
-            self.payload['roles'] = ' '.join(scopes)
+            self.payload["roles"] = " ".join(scopes)
 
     def dumps(self) -> str:
         """
