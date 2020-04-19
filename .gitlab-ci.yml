@@ -9,8 +9,6 @@
 # - Variables are grouped by section in KEY: "value" format (e.g. FOO: "bar")
 #   Sensitive values are represented by "[Sensitive]"
 #
-# - Snyk
-# > SNYK_TOKEN: "[Sensitive]"
 # - PyPi (production) - create tokens at https://pypi.org/manage/account/
 # > PYPI_TOKEN (protected): "[Sensitive]"
 #
@@ -21,15 +19,12 @@
 # == Global settings ==
 
 stages:
-  - test
-  - lint
-  - build
-  - publish
+  - 🧪 test
+  - 🏗 build
+  - 🚚 publish
 
 variables:
   APP_NAME: flask-azure-oauth
-  SNYK_ORG: antarctica
-  SNYK_PROJECT: flask-middleware-azure-oauth
 
 image:
   name: docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:latest
@@ -38,39 +33,48 @@ image:
 # == Jobs ==
 
 test-app:
-  stage: test
+  stage: 🧪 test
   variables:
     FLASK_ENV: testing
   script:
     - "flask test"
 
 pep8-app:
-  stage: lint
+  stage: 🧪 test
   script:
     - "black --check flask_azure_oauth/"
 
 bandit-app:
-  stage: lint
+  stage: 🧪 test
   script:
     - "bandit -r ."
 
-build-app:
-  stage: build
+build-dev:
+  stage: 🏗 build
   script:
     - 'poetry build'
   artifacts:
     name: "$CI_BUILD_TOKEN-build"
     paths:
       - dist
-    expire_in: 1 month
+    expire_in: 1 week
+  except:
+    - master
+    - tags
+
 
 publish-app-stage:
-  stage: publish
+  stage: 🚚 publish
   before_script:
     - "poetry config pypi-token.pypi-testing $PYPI_TEST_TOKEN --local"
     - "python support/python-packaging/parse_version.py $(git describe --tags) --pyproject"
   script:
     - "poetry publish --build --repository pypi-testing --no-interaction"
+  artifacts:
+    name: "$CI_BUILD_TOKEN-build"
+    paths:
+      - dist
+    expire_in: 1 month
   only:
     - master
   environment:
@@ -78,12 +82,17 @@ publish-app-stage:
     url: https://test.pypi.org/project/flask-azure-oauth/
 
 publish-app-prod:
-  stage: publish
+  stage: 🚚 publish
   before_script:
     - "poetry config pypi-token.pypi $PYPI_TOKEN --local"
     - "python support/python-packaging/parse_version.py $(git describe --tags) --pyproject"
   script:
     - "poetry publish --build --repository pypi --no-interaction"
+  artifacts:
+    name: "$CI_BUILD_TOKEN-build"
+    paths:
+      - dist
+    expire_in: 1 month
   only:
     - tags
   environment:
