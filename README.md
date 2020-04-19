@@ -343,19 +343,8 @@ To run tests manually:
 $ docker-compose run -e FLASK_ENV=testing app flask test
 ```
 
-To run tests using PyCharm:
+To run tests manually using PyCharm, use the included *App (Tests)* run/debug configuration.
 
-* *Run* -> *Edit Configurations*
-* *Add New Configuration* -> *Python Tests* -> *Unittests*
-
-In *Configuration* tab:
-
-* Script path: `[absolute path to project]/tests`
-* Python interpreter: *Project interpreter* (*app* service in project Docker Compose)
-* Working directory: `[absolute path to project]`
-* Path mappings: `[absolute path to project]=/usr/src/app`
-
-**Note:** This configuration can be also be used to debug tests (by choosing *debug* instead of *run*).
 
 ### Continuous Integration
 

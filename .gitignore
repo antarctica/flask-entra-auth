@@ -1,5 +1,4 @@
 __pycache__
-.idea
 build
 dist
 flask_oauth_azure_ad.egg-info
