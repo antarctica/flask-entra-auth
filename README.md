@@ -1,6 +1,6 @@
 # Flask Azure AD OAuth Provider
 
-Python Flask extension for using Azure Active Directory with OAuth to protect applications
+Python Flask extension for using Azure Active Directory with OAuth to protect applications.
 
 ## Purpose
 
@@ -247,21 +247,24 @@ granted access to use such applications as a client.
 This project is developed as a Python library. A bundled Flask application is used to simulate its usage and to act as
 framework for running tests etc.
 
-Ensure classes and methods are defined within the `flask_azure_oauth` package.
+```shell
+$ git clone https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth.git
+$ cd flask-azure-oauth
+```
 
-Ensure [Integration tests](#integration-tests) are written for any new feature, or changes to existing features.
+### Development environment
 
-If you have access to the BAS GitLab instance, pull the Docker image from the BAS Docker Registry:
+Docker and Docker Compose are required to setup a local development environment of this application.
+
+If you have access to the [BAS GitLab instance](https://gitlab.data.bas.ac.uk), you can pull the application Docker
+image from the BAS Docker Registry. Otherwise you will need to build the Docker image locally.
 
 ```shell
+# If you have access to gitlab.data.bas.ac.uk:
 $ docker login docker-registry.data.bas.ac.uk
 $ docker-compose pull
-
-# To run the local Flask application using the Flask development server
-$ docker-compose up
-
-# To start a shell
-$ docker-compose run app ash
+# If you don't have access:
+$ docker-compose build
 ```
 
 ### Code Style
@@ -316,13 +319,13 @@ such as not sanitising user inputs or using weak cryptography.
 **Warning:** Bandit is a static analysis tool and can't check for issues that are only be detectable when running the 
 application. As with all security tools, Bandit is an aid for spotting common mistakes, not a guarantee of secure code.
 
-Through [Continuous Integration](#continuous-integration), each commit is tested.
-
-To check locally:
+To check manually from the command line:
 
 ```shell
 $ docker-compose run app bandit -r .
 ```
+
+Checks are ran automatically in [Continuous Integration](#continuous-integration).
 
 ## Testing
 
@@ -332,10 +335,8 @@ This project uses integration tests to ensure features work as expected and to g
 vulnerabilities.
 
 The Python [UnitTest](https://docs.python.org/3/library/unittest.html) library is used for running tests using Flask's 
-test framework. Test cases are defined in files within `tests/` and are automatically loaded when using the 
-`test` Flask CLI command included in the local Flask application in the development environment.
-
-Tests are automatically ran on each commit through [Continuous Integration](#continuous-integration).
+test framework. Test cases are defined in files within `tests/` and are automatically loaded when using the `test` 
+Flask CLI command included in the local Flask application in the development environment.
 
 To run tests manually:
 
@@ -345,12 +346,11 @@ $ docker-compose run -e FLASK_ENV=testing app flask test
 
 To run tests manually using PyCharm, use the included *App (Tests)* run/debug configuration.
 
+Tests are ran automatically in [Continuous Integration](#continuous-integration).
 
 ### Continuous Integration
 
 All commits will trigger a Continuous Integration process using GitLab's CI/CD platform, configured in `.gitlab-ci.yml`.
-
-This process will run the application [Integration tests](#integration-tests).
 
 ## Deployment
 
@@ -369,7 +369,7 @@ A Continuous Deployment process using GitLab's CI/CD platform is configured in `
 
 ## Release procedure
 
-### At release
+For all releases:
 
 1. create a `release` branch
 2. close release in `CHANGELOG.md`
