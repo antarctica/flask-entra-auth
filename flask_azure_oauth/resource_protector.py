@@ -1,4 +1,4 @@
-from authlib.flask.oauth2 import ResourceProtector as _ResourceProtector
+from authlib.integrations.flask_oauth2 import ResourceProtector as _ResourceProtector
 from authlib.oauth2.rfc6749 import MissingAuthorizationError, UnsupportedTokenTypeError
 from authlib.oauth2.rfc6750 import BearerTokenValidator
 
