@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+* Bandit configuration file
+
 ### Changed
 
 * Incorporating @maxgubler's contribution for Authlib 0.12
