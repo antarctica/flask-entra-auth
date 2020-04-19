@@ -39,6 +39,7 @@ test-app:
   stage: 🧪 test
   variables:
     FLASK_ENV: testing
+    FLASK_APP: ./manage.py
   script:
     - "flask test"
 
