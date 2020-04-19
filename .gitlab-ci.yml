@@ -47,7 +47,7 @@ test-app:
 pep8-app:
   stage: lint
   script:
-    - "flake8 . --ignore=E501"
+    - "black --check flask_azure_oauth/"
 
 bandit-app:
   stage: lint

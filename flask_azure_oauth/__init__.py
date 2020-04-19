@@ -25,16 +25,16 @@ class FlaskAzureOauth(ResourceProtector):
         :type app: App
         :param app: Flask application
         """
-        self.azure_tenancy_id = app.config['AZURE_OAUTH_TENANCY']
-        self.azure_application_id = app.config['AZURE_OAUTH_APPLICATION_ID']
-        self.azure_client_application_ids = app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS']
+        self.azure_tenancy_id = app.config["AZURE_OAUTH_TENANCY"]
+        self.azure_application_id = app.config["AZURE_OAUTH_APPLICATION_ID"]
+        self.azure_client_application_ids = app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"]
         self.jwks = self._get_jwks(app=app)
 
         self.validator = AzureTokenValidator(
             azure_tenancy_id=self.azure_tenancy_id,
             azure_application_id=self.azure_application_id,
             azure_client_application_ids=self.azure_client_application_ids,
-            azure_jwks=self.jwks
+            azure_jwks=self.jwks,
         )
 
         self.register_token_validator(self.validator)
@@ -66,9 +66,9 @@ class FlaskAzureOauth(ResourceProtector):
         :rtype dict
         :return: JSON Web Key Set
         """
-        if 'TESTING' in app.config and app.config['TESTING']:
+        if "TESTING" in app.config and app.config["TESTING"]:
             test_jwks = TestJwk()
-            app.config['TEST_JWKS'] = test_jwks
+            app.config["TEST_JWKS"] = test_jwks
             return test_jwks.jwks()
 
         jwks_request = requests.get(f"https://login.microsoftonline.com/{self.azure_tenancy_id}/discovery/v2.0/keys")
@@ -90,6 +90,6 @@ class FlaskAzureOauth(ResourceProtector):
             azure_tenancy_id=self.azure_tenancy_id,
             azure_application_id=self.azure_application_id,
             azure_client_application_ids=self.azure_client_application_ids,
-            azure_jwks=self.jwks
+            azure_jwks=self.jwks,
         )
         return token.introspect()

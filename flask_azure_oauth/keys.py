@@ -5,8 +5,10 @@ from authlib.jose import JWK, JWK_ALGORITHMS
 
 # noinspection PyPackageRequirements
 from cryptography.hazmat.backends import default_backend
+
 # noinspection PyPackageRequirements
 from cryptography.hazmat.primitives import serialization
+
 # noinspection PyPackageRequirements
 from cryptography.hazmat.primitives.asymmetric import rsa
 
@@ -18,16 +20,17 @@ class TestJwk:
     Supports generating unique RSA 256 bit keys for signing JSON Web Tokens. As the key-pair is unique to each JWK
     instance, this class allows the private key to be retrieved for signing test tokens. Normally this isn't possible.
     """
+
     _jwk = JWK(algorithms=JWK_ALGORITHMS)
 
-    algorithm = 'RS256'
-    key_type = 'RSA'
-    key_use = 'sig'
+    algorithm = "RS256"
+    key_type = "RSA"
+    key_use = "sig"
 
     def __init__(self):
         self.private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
         self.public_key = self.private_key.public_key()
-        self.key_id = 'test-' + ''.join(
+        self.key_id = "test-" + "".join(
             random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=7)
         )
 
@@ -43,7 +46,7 @@ class TestJwk:
         return self.private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption()
+            encryption_algorithm=serialization.NoEncryption(),
         ).decode()
 
     def public_key_pem(self) -> str:
@@ -57,8 +60,7 @@ class TestJwk:
         :return: Public key as PEM encoded, OpenSSL formatted, string
         """
         return self.public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
         ).decode()
 
     def kid(self) -> str:
@@ -91,4 +93,4 @@ class TestJwk:
         :rtype dict
         :return: JWK as a JWK Set
         """
-        return {'keys': [self.dumps()]}
+        return {"keys": [self.dumps()]}

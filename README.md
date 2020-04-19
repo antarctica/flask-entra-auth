@@ -268,14 +268,24 @@ $ docker-compose run app ash
 
 PEP-8 style and formatting guidelines must be used for this project, with the exception of the 80 character line limit.
 
-[Flake8](http://flake8.pycqa.org/) is used to ensure compliance, and is ran on each commit through 
-[Continuous Integration](#continuous-integration).
+[Black](https://github.com/psf/black) is used to ensure compliance, configured in `pyproject.toml`.
 
-To check compliance locally:
+Black can be [integrated](https://black.readthedocs.io/en/stable/editor_integration.html#pycharm-intellij-idea) with a
+range of editors, such as PyCharm, to perform formatting automatically.
+
+To apply formatting manually:
 
 ```shell
-$ docker-compose run app flake8 . --ignore=E501
+$ docker-compose run app black flask_azure_oauth/
 ```
+
+To check compliance manually:
+
+```shell
+$ docker-compose run app black --check flask_azure_oauth/
+```
+
+Checks are ran automatically in [Continuous Integration](#continuous-integration).
 
 ### Dependencies
 

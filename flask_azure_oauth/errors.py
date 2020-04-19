@@ -19,9 +19,10 @@ class ApiException(Exception):
     to return the error as a Flask response. Where further processing or handling of the error is needed the 'json()'
     method can be used to return the error as a dict.
     """
+
     status = HTTPStatus.INTERNAL_SERVER_ERROR
     code = None
-    title = 'API Error'
+    title = "API Error"
     detail = None
     meta = {}
     links = {}
@@ -34,7 +35,7 @@ class ApiException(Exception):
         title: str = None,
         detail: str = None,
         meta: dict = None,
-        about_link: str = None
+        about_link: str = None,
     ):
         """
         :type status: HTTPStatus
@@ -62,9 +63,7 @@ class ApiException(Exception):
         if meta is not None:
             self.meta = meta
         if about_link is not None:
-            self.links = {
-                'about': about_link
-            }
+            self.links = {"about": about_link}
 
     def dict(self) -> dict:
         """
@@ -73,20 +72,16 @@ class ApiException(Exception):
         :rtype dict
         :return: Error as dict
         """
-        error = {
-            'id': str(self.id),
-            'status': self.status.value,
-            'title': self.title
-        }
+        error = {"id": str(self.id), "status": self.status.value, "title": self.title}
 
         if self.code is not None:
-            error['code'] = self.code
+            error["code"] = self.code
         if self.detail is not None:
-            error['detail'] = self.detail
+            error["detail"] = self.detail
         if self.meta:
-            error['meta'] = self.meta
-        if 'about' in self.links.keys():
-            error['links'] = {'about': self.links['about']}
+            error["meta"] = self.meta
+        if "about" in self.links.keys():
+            error["links"] = {"about": self.links["about"]}
 
         return error
 
@@ -107,9 +102,7 @@ class ApiException(Exception):
         :rtype Response
         :return: Flask response containing the error, formatted as JSON
         """
-        payload = {
-            'errors': [self.dict()]
-        }
+        payload = {"errors": [self.dict()]}
         return make_response(jsonify(payload), self.status.value)
 
 
@@ -122,6 +115,7 @@ class ApiAuthError(ApiException):
 
     Instances of this exception are returned where their isn't a more specific exception type.
     """
+
     status = HTTPStatus.UNAUTHORIZED
 
     def response(self):
@@ -129,71 +123,86 @@ class ApiAuthError(ApiException):
         This method overloads the default method in the 'ApiException' class to make it compatible with the AuthLib
         library.
         """
-        payload = {'errors': [self.dict()]}
+        payload = {"errors": [self.dict()]}
 
-        raise_http_exception(self.status, json.dumps(payload), {'content-type': 'application/json'})
+        raise_http_exception(self.status, json.dumps(payload), {"content-type": "application/json"})
 
 
 class ApiAuthAuthorizationMissingError(ApiAuthError):
     """
     Returned where a request doesn't have an Authorization header
     """
-    title = 'Missing authorization header'
-    detail = 'Ensure your request includes an \'Authorization\' header and try again'
+
+    title = "Missing authorization header"
+    detail = "Ensure your request includes an 'Authorization' header and try again"
 
 
 class ApiAuthTokenTypeUnsupportedError(ApiAuthError):
     """
     Returned where a request's Authorization header doesn't have an Bearer token
     """
-    title = 'Unsupported token type'
-    detail = 'Ensure your request uses a \'Bearer\' token type and try again'
+
+    title = "Unsupported token type"
+    detail = "Ensure your request uses a 'Bearer' token type and try again"
 
 
 class ApiAuthTokenDecodeError(ApiAuthError):
     """
     Returned where a request's token cannot be decoded as a JSON Web Token
     """
-    title = 'Token could not be decoded'
-    detail = 'The JSON Web Token (JWT) used as a token could not be decoded. Ensure you are using the correct token ' \
-             'and try again, or contact support'
+
+    title = "Token could not be decoded"
+    detail = (
+        "The JSON Web Token (JWT) used as a token could not be decoded. Ensure you are using the correct token "
+        "and try again, or contact support"
+    )
 
 
 class ApiAuthTokenHeaderKidMissingError(ApiAuthError):
     """
     Returned where a request's token's header does not contain a Key ID field
     """
-    title = '\'kid\' header field missing in token'
-    detail = 'Ensure your request includes a \'kid\' (Key ID) field in the token header and try again'
+
+    title = "'kid' header field missing in token"
+    detail = "Ensure your request includes a 'kid' (Key ID) field in the token header and try again"
 
 
 class ApiAuthTokenKeyUntrustedError(ApiAuthError):
     """
     Returned where the signing key identified in the request's token isn't trusted by the API
     """
-    title = 'Untrusted token JWK'
-    detail = 'The JSON Web Key (JWK) identified by the \'kid\' (Key ID) field in the token header, does not ' \
-             'correspond to one of the JWKs in the JSON Web Key Set (JWKS) trusted by this API. Ensure you are ' \
-             'using the correct \'kid\' and try again, or contact support.'
+
+    title = "Untrusted token JWK"
+    detail = (
+        "The JSON Web Key (JWK) identified by the 'kid' (Key ID) field in the token header, does not "
+        "correspond to one of the JWKs in the JSON Web Key Set (JWKS) trusted by this API. Ensure you are "
+        "using the correct 'kid' and try again, or contact support."
+    )
 
 
 class ApiAuthTokenKeyDecodeError(ApiAuthError):
     """
     Returned where the signing key identified in the request's token cannot be decoded as a JSON Web Key
     """
-    title = 'Token JWK could not be decoded'
-    detail = 'The JSON Web Key (JWK) in the JSON Web Key Set (JWKS) identified by the \'kid\' (Key ID) field in the ' \
-             'token header cannot be decoded. Ensure you are using the correct Key ID and try again, or contact ' \
-             'support.'
+
+    title = "Token JWK could not be decoded"
+    detail = (
+        "The JSON Web Key (JWK) in the JSON Web Key Set (JWKS) identified by the 'kid' (Key ID) field in the "
+        "token header cannot be decoded. Ensure you are using the correct Key ID and try again, or contact "
+        "support."
+    )
 
 
 class ApiAuthTokenSignatureInvalidError(ApiAuthError):
     """
     Returned where the request's token's signature cannot be verified against it's signing key
     """
-    title = 'Invalid token signature'
-    detail = 'The JSON Web Token (JWT) used as a token could be verified as authentic. Ensure you are using the ' \
-             'correct token and try again, or contact support.'
+
+    title = "Invalid token signature"
+    detail = (
+        "The JSON Web Token (JWT) used as a token could be verified as authentic. Ensure you are using the "
+        "correct token and try again, or contact support."
+    )
 
 
 class ApiAuthTokenClaimMissingError(ApiAuthError):
@@ -203,16 +212,20 @@ class ApiAuthTokenClaimMissingError(ApiAuthError):
     Instances of this exception must overload the 'detail' class variable with human readable, and the meta variable
     with machine readable, information about the missing claim.
     """
-    title = 'Missing required claim in token'
+
+    title = "Missing required claim in token"
 
 
 class ApiAuthTokenClaimUntrustedIssuerError(ApiAuthError):
     """
     Returned where a request's token's issuer claim isn't trusted by the API
     """
-    title = 'Untrusted issuer claim in token'
-    detail = 'The JSON Web Token (JWT) used as a token was not issued by a trusted issuer. Ensure you are using the ' \
-             'correct token and try again, or contact support.'
+
+    title = "Untrusted issuer claim in token"
+    detail = (
+        "The JSON Web Token (JWT) used as a token was not issued by a trusted issuer. Ensure you are using the "
+        "correct token and try again, or contact support."
+    )
 
 
 class ApiAuthTokenClaimInvalidAudience(ApiAuthError):
@@ -221,45 +234,60 @@ class ApiAuthTokenClaimInvalidAudience(ApiAuthError):
 
     I.e. it is meant for a different audience.
     """
-    title = 'Invalid audience claim in token'
-    detail = 'The JSON Web Token (JWT) used as a token does not have the correct audience. Ensure you are using the ' \
-             'correct token and try again, or contact support.'
+
+    title = "Invalid audience claim in token"
+    detail = (
+        "The JSON Web Token (JWT) used as a token does not have the correct audience. Ensure you are using the "
+        "correct token and try again, or contact support."
+    )
 
 
 class ApiAuthTokenClaimInvalidIssuedAt(ApiAuthError):
     """
     Returned where a request's token has not been issued yet
     """
-    title = 'Invalid issued at claim in token'
-    detail = 'The JSON Web Token (JWT) used as a token has not been issued yet. Ensure you are using the correct ' \
-             'token and try again, or contact support.'
+
+    title = "Invalid issued at claim in token"
+    detail = (
+        "The JSON Web Token (JWT) used as a token has not been issued yet. Ensure you are using the correct "
+        "token and try again, or contact support."
+    )
 
 
 class ApiAuthTokenClaimInvalidNotBefore(ApiAuthError):
     """
     Returned where a request's token is not valid yet
     """
-    title = 'Invalid not before claim in token'
-    detail = 'The JSON Web Token (JWT) used as a token is not valid yet. Ensure you are using the correct token and ' \
-             'try again, or contact support.'
+
+    title = "Invalid not before claim in token"
+    detail = (
+        "The JSON Web Token (JWT) used as a token is not valid yet. Ensure you are using the correct token and "
+        "try again, or contact support."
+    )
 
 
 class ApiAuthTokenClaimInvalidExpiry(ApiAuthError):
     """
     Returned where a request's token has expired
     """
-    title = 'Invalid expiry claim in token'
-    detail = 'The JSON Web Token (JWT) used as a token has expired. Ensure you are using the correct token and try ' \
-             'again, or contact support.'
+
+    title = "Invalid expiry claim in token"
+    detail = (
+        "The JSON Web Token (JWT) used as a token has expired. Ensure you are using the correct token and try "
+        "again, or contact support."
+    )
 
 
 class ApiAuthTokenClaimInvalidClientApplication(ApiAuthError):
     """
     Returned where a request's token's Azure client application ID isn't trusted by the API
     """
-    title = 'Invalid client application claim in token'
-    detail = 'The JSON Web Token (JWT) used as a token uses an invalid client application (azp). Ensure you are ' \
-             'using the correct token & client credentials and try again, or contact support.'
+
+    title = "Invalid client application claim in token"
+    detail = (
+        "The JSON Web Token (JWT) used as a token uses an invalid client application (azp). Ensure you are "
+        "using the correct token & client credentials and try again, or contact support."
+    )
 
 
 class ApiAuthTokenScopesInsufficient(ApiAuthError):
@@ -267,11 +295,12 @@ class ApiAuthTokenScopesInsufficient(ApiAuthError):
     Returned where a request's token's scopes (permissions) don't meet the scopes required to interact with the
     requested resource
     """
+
     status = HTTPStatus.FORBIDDEN
-    title = 'Insufficient scopes in token'
-    detail = 'The JSON Web Token (JWT) used as a token does not contain scopes required to access this resource. '
-    'Ensure you are using the correct token and have the correct permissions assigned or delegated to '
-    'your client and try again, or contact support.'
+    title = "Insufficient scopes in token"
+    detail = "The JSON Web Token (JWT) used as a token does not contain scopes required to access this resource. "
+    "Ensure you are using the correct token and have the correct permissions assigned or delegated to "
+    "your client and try again, or contact support."
 
 
 def auth_error_fallback(e: AuthlibHTTPError):
@@ -284,11 +313,7 @@ def auth_error_fallback(e: AuthlibHTTPError):
     :type e: AuthlibHTTPError
     :param e: Auth exception
     """
-    error = ApiAuthError(
-        status=HTTPStatus(e.status_code),
-        title=e.error,
-        detail=e.get_error_description()
-    )
+    error = ApiAuthError(status=HTTPStatus(e.status_code), title=e.error, detail=e.get_error_description())
     error.response()
 
 
@@ -364,9 +389,7 @@ def auth_error_token_missing_claim(*, exception: MissingClaimError, claims: dict
     error = ApiAuthTokenClaimMissingError(
         detail=f"The token payload is missing a required claim: '{ claims[claim]['name'] }' ({ claim }). Ensure you "
         f"are using the correct token and try again, or contact support.",
-        meta={
-            'missing_claim': claims[claim]
-        }
+        meta={"missing_claim": claims[claim]},
     )
     error.response()
 
@@ -431,12 +454,7 @@ def auth_error_token_scopes_insufficient(*, resource_scopes: str, token_scopes: 
     :type token_scopes: set
     :param token_scopes: list of scopes within the current token
     """
-    resource_scopes = resource_scopes.split(' ')
+    resource_scopes = resource_scopes.split(" ")
 
-    error = ApiAuthTokenScopesInsufficient(
-        meta={
-            'required_scopes': resource_scopes,
-            'scopes_in_token': token_scopes
-        }
-    )
+    error = ApiAuthTokenScopesInsufficient(meta={"required_scopes": resource_scopes, "scopes_in_token": token_scopes})
     error.response()
