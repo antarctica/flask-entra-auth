@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Updating to Requests 2.23.0
 * Updating development dependencies
 * Update project dates
+* Switching to Poetry for dependency management and package publishing
 
 ### Removed
 

@@ -244,9 +244,8 @@ granted access to use such applications as a client.
 
 ## Developing
 
-A docker container ran through Docker Compose is used as a development environment for this project. It includes 
-development only dependencies listed in `requirements.txt`, a local Flask application in `app.py` and 
-[Integration tests](#integration-tests).
+This project is developed as a Python library. A bundled Flask application is used to simulate its usage and to act as
+framework for running tests etc.
 
 Ensure classes and methods are defined within the `flask_azure_oauth` package.
 
@@ -280,27 +279,23 @@ $ docker-compose run app flake8 . --ignore=E501
 
 ### Dependencies
 
-Development Python dependencies should be declared in `requirements.txt` to be included in the development environment.
+Python dependencies for this project are managed with [Poetry](https://python-poetry.org) in `pyproject.toml`.
 
-Runtime Python dependencies should be declared in `requirements.txt` and `setup.py` to also be installed as dependencies
-of this package in other applications.
+Non-code files, such as static files, can also be included in the [Python package](#python-package) using the
+`include` key in `pyproject.toml`.
 
-All dependencies should be periodically reviewed and update as new versions are released.
+To add a new (development) dependency:
 
 ```shell
 $ docker-compose run app ash
-$ pip install [dependency]==
-# this will display a list of available versions, add the latest to `requirements.txt` and or `setup.py`
-$ exit
-$ docker-compose down
-$ docker-compose build
+$ poetry add [dependency] (--dev)
 ```
 
-If you have access to the BAS GitLab instance, push the Docker image to the BAS Docker Registry:
+Then rebuild the development container, and if you can, push to GitLab:
 
 ```shell
-$ docker login docker-registry.data.bas.ac.uk
-$ docker-compose push
+$ docker-compose build app
+$ docker-compose push app
 ```
 
 ### Static security scanning
@@ -358,63 +353,28 @@ All commits will trigger a Continuous Integration process using GitLab's CI/CD p
 
 This process will run the application [Integration tests](#integration-tests).
 
-## Distribution
- 
-Both source and binary versions of the package are build using [SetupTools](https://setuptools.readthedocs.io), which 
-can then be published to the [Python package index](https://pypi.org/project/flask-azure-oauth/) for use in other 
-applications. Package settings are defined in `setup.py`.
+## Deployment
 
-This project is built and published to PyPi automatically through [Continuous Deployment](#continuous-deployment).
+### Python package
 
-To build the source and binary artefacts for this project manually:
+This project is distributed as a Python package, hosted in [PyPi](https://pypi.org/project/flask-azure-oauth).
 
-```shell
-$ docker-compose run app ash
-# build package to /build, /dist and /flask_azure_oauth.egg-info
-$ python setup.py sdist bdist_wheel
-$ exit
-$ docker-compose down
-```
+Source and binary packages are built and published automatically using
+[Poetry](https://python-poetry.org/docs/cli/#publish) in [Continuous Delivery](#continuous-deployment).
 
-To publish built artefacts for this project manually to [PyPi testing](https://test.pypi.org):
-
-```shell
-$ docker-compose run app ash
-$ python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-# project then available at: https://test.pypi.org/project/flask-azure-oauth/
-$ exit
-$ docker-compose down
-```
-
-To publish manually to [PyPi](https://pypi.org):
-
-```shell
-$ docker-compose run app ash
-$ python -m twine upload --repository-url https://pypi.org/legacy/ dist/*
-# project then available at: https://pypi.org/project/flask-azure-oauth/
-$ exit
-$ docker-compose down
-```
+Package versions are determined automatically using the `support/python-packaging/parse_version.py` script.
 
 ### Continuous Deployment
 
-A Continuous Deployment process using GitLab's CI/CD platform is configured in `.gitlab-ci.yml`. This will:
-
-* build the source and binary artefacts for this project
-* publish built artefacts for this project to the relevant PyPi repository
-
-This process will deploy changes to [PyPi testing](https://test.pypi.org) on all commits to the *master* branch.
-
-This process will deploy changes to [PyPi](https://pypi.org) on all tagged commits.
+A Continuous Deployment process using GitLab's CI/CD platform is configured in `.gitlab-ci.yml`.
 
 ## Release procedure
 
 ### At release
 
 1. create a `release` branch
-2. bump version in `setup.py` as per SemVer
-3. close release in `CHANGELOG.md`
-4. push changes, merge the `release` branch into `master` and tag with version
+2. close release in `CHANGELOG.md`
+3. push changes, merge the `release` branch into `master` and tag with version
 
 The project will be built and published to PyPi automatically through [Continuous Deployment](#continuous-deployment).
 

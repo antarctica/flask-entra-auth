@@ -11,12 +11,12 @@
 #
 # - Snyk
 # > SNYK_TOKEN: "[Sensitive]"
+# - PyPi (production) - create tokens at https://pypi.org/manage/account/
+# > PYPI_TOKEN (protected): "[Sensitive]"
 #
-# - PyPi (production)
-# > PYPI_PASSWORD: "[Sensitive]"
+# - PyPi (staging) - create tokens at https://test.pypi.org/manage/account/
+# > PYPI_TEST_TOKEN (protected): "[Sensitive]"
 #
-# - PyPi (staging)
-# > PYPI_TEST_PASSWORD: "[Sensitive]"
 
 # == Global settings ==
 
@@ -30,8 +30,6 @@ variables:
   APP_NAME: flask-azure-oauth
   SNYK_ORG: antarctica
   SNYK_PROJECT: flask-middleware-azure-oauth
-  PYPI_USERNAME: british-antarctic-survey
-  PYPI_TEST_USERNAME: british-antarctic-survey
 
 image:
   name: docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:latest
@@ -59,7 +57,7 @@ bandit-app:
 build-app:
   stage: build
   script:
-    - "python setup.py sdist bdist_wheel"
+    - 'poetry build'
   artifacts:
     name: "$CI_BUILD_TOKEN-build"
     paths:
@@ -68,8 +66,11 @@ build-app:
 
 publish-app-stage:
   stage: publish
+  before_script:
+    - "poetry config pypi-token.pypi-testing $PYPI_TEST_TOKEN --local"
+    - "python support/python-packaging/parse_version.py $(git describe --tags) --pyproject"
   script:
-    - "python -m twine upload --repository-url https://test.pypi.org/legacy/ --username $PYPI_TEST_USERNAME --password $PYPI_TEST_PASSWORD --disable-progress-bar --verbose dist/*"
+    - "poetry publish --build --repository pypi-testing --no-interaction"
   only:
     - master
   environment:
@@ -78,8 +79,11 @@ publish-app-stage:
 
 publish-app-prod:
   stage: publish
+  before_script:
+    - "poetry config pypi-token.pypi $PYPI_TOKEN --local"
+    - "python support/python-packaging/parse_version.py $(git describe --tags) --pyproject"
   script:
-    - "python -m twine upload --username $PYPI_USERNAME --password $PYPI_PASSWORD --disable-progress-bar --verbose dist/*"
+    - "poetry publish --build --repository pypi --no-interaction"
   only:
     - tags
   environment:
