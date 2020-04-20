@@ -39,18 +39,6 @@ class FlaskAzureOauth(ResourceProtector):
 
         self.register_token_validator(self.validator)
 
-    def reset_app(self) -> None:
-        """
-        Removes previously configured validators to allow new ones to be registered
-
-        This is mainly used in testing where a unique, temporary, JWKS is used for each application instance and test.
-        As instances of this class are typically declared outside of an application, the registered validator needs to
-        be removed after each test to allow the next test to use its temporary JWKS - otherwise tokens issued will be
-        marked as untrusted.
-        """
-
-        self.deregister_token_validator(self.validator)
-
     def _get_jwks(self, app: App) -> dict:
         """
         Retrieves a JSON Web Key Set (JWKS)
