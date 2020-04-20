@@ -74,9 +74,10 @@ def create_test_app(**kwargs):
         token_string = authorization_header.split('Bearer ')[1]
 
         payload = {
-            'data': {
-                'token': app.auth.introspect_token(token_string=token_string),
-                'token-string': token_string
+            "data": {
+                "token": app.auth.introspect_token(token_string=token_string),
+                "token-rfc7662": app.auth.introspect_token_rfc7662(token_string=token_string),
+                "token-string": token_string,
             }
         }
 

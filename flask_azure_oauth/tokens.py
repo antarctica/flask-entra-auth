@@ -421,6 +421,33 @@ class AzureToken:
             "header": self._header,
             "payload": claims,
             "scopes": list(self._get_scopes()),
+
+    def introspect_rfc7662(self) -> dict:
+        """
+        Returns details about the current token for reference/debugging
+
+        Implements RFC 7662 https://tools.ietf.org/html/rfc7662
+
+        :rtype dict
+        :return: Token properties, formatted as per RFC 7662
+        """
+        active = False
+        if self._payload.validate_exp(now=int(time.time()), leeway=0) is None:
+            active = True
+        scopes = list(self._get_scopes())
+        scopes.sort()
+
+        return {
+            "active": active,
+            "scope": " ".join(scopes),
+            "client_id": self.claims["azp"],
+            "token_type": self._header["typ"],
+            "exp": self.claims["exp"],
+            "iat": self.claims["iat"],
+            "nbf": self.claims["nbf"],
+            "sub": self.claims["sub"],
+            "aud": self.claims["aud"],
+            "iss": self.claims["iss"],
         }
 
 

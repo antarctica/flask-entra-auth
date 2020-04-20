@@ -52,6 +52,18 @@ class FlaskOAuthProviderJWTIntrospectionTestCase(FlaskOAuthProviderBaseTestCase)
                     },
                     "scopes": ["scope1", "scope2"],
                 },
+                "token-rfc7662": {
+                    "active": True,
+                    "aud": "test",
+                    "client_id": "test",
+                    "exp": 1587388665,
+                    "iat": 1587378665,
+                    "iss": "https://login.microsoftonline.com/test/v2.0",
+                    "nbf": 1587378665,
+                    "scope": "scope1 scope2",
+                    "sub": None,
+                    "token_type": "JWT",
+                },
                 "token-string": token_string,
             }
         }

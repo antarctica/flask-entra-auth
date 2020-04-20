@@ -67,6 +67,8 @@ class FlaskAzureOauth(ResourceProtector):
         """
         Returns details about the current (Azure) JSON Web Token for reference/debugging
 
+        Includes support for RFC 7662 https://tools.ietf.org/html/rfc7662
+
         :param token_string: str
         :return: (Azure) JWT as a base64 encoded string (i.e. the value of the Authorization header)
 
@@ -81,3 +83,21 @@ class FlaskAzureOauth(ResourceProtector):
             azure_jwks=self.jwks,
         )
         return token.introspect()
+
+    def introspect_token_rfc7662(self, *, token_string: str) -> dict:
+        """
+        Returns details about the current token for reference/debugging
+
+        Implements RFC 7662 https://tools.ietf.org/html/rfc7662
+
+        :rtype dict
+        :return: Token properties, formatted as per RFC 7662
+        """
+        token = AzureToken(
+            token_string=token_string,
+            azure_tenancy_id=self.azure_tenancy_id,
+            azure_application_id=self.azure_application_id,
+            azure_client_application_ids=self.azure_client_application_ids,
+            azure_jwks=self.jwks,
+        )
+        return token.introspect_rfc7662()
