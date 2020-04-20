@@ -17,10 +17,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Sharing PyCharm test configuration through version control
 * Adding GitLab release management
 * Support for scopes from both `scp` and `roles` claims
+* Tests for internal introspection endpoint
+* Support for RFC 7662 (token introspection) using `introspect_token_rfc7662()`
 
 ### Fixed
 
 * Signature of `FlaskAzureOauth.initapp(app=app)` changed to `.initapp(app)`, no longer requiring named parameter
+* Ensuring scopes are always sorted in introspection methods to aid in stable tests
 
 ### Changed
 

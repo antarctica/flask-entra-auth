@@ -405,6 +405,8 @@ class AzureToken:
         :return: Token properties, including formatted scopes and meta information for claims
         """
         claims = {}
+        scopes = list(self._get_scopes())
+        scopes.sort()
 
         for claim in self.claims.claim_details:
             claims[claim] = {
@@ -420,7 +422,35 @@ class AzureToken:
         return {
             "header": self._header,
             "payload": claims,
-            "scopes": list(self._get_scopes()),
+            "scopes": scopes,
+        }
+
+    def introspect_rfc7662(self) -> dict:
+        """
+        Returns details about the current token for reference/debugging
+
+        Implements RFC 7662 https://tools.ietf.org/html/rfc7662
+
+        :rtype dict
+        :return: Token properties, formatted as per RFC 7662
+        """
+        active = False
+        if self._payload.validate_exp(now=int(time.time()), leeway=0) is None:
+            active = True
+        scopes = list(self._get_scopes())
+        scopes.sort()
+
+        return {
+            "active": active,
+            "scope": " ".join(scopes),
+            "client_id": self.claims["azp"],
+            "token_type": self._header["typ"],
+            "exp": self.claims["exp"],
+            "iat": self.claims["iat"],
+            "nbf": self.claims["nbf"],
+            "sub": self.claims["sub"],
+            "aud": self.claims["aud"],
+            "iss": self.claims["iss"],
         }
 
 
@@ -635,9 +665,12 @@ class TestJwt:
             "sub": None,
             "azp": app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"][0] or "testing",
         }
+        self.scopes = set()
         if roles is not None:
+            self.scopes.update(set(roles))
             self.payload["roles"] = " ".join(roles)
         if scps is not None:
+            self.scopes.update(set(scps))
             self.payload["scp"] = " ".join(scps)
 
     def dumps(self) -> str:
