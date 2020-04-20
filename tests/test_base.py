@@ -26,28 +26,26 @@ class FlaskOAuthProviderBaseTestCase(unittest.TestCase):
     def _prepare_expected_error_payload(error: ApiAuthError):
         error = error.dict()
         # Overwrite dynamic error ID with static value to allow comparision
-        error['id'] = 'a611b89f-f1bb-43c5-8efa-913c83c9109e'
+        error["id"] = "a611b89f-f1bb-43c5-8efa-913c83c9109e"
 
-        return {'errors': [error]}
+        return {"errors": [error]}
 
     def _check_error_response(self, *, response: Response, json_response: dict, expected_status: HTTPStatus):
         self.assertEqual(response.status_code, expected_status)
-        self.assertIn('errors', json_response.keys())
-        self.assertEqual(len(json_response['errors']), 1)
+        self.assertIn("errors", json_response.keys())
+        self.assertEqual(len(json_response["errors"]), 1)
 
         # Overwrite dynamic error ID with static value to allow comparision
-        if 'id' in json_response['errors'][0].keys():
-            json_response['errors'][0]['id'] = 'a611b89f-f1bb-43c5-8efa-913c83c9109e'
+        if "id" in json_response["errors"][0].keys():
+            json_response["errors"][0]["id"] = "a611b89f-f1bb-43c5-8efa-913c83c9109e"
 
     def _check_token_error_response(self, token: str):
         # Auth introspection used as a stable test endpoint
-        response = self.client.get('/meta/auth/introspection', headers={'authorization': f"Bearer { token }"})
+        response = self.client.get("/meta/auth/introspection", headers={"authorization": f"Bearer { token }"})
         json_response = response.get_json()
 
         self._check_error_response(
-            response=response,
-            json_response=json_response,
-            expected_status=HTTPStatus.UNAUTHORIZED
+            response=response, json_response=json_response, expected_status=HTTPStatus.UNAUTHORIZED
         )
 
         return json_response
