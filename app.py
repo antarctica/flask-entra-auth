@@ -92,4 +92,20 @@ def create_test_app(**kwargs):
         """
         return '', HTTPStatus.NO_CONTENT
 
+    @app.route("/meta/auth/sufficient-scope")
+    @app.auth("scope")
+    def meta_auth_sufficient_scope():
+        """
+        Simulates a resource a client has access to by having the correct scope.
+        """
+        return "", HTTPStatus.NO_CONTENT
+
+    @app.route("/meta/auth/sufficient-scopes")
+    @app.auth("scope1 scope2")
+    def meta_auth_sufficient_scopes():
+        """
+        Simulates a resource a client has access to by having the correct scopes.
+        """
+        return "", HTTPStatus.NO_CONTENT
+
     return app
