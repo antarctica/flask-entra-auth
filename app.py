@@ -22,7 +22,7 @@ def create_app():
     app.config['AZURE_OAUTH_TENANCY'] = config['AZURE_OAUTH_TENANCY']
     app.config['AZURE_OAUTH_APPLICATION_ID'] = config['AZURE_OAUTH_APPLICATION_ID']
     app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS'] = config['AZURE_OAUTH_CLIENT_APPLICATION_IDS']
-    auth.init_app(app=app)
+    auth.init_app(app)
 
     @app.route('/meta/auth/introspection')
     @auth()

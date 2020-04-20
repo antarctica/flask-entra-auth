@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Adding GitLab release management
 * Support for scopes from both `scp` and `roles` claims
 
+### Fixed
+
+* Signature of `FlaskAzureOauth.initapp(app=app)` changed to `.initapp(app)`, no longer requiring named parameter
+
 ### Changed
 
 * Incorporating @maxgubler's contribution for Authlib 0.12

@@ -18,7 +18,7 @@ class FlaskAzureOauth(ResourceProtector):
         self.azure_client_application_ids = []
         self.jwks = {}
 
-    def init_app(self, *, app: App):
+    def init_app(self, app: App):
         """
         Initialises extension using settings from the Flask application
 
