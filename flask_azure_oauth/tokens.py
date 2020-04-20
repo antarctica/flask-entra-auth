@@ -635,9 +635,12 @@ class TestJwt:
             "sub": None,
             "azp": app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"][0] or "testing",
         }
+        self.scopes = set()
         if roles is not None:
+            self.scopes.update(set(roles))
             self.payload["roles"] = " ".join(roles)
         if scps is not None:
+            self.scopes.update(set(scps))
             self.payload["scp"] = " ".join(scps)
 
     def dumps(self) -> str:

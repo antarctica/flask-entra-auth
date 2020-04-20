@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Sharing PyCharm test configuration through version control
 * Adding GitLab release management
 * Support for scopes from both `scp` and `roles` claims
+* Tests for internal introspection endpoint
 
 ### Fixed
 
