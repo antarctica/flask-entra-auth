@@ -405,6 +405,8 @@ class AzureToken:
         :return: Token properties, including formatted scopes and meta information for claims
         """
         claims = {}
+        scopes = list(self._get_scopes())
+        scopes.sort()
 
         for claim in self.claims.claim_details:
             claims[claim] = {
@@ -420,7 +422,8 @@ class AzureToken:
         return {
             "header": self._header,
             "payload": claims,
-            "scopes": list(self._get_scopes()),
+            "scopes": scopes,
+        }
 
     def introspect_rfc7662(self) -> dict:
         """
