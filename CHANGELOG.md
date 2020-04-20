@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Removed (BREAKING!)
+
+* Unused `FlaskAzureOauth.reset_app()` method
+
 ### Added
 
 * Bandit configuration file
