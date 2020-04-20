@@ -52,13 +52,14 @@ class FlaskOAuthProviderBaseTestCase(unittest.TestCase):
 
         return json_response
 
-    def _create_auth_token(self, header: dict = None, payload: dict = None, scopes: list = None):
+    def _create_auth_token(self, header: dict = None, payload: dict = None, roles: list = None, scps: list = None):
         jwt = TestJwt(
             app=self.app,
             header=header,
             payload=payload,
-            scopes=scopes,
-            signing_key=self.app.config['TEST_JWKS']
+            roles=roles,
+            scps=scps,
+            signing_key=self.app.config["TEST_JWKS"],
         )
         return jwt.dumps()
 

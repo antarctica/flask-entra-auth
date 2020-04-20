@@ -63,8 +63,9 @@ class TestJwt(_TestJwt):
         app: App,
         header: dict = None,
         payload: dict = None,
-        scopes: list = None,
-        signing_key: TestJwk = None
+        roles: list = None,
+        scps: list = None,
+        signing_key: TestJwk = None,
     ):
         """
         :type app: App
@@ -73,13 +74,15 @@ class TestJwt(_TestJwt):
         :param header: header fields to include in token, overrides default values if given
         :type payload: dict
         :param payload: payload claims to include in token, overrides default values if given
-        :type scopes: list
-        :param scopes: Optional scopes to include in the token (as a 'roles' claim) for testing authorisation
+        :type roles: list
+        :param roles: Optional scopes to include in the token (as a 'roles' claim) for testing authorisation
+        :type scps: list
+        :param scps: Optional scopes to include in the token (as a 'scp' claim) for testing authorisation
         :type signing_key: TestJwk
         :param signing_key: Optional TestJwk instance for setting the token Key ID, signing algorithm and private key
         for signing
         """
-        super().__init__(app=app, scopes=scopes)
+        super().__init__(app=app, roles=roles, scps=scps)
 
         if signing_key is not None:
             self.signing_key = signing_key

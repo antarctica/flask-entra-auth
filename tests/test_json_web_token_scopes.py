@@ -24,3 +24,31 @@ class FlaskOAuthProviderJWTScopesTestCase(FlaskOAuthProviderBaseTestCase):
             expected_status=HTTPStatus.FORBIDDEN
         )
         self.assertDictEqual(json_response, expected_payload)
+
+    def test_auth_sufficient_token_scope_single_role(self):
+        token = self._create_auth_token(roles=["scope"])
+
+        response = self.client.get("/meta/auth/sufficient-scope", headers={"authorization": f"Bearer { token }"})
+
+        self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
+
+    def test_auth_sufficient_token_scope_single_scps(self):
+        token = self._create_auth_token(scps=["scope"])
+
+        response = self.client.get("/meta/auth/sufficient-scope", headers={"authorization": f"Bearer { token }"})
+
+        self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
+
+    def test_auth_sufficient_token_scopes_multiple_scps(self):
+        token = self._create_auth_token(scps=["scope1", "scope2"])
+
+        response = self.client.get("/meta/auth/sufficient-scopes", headers={"authorization": f"Bearer { token }"})
+
+        self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
+
+    def test_auth_sufficient_token_scopes_mixed_roles_scps(self):
+        token = self._create_auth_token(roles=["scope1"], scps=["scope2"])
+
+        response = self.client.get("/meta/auth/sufficient-scopes", headers={"authorization": f"Bearer { token }"})
+
+        self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
