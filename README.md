@@ -350,6 +350,14 @@ $ docker-compose build app
 $ docker-compose push app
 ```
 
+### Supported Python versions
+
+This project is only tested against the Python version used in the project container.
+
+Other Python versions may be compatible with this project but these are not tested or officially supported.
+
+A minimum Python version is set in `pyproject.toml`.
+
 ### Static security scanning
 
 To ensure the security of this API, source code is checked against [Bandit](https://github.com/PyCQA/bandit) for issues 
