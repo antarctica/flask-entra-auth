@@ -388,7 +388,7 @@ Flask CLI command included in the local Flask application in the development env
 To run tests manually:
 
 ```shell
-$ docker-compose run -e FLASK_ENV=testing app flask test
+$ docker-compose run -e FLASK_ENV=testing app flask test --test-runner text
 ```
 
 To run tests manually using PyCharm, use the included *App (Tests)* run/debug configuration.

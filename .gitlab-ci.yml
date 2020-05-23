@@ -41,7 +41,11 @@ test-app:
     FLASK_ENV: testing
     FLASK_APP: ./manage.py
   script:
-    - "flask test"
+    - "flask test --test-runner junit"
+  artifacts:
+    paths:
+    reports:
+      junit: test-results.xml
 
 pep8-app:
   stage: 🧪 test

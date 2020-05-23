@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+* Unit test JUnit support for use in GitLab CI
+
+### Fixed
+
+* Token introspection test case expanded to include RFC 7662 support
+* `test` CLI command returns a non-zero exit code when tests fail
 
 ### Changed
 
