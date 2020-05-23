@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from tokens import TestJwt
+from flask_azure_oauth.tokens import TestJwt
 from tests.test_base import FlaskOAuthProviderBaseTestCase
 
 
@@ -56,10 +56,10 @@ class FlaskOAuthProviderJWTIntrospectionTestCase(FlaskOAuthProviderBaseTestCase)
                     "active": True,
                     "aud": "test",
                     "client_id": "test",
-                    "exp": 1587388665,
-                    "iat": 1587378665,
+                    "exp": 1587383954,
+                    "iat": 1587373954,
                     "iss": "https://login.microsoftonline.com/test/v2.0",
-                    "nbf": 1587378665,
+                    "nbf": 1587373954,
                     "scope": "scope1 scope2",
                     "sub": None,
                     "token_type": "JWT",
@@ -107,10 +107,13 @@ class FlaskOAuthProviderJWTIntrospectionTestCase(FlaskOAuthProviderBaseTestCase)
                             json_response["data"]["token"]["payload"]["nbf"]["value_iso_8601"] = expected_payload[
                                 "data"
                             ]["token"]["payload"]["nbf"]["value_iso_8601"]
+            if "token-rfc7662" in json_response["data"]:
+                if "exp" in json_response["data"]["token-rfc7662"]:
+                    json_response["data"]["token-rfc7662"]["exp"] = expected_payload["data"]["token-rfc7662"]["exp"]
+                if "iat" in json_response["data"]["token-rfc7662"]:
+                    json_response["data"]["token-rfc7662"]["iat"] = expected_payload["data"]["token-rfc7662"]["iat"]
+                if "nbf" in json_response["data"]["token-rfc7662"]:
+                    json_response["data"]["token-rfc7662"]["nbf"] = expected_payload["data"]["token-rfc7662"]["nbf"]
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertDictEqual(json_response, expected_payload)
-
-        # self.assertDictEqual(json_response["data"]["token"]["header"], expected_payload["data"]["token"]["header"])
-        # self.assertEqual(json_response["data"]["token-string"], expected_payload["data"]["token_string"])
-        # self.assertListEqual(json_response["data"]["token"]["scopes"], expected_payload["data"]["token"]["scopes"])
