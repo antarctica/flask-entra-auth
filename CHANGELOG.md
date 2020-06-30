@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 * Typo in 'invalid token signature' exception detail
+* Correcting invalid `token.dumps()` calls in README examples
 
 ## [0.4.1] - 2020-05-23
 
