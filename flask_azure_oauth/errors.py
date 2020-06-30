@@ -200,7 +200,7 @@ class ApiAuthTokenSignatureInvalidError(ApiAuthError):
 
     title = "Invalid token signature"
     detail = (
-        "The JSON Web Token (JWT) used as a token could be verified as authentic. Ensure you are using the "
+        "The JSON Web Token (JWT) used as a token could not be verified as authentic. Ensure you are using the "
         "correct token and try again, or contact support."
     )
 
