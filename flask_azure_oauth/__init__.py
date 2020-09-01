@@ -57,7 +57,10 @@ class FlaskAzureOauth(ResourceProtector):
         :rtype dict
         :return: JSON Web Key Set
         """
-        jwks_request = requests.get(f"https://login.microsoftonline.com/{self.azure_tenancy_id}/discovery/v2.0/keys")
+        jwks_request = requests.get(
+            f"https://login.microsoftonline.com/{self.azure_tenancy_id}/discovery/v2.0/keys",
+            params={"appid": self.azure_application_id},
+        )
         jwks_request.raise_for_status()
         return jwks_request.json()
 
