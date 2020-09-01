@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Typo in 'invalid token signature' exception detail
 * Correcting invalid `token.dumps()` calls in README examples
 
+### Changed
+
+* `AZURE_OAUTH_CLIENT_APPLICATION_IDS` option and `azp` claim checking made optional
+
 ## [0.4.1] - 2020-05-23
 
 ### Added

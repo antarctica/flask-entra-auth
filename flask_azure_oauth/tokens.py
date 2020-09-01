@@ -1,7 +1,7 @@
 import time
 
 from datetime import datetime
-from typing import List, Union, Callable
+from typing import List, Union, Callable, Optional
 
 # noinspection PyPackageRequirements
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
@@ -74,7 +74,9 @@ class AzureJWTClaims(JWTClaims):
         "azp": {"claim": "azp", "name": "Azure client application ID", "type": "custom"},
     }
 
-    def __init__(self, *, payload: dict, header: dict, tenancy_id: str, service_app_id: str, client_app_ids: List[str]):
+    def __init__(
+        self, *, payload: dict, header: dict, tenancy_id: str, service_app_id: str, client_app_ids: Optional[List[str]]
+    ):
         """
         :type payload: dict
         :param payload: Payload of an (Azure) JSON Web Token
@@ -85,9 +87,10 @@ class AzureJWTClaims(JWTClaims):
         :type service_app_id: str
         :param service_app_id: ID of the Azure Active Directory application registration representing this service/API,
         used for validating the 'audience' claim
-        :type client_app_ids: List[str]
-        :param client_app_ids: IDs of Azure Active Directory application registrations representing clients of this
-        service/API, used for validating the 'Azure client applications' (azp) custom claim
+        :type client_app_ids: Optional[List[str]]
+        :param client_app_ids: Optional IDs of Azure Active Directory application registrations representing permitted
+        clients of this service/API, used for validating the 'Azure client applications' (azp) custom claim, if none all
+        client applications will be allowed
         """
         options = {
             "iss": {"essential": True, "values": [f"https://login.microsoftonline.com/{ tenancy_id }/v2.0"]},
@@ -96,7 +99,7 @@ class AzureJWTClaims(JWTClaims):
             "exp": {"essential": True},
             "nbf": {"essential": True},
             "iat": {"essential": True},
-            "azp": {"essential": True, "values": client_app_ids},
+            "azp": {"essential": False, "values": client_app_ids},
         }
         params = None
 
@@ -200,7 +203,7 @@ class AzureJWTClaims(JWTClaims):
 
     def validate_azp(self) -> None:
         """
-        Custom validation for the proprietary 'Azure client application' (azp) claim, which is included in tokens
+        Custom validation for the proprietary 'Azure client application' (azp) claim, which is included in (V2) tokens
         issued by Microsoft Azure's Active Directory OAuth endpoints.
 
         This claim contains the ID of the Azure AD application registration that requested the token (i.e. the client).
@@ -214,6 +217,9 @@ class AzureJWTClaims(JWTClaims):
         This claim is different to the 'Subject' (sub) standard claim, as this claim always returns the ID of the
         client application, whereas the subject claim will return either the ID of the current user (in user facing
         services) or the ID of the client application (in service to service contexts).
+
+        Note: This claim is optional, if `azure_client_application_ids` is None, no checks will be made and all clients
+        will be allowed.
 
         Note: Checking this claim authorises a request in a very broad sense. Further checks *MUST* be made using scopes
         and other logic as relevant.
@@ -247,7 +253,7 @@ class AzureToken:
         token_string: str,
         azure_tenancy_id: str,
         azure_application_id: str,
-        azure_client_application_ids: List[str],
+        azure_client_application_ids: Optional[List[str]],
         azure_jwks: dict,
     ):
         """
@@ -257,9 +263,9 @@ class AzureToken:
         :param azure_tenancy_id: Azure Active Directory tenancy ID
         :type azure_application_id: str
         :param azure_application_id: ID of the Azure Active Directory application registration representing this app
-        :type azure_client_application_ids: List[str]
-        :param azure_client_application_ids: IDs of Azure Active Directory application registrations representing
-        clients of this app
+        :type azure_client_application_ids: Optional[List[str]]
+        :param azure_client_application_ids: Optional IDs of Azure Active Directory application registrations
+        representing clients of this app, if none all client applications will be allowed
         :type azure_jwks: dict
         :param azure_jwks: trusted JWKs formatted as a JSON Web Key Set
         """
@@ -409,12 +415,20 @@ class AzureToken:
         scopes.sort()
 
         for claim in self.claims.claim_details:
-            claims[claim] = {
-                "claim": self.claims.claim_details[claim]["claim"],
-                "name": self.claims.claim_details[claim]["name"],
-                "type": self.claims.claim_details[claim]["type"],
-                "value": self.claims[claim],
-            }
+            try:
+                claims[claim] = {
+                    "claim": self.claims.claim_details[claim]["claim"],
+                    "name": self.claims.claim_details[claim]["name"],
+                    "type": self.claims.claim_details[claim]["type"],
+                    "value": self.claims[claim],
+                }
+            except KeyError:
+                claims[claim] = {
+                    "claim": self.claims.claim_details[claim]["claim"],
+                    "name": self.claims.claim_details[claim]["name"],
+                    "type": self.claims.claim_details[claim]["type"],
+                    "value": None,
+                }
 
             if claim == "iat" or claim == "nbf" or claim == "exp":
                 claims[claim]["value_iso_8601"] = datetime.utcfromtimestamp(int(claims[claim]["value"])).isoformat()
@@ -440,10 +454,9 @@ class AzureToken:
         scopes = list(self._get_scopes())
         scopes.sort()
 
-        return {
+        result = {
             "active": active,
             "scope": " ".join(scopes),
-            "client_id": self.claims["azp"],
             "token_type": self._header["typ"],
             "exp": self.claims["exp"],
             "iat": self.claims["iat"],
@@ -452,6 +465,12 @@ class AzureToken:
             "aud": self.claims["aud"],
             "iss": self.claims["iss"],
         }
+        try:
+            result["client_id"] = self.claims["azp"]
+        except KeyError:
+            result["client_id"] = None
+
+        return result
 
 
 class AzureTokenValidator(BearerTokenValidator):
@@ -471,7 +490,7 @@ class AzureTokenValidator(BearerTokenValidator):
         *,
         azure_tenancy_id: str,
         azure_application_id: str,
-        azure_client_application_ids: List[str],
+        azure_client_application_ids: Optional[List[str]],
         azure_jwks: dict,
     ):
         """
@@ -479,9 +498,9 @@ class AzureTokenValidator(BearerTokenValidator):
         :param azure_tenancy_id: Azure Active Directory tenancy ID
         :type azure_application_id: str
         :param azure_application_id: ID of the Azure Active Directory application registration representing this app
-        :type azure_client_application_ids: List[str]
-        :param azure_client_application_ids: IDs of Azure Active Directory application registrations representing
-        clients of this app
+        :type azure_client_application_ids: Optional[List[str]]
+        :param azure_client_application_ids: Optional IDs of Azure Active Directory application registrations
+        representing clients of this app, if none all client applications will be allowed
         :type azure_jwks: dict
         :param azure_jwks: trusted JWKs formatted as a JSON Web Key Set
         """

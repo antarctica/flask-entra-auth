@@ -22,7 +22,6 @@ class FlaskOAuthProviderJWTTestCase(FlaskOAuthProviderBaseTestCase):
             "iss": {"claim": "iss", "name": "Issuer", "type": "standard"},
             "nbf": {"claim": "nbf", "name": "Not before", "type": "standard"},
             "sub": {"claim": "sub", "name": "Subject", "type": "standard"},
-            "azp": {"claim": "azp", "name": "Azure client application ID", "type": "custom"},
         }
 
         for claim in claims.values():
@@ -167,7 +166,7 @@ class FlaskOAuthProviderJWTTestCase(FlaskOAuthProviderBaseTestCase):
         response = self.client.get("/meta/auth/introspection", headers={"authorization": f"Bearer {token}"})
         self.assertEqual(HTTPStatus.OK, response.status_code)
 
-    def test_auth_multiple_token_client_applications(self):
+    def test_auth_successful_multiple_token_client_applications(self):
         azps = ["test", "test2"]
 
         for azp in azps:
@@ -187,3 +186,41 @@ class FlaskOAuthProviderJWTTestCase(FlaskOAuthProviderBaseTestCase):
                 # Auth introspection used as a stable test endpoint
                 response = self.client.get("/meta/auth/introspection", headers={"authorization": f"Bearer {token}"})
                 self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_auth_successful_empty_token_client_applications(self):
+        # Generate JWT
+        token_payload = {
+            "aud": "test",
+            "exp": int(time.time() + 10000),
+            "iat": int(time.time()),
+            "iss": "https://login.microsoftonline.com/test/v2.0",
+            "nbf": int(time.time()),
+            "sub": None,
+        }
+        token = self._create_auth_token(payload=token_payload)
+
+        # Change the application to not specify trusted client applications
+        self._change_application_auth(config={"AZURE_OAUTH_CLIENT_APPLICATION_IDS": []})
+
+        # Auth introspection used as a stable test endpoint
+        response = self.client.get("/meta/auth/introspection", headers={"authorization": f"Bearer {token}"})
+        self.assertEqual(HTTPStatus.OK, response.status_code)
+
+    def test_auth_successful_no_token_client_applications(self):
+        # Generate JWT
+        token_payload = {
+            "aud": "test",
+            "exp": int(time.time() + 10000),
+            "iat": int(time.time()),
+            "iss": "https://login.microsoftonline.com/test/v2.0",
+            "nbf": int(time.time()),
+            "sub": None,
+        }
+        token = self._create_auth_token(payload=token_payload)
+
+        # Change the application to not specify trusted client applications
+        self._change_application_auth(config={"AZURE_OAUTH_CLIENT_APPLICATION_IDS": None})
+
+        # Auth introspection used as a stable test endpoint
+        response = self.client.get("/meta/auth/introspection", headers={"authorization": f"Bearer {token}"})
+        self.assertEqual(HTTPStatus.OK, response.status_code)
