@@ -27,8 +27,16 @@ class FlaskAzureOauth(ResourceProtector):
         """
         self.azure_tenancy_id = app.config["AZURE_OAUTH_TENANCY"]
         self.azure_application_id = app.config["AZURE_OAUTH_APPLICATION_ID"]
-        self.azure_client_application_ids = app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"]
         self.jwks = self._get_jwks(app=app)
+        self.azure_client_application_ids = None
+
+        try:
+            self.azure_client_application_ids = app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"]
+            if isinstance(self.azure_client_application_ids, list):
+                if len(self.azure_client_application_ids) == 0:
+                    self.azure_client_application_ids = None
+        except KeyError:
+            pass
 
         self.validator = AzureTokenValidator(
             azure_tenancy_id=self.azure_tenancy_id,

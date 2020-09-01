@@ -23,7 +23,7 @@ Specifically this provider supports these scenarios:
    * supports authentication and authorisation
    * used to allow a client application access to some functionality or resources provided by another application
    * can be used for non-interactive, machine-to-machine, processes (using the OAuth Client Credentials Grant)
-   * uses the identity of the client application for authentication
+   * optionally, uses the identity of the client application for authentication
    * optionally, uses permissions assigned directly to the client application for authorisation
 2. *user to application*
     * supports authentication and authorisation
@@ -97,8 +97,8 @@ To restrict a route to specific users (authorisation):
 
 * add any required [Scopes](#permissions-roles-and-scopes) to the decorator - for example the `/projected-with-*` routes
 
-Independently of these options, it's possibly to whitelist specific, allowed, client applications, regardless of the
-user using them. This is useful in circumstances where a user may be authorised but the client can't be trusted.:
+Independently of these options, it's possible to require specific, trusted, client applications, regardless of the user 
+using them. This is useful in circumstances where a user may be authorised but the client can't be trusted:
 
 * set the `AZURE_OAUTH_CLIENT_APPLICATION_IDS` config option to a list of Azure application identifiers
 
@@ -117,7 +117,10 @@ The resource protector requires two configuration options to validate tokens cor
 | ------------------------------------ | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `AZURE_OAUTH_TENANCY`                | Str       | Yes      | ID of the Azure AD tenancy all applications and users are registered within                                                |
 | `AZURE_OAUTH_APPLICATION_ID`         | Str       | Yes      | ID of the Azure AD application registration for the application being protected                                            |
-| `AZURE_OAUTH_CLIENT_APPLICATION_IDS` | List[Str] | Yes      | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected |
+| `AZURE_OAUTH_CLIENT_APPLICATION_IDS` | List[Str] | No       | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected |
+
+**Note:** If the `AZURE_OAUTH_CLIENT_APPLICATION_IDS` option is not set, all client applications will be trusted and the 
+`azp` claim, if present, is ignored.
 
 Before these options can be set you will need to:
 
