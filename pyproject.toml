@@ -29,6 +29,7 @@ requests = "^2.23.0"
 python = "^3.6"
 
 [tool.poetry.dev-dependencies]
+msal = "^1.4.1"
 black = "^19.10b0"
 bandit = "^1.6.2"
 tomlkit = "^0.5.8"

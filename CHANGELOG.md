@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 * Support for access tokens from the Flask session (using `access_token` as a key)
 * Minimal support for custom signing keys (app specific JWKS)
+* Example applications for internally verifying the behaviour of the provider against real application registrations
 
 ### Fixed
 

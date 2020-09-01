@@ -450,6 +450,48 @@ Tests are ran automatically in [Continuous Integration](#continuous-integration)
 
 All commits will trigger a Continuous Integration process using GitLab's CI/CD platform, configured in `.gitlab-ci.yml`.
 
+### Test/Example applications
+
+For verifying this provider works for real-world use-cases, a test Flask application is included in 
+`examples/__init__.py`. This test application acts as both an application providing access to, and accessing, protected
+resources. It can use a number of application registrations registered in the BAS Web & Applications Test Azure AD.
+
+These applications allow testing different versions of access tokens for example. These applications are intended for 
+testing only. They do not represent real applications, or contain any sensitive or protected information. 
+
+To test requesting resources from protected resources as an API, set the appropriate config options and run the 
+application container:
+
+```shell
+$ docker-compose run app
+$ flask access-resource [resource]
+```
+
+To test requesting resources from protected resources as a browser application, set the appropriate config options and 
+start the application container:
+
+```shell
+$ docker-compose up
+```
+
+Terraform is used to provision the application registrations used:
+
+```
+$ cd provisioning/terraform
+$ docker-compose run terraform
+$ az login --allow-no-subscriptions
+$ terraform init
+$ terraform validate
+$ terraform apply
+```
+
+**Note:** Several properties in the application registration resources require setting once the registration has been 
+initially made (identifiers for example). These will need commenting out before use.
+
+Some properties, such as client secrets, can only be set once applications have been registered in the Azure Portal.
+
+Terraform state information is held in the BAS Terraform Remote State project (internal).
+
 ## Deployment
 
 ### Python package

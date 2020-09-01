@@ -30,7 +30,7 @@ FROM base as run
 
 ENV APPVENV=/usr/local/virtualenvs/flask_azure_oauth
 ENV PATH="$APPVENV/bin:$PATH"
-ENV FLASK_APP=/usr/src/app/manage.py
+ENV FLASK_APP=examples
 ENV FLASK_ENV=development
 
 COPY --from=build $APPVENV/ $APPVENV/
