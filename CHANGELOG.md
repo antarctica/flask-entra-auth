@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed [BREAKING!]
+
+* Refactored classes for creating test JWKS and JWTs to a `flask_azure_oauth.mocks` module
+* Refactored references to the `TestJwks` class from non-test objects, patching during tests should now be used instead
+
 ### Fixed
 
 * Typo in 'invalid token signature' exception detail
@@ -15,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 * `AZURE_OAUTH_CLIENT_APPLICATION_IDS` option and `azp` claim checking made optional
+* Updating GitLab CI/CD
 
 ## [0.4.1] - 2020-05-23
 

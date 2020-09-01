@@ -1,10 +1,12 @@
-from typing import Optional, List
+from http import HTTPStatus
+from unittest.mock import patch
 
-from flask import Flask as App
+from flask import Flask, request, jsonify, Flask as App, session
 
 from flask_azure_oauth import FlaskAzureOauth
-from flask_azure_oauth.tokens import AzureTokenValidator, TestJwt as _TestJwt
-from flask_azure_oauth.keys import TestJwk as _TestJwk
+from flask_azure_oauth.tokens import AzureTokenValidator
+from flask_azure_oauth.mocks.tokens import TestJwt as _TestJwt
+from flask_azure_oauth.mocks.keys import TestJwk as _TestJwk
 
 
 class TestJwk(_TestJwk):
@@ -99,41 +101,6 @@ class TestFlaskAzureOauth(FlaskAzureOauth):
     Test specific version of TestFlaskAzureOauth class to allow normally invalid JSON Web Key Set configurations
     """
 
-    def __init__(
-        self,
-        *,
-        azure_tenancy_id: str,
-        azure_application_id: str,
-        azure_client_application_ids: List[str],
-        azure_jwks: Optional[dict] = None,
-    ):
-        """
-        :type azure_tenancy_id: str
-        :param azure_tenancy_id: Azure Active Directory tenancy ID
-        :type azure_application_id: str
-        :param azure_application_id: ID of the Azure Active Directory application registration representing this app
-        :type azure_client_application_ids: List[str]
-        :param azure_client_application_ids: IDs of Azure Active Directory application registrations representing
-        clients of this app
-        :type azure_jwks: Optional[dict]
-        :param azure_jwks: trusted JWKs formatted as a JSON Web Key Set
-        """
-        super().__init__()
-
-        self.azure_tenancy_id = azure_tenancy_id
-        self.azure_application_id = azure_application_id
-        self.azure_client_application_ids = azure_client_application_ids
-        self.jwks = azure_jwks
-
-        self.validator = AzureTokenValidator(
-            azure_tenancy_id=self.azure_tenancy_id,
-            azure_application_id=self.azure_application_id,
-            azure_client_application_ids=self.azure_client_application_ids,
-            azure_jwks=self.jwks,
-        )
-
-        self.register_token_validator(self.validator)
-
     def use_null_jwks(self) -> None:
         """
         Replaces the token validator with a version where the JSON Web Key Set is empty
@@ -194,3 +161,92 @@ class TestFlaskAzureOauth(FlaskAzureOauth):
             azure_jwks=self.jwks,
         )
         self.register_token_validator(token_validator)
+
+
+test_jwks = TestJwk()
+
+
+def _get_jwks():
+    return test_jwks.jwks()
+
+
+def create_app(**kwargs):
+    app = Flask(__name__)
+
+    app.config["AZURE_OAUTH_TENANCY"] = "test"
+    app.config["AZURE_OAUTH_APPLICATION_ID"] = "test"
+    app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"] = ["test", "test2"]
+    app.config["TEST_JWKS"] = test_jwks
+
+    # Support using session
+    app.config["SECRET_KEY"] = "5c7KjhU3dm4ZPz6BevZ2xw"
+
+    # Support overriding auth provider config when testing
+    if "AZURE_OAUTH_TENANCY" in kwargs:
+        app.config["AZURE_OAUTH_TENANCY"] = kwargs["AZURE_OAUTH_TENANCY"]
+    if "AZURE_OAUTH_APPLICATION_ID" in kwargs:
+        app.config["AZURE_OAUTH_APPLICATION_ID"] = kwargs["AZURE_OAUTH_APPLICATION_ID"]
+    if "AZURE_OAUTH_CLIENT_APPLICATION_IDS" in kwargs:
+        app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"] = kwargs["AZURE_OAUTH_CLIENT_APPLICATION_IDS"]
+
+    with patch.object(FlaskAzureOauth, "_get_jwks") as mocked_get_jwks:
+        mocked_get_jwks.side_effect = _get_jwks
+        app.auth = TestFlaskAzureOauth()
+        app.auth.init_app(app)
+
+    # Support invalid ways of setting up the auth provider when testing
+    if "AUTH_MODE" in kwargs:
+        if kwargs["AUTH_MODE"] == "null-jwks":
+            app.auth.use_null_jwks()
+        elif kwargs["AUTH_MODE"] == "broken-jwks":
+            app.auth.use_broken_jwks()
+        elif kwargs["AUTH_MODE"] == "replaced-jwks":
+            app.auth.use_replaced_jwks()
+        elif kwargs["AUTH_MODE"] == "restored-jwks":
+            app.auth.use_restored_jwks()
+
+    @app.route("/meta/auth/introspection")
+    @app.auth()
+    def meta_auth_introspection():
+        authorization_header = request.headers.get("authorization")
+        if authorization_header is None:
+            authorization_header = f"Bearer {session['access_token']}"
+        token_string = authorization_header.split("Bearer ")[1]
+
+        payload = {
+            "data": {
+                "token": app.auth.introspect_token(token_string=token_string),
+                "token-rfc7662": app.auth.introspect_token_rfc7662(token_string=token_string),
+                "token-string": token_string,
+            }
+        }
+
+        return jsonify(payload)
+
+    @app.route("/meta/auth/insufficient-scopes")
+    @app.auth("unobtainable-scope")
+    def meta_auth_insufficient_scopes():
+        """
+        Simulates a resource a client doesn't have access to due to not having the correct scopes.
+
+        In practice it is impossible to access this resource.
+        """
+        return "", HTTPStatus.NO_CONTENT
+
+    @app.route("/meta/auth/sufficient-scope")
+    @app.auth("scope")
+    def meta_auth_sufficient_scope():
+        """
+        Simulates a resource a client has access to by having the correct scope.
+        """
+        return "", HTTPStatus.NO_CONTENT
+
+    @app.route("/meta/auth/sufficient-scopes")
+    @app.auth("scope1 scope2")
+    def meta_auth_sufficient_scopes():
+        """
+        Simulates a resource a client has access to by having the correct scopes.
+        """
+        return "", HTTPStatus.NO_CONTENT
+
+    return app
