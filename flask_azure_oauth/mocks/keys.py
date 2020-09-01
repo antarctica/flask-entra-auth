@@ -43,6 +43,7 @@ class TestJwk:
         :rtype str
         :return: Private key as PEM encoded, OpenSSL formatted, string
         """
+        # noinspection PyTypeChecker
         return self.private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
@@ -59,6 +60,7 @@ class TestJwk:
         :rtype str
         :return: Public key as PEM encoded, OpenSSL formatted, string
         """
+        # noinspection PyTypeChecker
         return self.public_key.public_bytes(
             encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
         ).decode()

@@ -3,7 +3,7 @@
 # == Notes ==
 
 # - GitLab automatically passes artifacts from previous stages by default
-# - Set required secret variables at: https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/settings/ci_cd
+# - Set required secret variables at: https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/settings/ci_cd
 
 # = Secret variables
 # - Variables are grouped by section in KEY: "value" format (e.g. FOO: "bar")
@@ -14,17 +14,14 @@
 #
 # - PyPi (staging) - create tokens at https://test.pypi.org/manage/account/
 # > PYPI_TEST_TOKEN (protected): "[Sensitive]"
-#
-# - GitLab - create token as the 'bot_magic_ci' user
-# > GITLAB_ACCESS_TOKEN: "[Sensitive]"
 
 # == Global settings ==
 
 stages:
+  - 💥 setup
   - 🧪 test
-  - 🏗 build
+  - 📦 package
   - 🚚 publish
-  - 🚀 release
 
 variables:
   APP_NAME: flask-azure-oauth
@@ -35,93 +32,90 @@ image:
 
 # == Jobs ==
 
-test-app:
-  stage: 🧪 test
-  variables:
-    FLASK_ENV: testing
-    FLASK_APP: ./manage.py
+version:
+  stage: 💥 setup
+  image:
+    name: docker-registry.data.bas.ac.uk/magic/infrastructure/python-version-parser:latest
+    entrypoint: [""]
+  before_script:
+    - "python3 /usr/src/app/python_version_parser $(git describe --tags) > _version && export VERSION=$(cat _version)"
+    - "export VERSION=${VERSION:-0.0.0}"
   script:
-    - "flask test --test-runner junit"
+    - 'echo $VERSION'
+    - 'echo "VERSION=$VERSION" >> build.env'
+  needs: []
   artifacts:
-    paths:
+    reports:
+      dotenv: build.env
+
+tests:
+  stage: 🧪 test
+  before_script:
+    - "cp support/python-tests-junit/tests.py ./"
+  script:
+    - "python ./tests.py"
+  needs: []
+  artifacts:
     reports:
       junit: test-results.xml
 
-pep8-app:
+black:
   stage: 🧪 test
   script:
     - "black --check flask_azure_oauth/"
+  needs: []
 
-bandit-app:
+bandit:
   stage: 🧪 test
   script:
     - "bandit -r ."
+  needs: []
 
-build-dev:
-  stage: 🏗 build
+package:
+  stage: 📦 package
   script:
     - 'poetry build'
+  needs:
+    - job: tests
+    - job: version
+      artifacts: true
   artifacts:
-    name: "$CI_BUILD_TOKEN-build"
     paths:
       - dist
     expire_in: 1 week
-  except:
-    - master
-    - tags
 
-
-publish-app-stage:
+pypi-testing:
   stage: 🚚 publish
   before_script:
     - "poetry config pypi-token.pypi-testing $PYPI_TEST_TOKEN --local"
-    - "python support/python-packaging/parse_version.py $(git describe --tags) --pyproject"
   script:
-    - "poetry publish --build --repository pypi-testing --no-interaction"
-  artifacts:
-    name: "$CI_BUILD_TOKEN-build"
-    paths:
-      - dist
-    expire_in: 1 month
+    - "poetry version $VERSION"
+    - "poetry publish --repository pypi-testing --no-interaction"
+  needs:
+    - job: version
+      artifacts: true
+    - job: package
+      artifacts: true
   only:
     - master
   environment:
     name: staging
     url: https://test.pypi.org/project/flask-azure-oauth/
 
-publish-app-prod:
+pypi:
   stage: 🚚 publish
   before_script:
     - "poetry config pypi-token.pypi $PYPI_TOKEN --local"
-    - "python support/python-packaging/parse_version.py $(git describe --tags) --pyproject"
+    - "poetry version $VERSION"
   script:
-    - "poetry publish --build --repository pypi --no-interaction"
-  artifacts:
-    name: "$CI_BUILD_TOKEN-build"
-    paths:
-      - dist
-    expire_in: 1 month
+    - "poetry publish --repository pypi --no-interaction"
+  needs:
+    - job: version
+      artifacts: true
+    - job: package
+      artifacts: true
   only:
     - tags
   environment:
     name: production
     url: https://pypi.org/project/flask-azure-oauth/
-
-gitlab-prod:
-  stage: 🚀 release
-  image:
-    name: byrnedo/alpine-curl:0.1.8
-    entrypoint: [""]
-  script:
-    - curl --request POST
-      --header 'Content-Type:application/json'
-      --header "PRIVATE-TOKEN:$GITLAB_ACCESS_TOKEN"
-      --data '{"name":"'$CI_COMMIT_TAG'","tag_name":"'$CI_COMMIT_TAG'","description":"...","milestones":["'$CI_COMMIT_TAG'"]}'
-      "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases"
-    - curl --request POST
-      --header "PRIVATE-TOKEN:$GITLAB_ACCESS_TOKEN"
-      --data name="PyPi package"
-      --data url="https://pypi.org/project/$APP_NAME/${CI_COMMIT_TAG:1}"
-      "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases/$CI_COMMIT_TAG/assets/links"
-  only:
-    - tags

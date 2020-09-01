@@ -233,14 +233,12 @@ those that will be granted access to use such applications, possibly by a user (
 
 ### Testing support
 
-When a Flask application is in testing mode (i.e. `app.config['TESTING']=True`), this provider will generate a local
-JSON Web Key Set, containing a single key, which can be used to sign tokens with arbitrary scopes.
+For testing applications, a local/test JSON Web Key Set (JWKS) can be used to sign local/test JSON Web Tokens (JWTs) 
+without relying on Azure. Local tokens can include, or not include, arbitrary scopes/roles, which can ensure 
+requirements for specific scopes are properly enforced by this provider.
 
-This can be used to test routes that require a scope or scopes, by allowing tokens to be generated with or without
-required scopes to test both authorised and unauthorised responses.
-
-Typically the instance of this provider will be defined outside of an application, and therefore persist between
-application instances and tests.
+This requires using local tokens signed by the test keys, and patching the `FlaskAzureOauth._get_jwks` method to 
+validate tokens using the same test keys. 
 
 For example:
 
@@ -248,25 +246,39 @@ For example:
 import unittest
 
 from http import HTTPStatus
-from flask_azure_oauth.tokens import TestJwt
+from unittest.mock import patch
+
+from flask_azure_oauth import FlaskAzureOauth
+from flask_azure_oauth.mocks.keys import TestJwk
+from flask_azure_oauth.mocks.tokens import TestJwt
+
+from examples import create_app
 
 
 class AppTestCase(unittest.TestCase):
     def setUp(self):
-        # 'create_app()' should return a Flask application where `app.config['TESTING'] = True` has been set
-        self.app = create_app('testing')
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        self.client = self.app.test_client()
+        self.test_jwks = TestJwk()
+
+        with patch.object(FlaskAzureOauth, "_get_jwks") as mocked_get_jwks:
+            mocked_get_jwks.return_value = self.test_jwks.jwks()
+
+            # `self.app` should be set to a Flask application, either by direct import, or by calling an app factory
+            self.app = create_app()
+
+            self.app.config["TEST_JWKS"] = self.test_jwks
+            self.app_context = self.app.app_context()
+            self.app_context.push()
+            self.client = self.app.test_client()
 
     def test_protected_route_with_multiple_scopes_authorised(self):
         # Generate token with required roles
-        token = TestJwt(app=self.app, roles=['required-scope1', 'required-scope2'])
+        token = TestJwt(
+            app=self.app, roles=["BAS.MAGIC.ADD.Records.Publish.All", "BAS.MAGIC.ADD.Records.ReadWrite.All"]
+        )
 
         # Make request to protected route with token
         response = self.client.get(
-            '/protected-with-multiple-scopes',
-            headers={'authorization': f"bearer { token.dumps() }"}
+            "/protected-with-multiple-scopes", headers={"authorization": f"bearer { token.dumps() }"}
         )
         self.assertEqual(HTTPStatus.OK, response.status_code)
         self.app_context.pop()
@@ -277,8 +289,7 @@ class AppTestCase(unittest.TestCase):
 
         # Make request to protected route with token
         response = self.client.get(
-            '/protected-with-multiple-scopes',
-            headers={'authorization': f"bearer { token.dumps() }"}
+            "/protected-with-multiple-scopes", headers={"authorization": f"bearer { token.dumps() }"}
         )
         self.assertEqual(HTTPStatus.FORBIDDEN, response.status_code)
         self.app_context.pop()

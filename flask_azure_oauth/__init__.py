@@ -4,7 +4,6 @@ from flask import Flask as App
 
 from flask_azure_oauth.resource_protector import ResourceProtector
 from flask_azure_oauth.tokens import AzureTokenValidator, AzureToken
-from flask_azure_oauth.keys import TestJwk
 
 
 class FlaskAzureOauth(ResourceProtector):
@@ -27,8 +26,8 @@ class FlaskAzureOauth(ResourceProtector):
         """
         self.azure_tenancy_id = app.config["AZURE_OAUTH_TENANCY"]
         self.azure_application_id = app.config["AZURE_OAUTH_APPLICATION_ID"]
-        self.jwks = self._get_jwks(app=app)
         self.azure_client_application_ids = None
+        self.jwks = self._get_jwks()
 
         try:
             self.azure_client_application_ids = app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"]
@@ -47,26 +46,17 @@ class FlaskAzureOauth(ResourceProtector):
 
         self.register_token_validator(self.validator)
 
-    def _get_jwks(self, app: App) -> dict:
+    def _get_jwks(self) -> dict:
         """
         Retrieves a JSON Web Key Set (JWKS)
 
         JWKS allow token providers to advertise the keys that will be used to sign JSON Web Tokens (JWTs) in a dynamic
         and machine readable way. Normally keys are fetched from the configured Azure tenancy, and will change
-        periodically. In testing (app.config['TESTING'] == True), we don't want to use real tokens/keys so a
-        'self-signed' JWKS is generated.
-
-        :type app: App
-        :param app: Flask application
+        periodically.
 
         :rtype dict
         :return: JSON Web Key Set
         """
-        if "TESTING" in app.config and app.config["TESTING"]:
-            test_jwks = TestJwk()
-            app.config["TEST_JWKS"] = test_jwks
-            return test_jwks.jwks()
-
         jwks_request = requests.get(f"https://login.microsoftonline.com/{self.azure_tenancy_id}/discovery/v2.0/keys")
         jwks_request.raise_for_status()
         return jwks_request.json()

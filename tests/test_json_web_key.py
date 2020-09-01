@@ -34,7 +34,7 @@ class FlaskOAuthProviderJWKTestCase(FlaskOAuthProviderBaseTestCase):
         token = self._create_auth_token()
 
         # Change the application to remove the trusted JSON Web Key Set and so make any tokens untrusted
-        self._change_application_auth("null-jwks")
+        self._change_application_auth(AUTH_MODE="null-jwks")
 
         json_response = self._check_token_error_response(token)
         self.assertDictEqual(json_response, expected_payload)
@@ -45,7 +45,7 @@ class FlaskOAuthProviderJWKTestCase(FlaskOAuthProviderBaseTestCase):
         token = self._create_auth_token()
 
         # Change the application to break the trusted JSON Web Key Set and so prevent validating any tokens
-        self._change_application_auth("broken-jwks")
+        self._change_application_auth(AUTH_MODE="broken-jwks")
 
         json_response = self._check_token_error_response(token)
         self.assertDictEqual(json_response, expected_payload)
@@ -56,11 +56,11 @@ class FlaskOAuthProviderJWKTestCase(FlaskOAuthProviderBaseTestCase):
         token = self._create_auth_token()
 
         # Change the application to replace the JSON Web Key Set and so prevent validating any tokens
-        self._change_application_auth("replaced-jwks")
+        self._change_application_auth(AUTH_MODE="replaced-jwks")
 
         json_response = self._check_token_error_response(token)
         self.assertDictEqual(json_response, expected_payload)
 
     def test_restore_jwks(self):
         # Change the application to restore the JSON Web Key Set to a normal state
-        self._change_application_auth("restored-jwks")
+        self._change_application_auth(AUTH_MODE="restored-jwks")

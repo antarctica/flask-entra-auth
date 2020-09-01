@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from flask_azure_oauth.tokens import TestJwt
+from flask_azure_oauth.mocks.tokens import TestJwt
 from tests.test_base import FlaskOAuthProviderBaseTestCase
 
 
