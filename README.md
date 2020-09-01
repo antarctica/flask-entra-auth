@@ -129,6 +129,18 @@ Before these options can be set you will need to:
 3. [register the application(s) that will use the protected application](#registering-an-application-in-azure)
 4. [assign permissions to users and/or client application(s)](#assigning-permissions-and-roles-to-users-and-applications)
 
+### Access token versions
+
+Since version 0.5.0, this provider is compatible with Azure access token versions 1.0 and 2.0. Prior to version 0.5.0 
+only version 2.0 tokens could be used. See 
+[Microsoft's documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens) for the 
+differences between token versions.
+
+**Note:** If you use version 1.0 tokens, this provider expects at least one of the `identifierUris` property values to 
+be `api://{protected_application_id}`, where `{protected_application_id}` is the application ID of the app registration
+representing the application being protected by this provider. Without this, you will receive errors for an invalid 
+audience.
+
 ### Applications, users, groups and tenancies
 
 Azure Active Directory has a number of different concepts for agents that represent things being protected and things
