@@ -74,6 +74,7 @@ bandit:
 package:
   stage: 📦 package
   script:
+    - "poetry version $VERSION"
     - 'poetry build'
   needs:
     - job: tests
