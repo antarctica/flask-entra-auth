@@ -92,9 +92,21 @@ class AzureJWTClaims(JWTClaims):
         client applications will be allowed
         """
         options = {
-            "iss": {"essential": True, "values": [f"https://login.microsoftonline.com/{ tenancy_id }/v2.0"]},
+            "iss": {
+                "essential": True,
+                "values": [
+                    f"https://login.microsoftonline.com/{ tenancy_id }/v2.0",  # used by version 2.0 tokens
+                    f"https://sts.windows.net/{ tenancy_id }/",  # used by version 1.0 tokens
+                ],
+            },
             "sub": {"essential": True},
-            "aud": {"essential": True, "value": service_app_id},
+            "aud": {
+                "essential": True,
+                "values": [
+                    service_app_id,  # used by version 2.0 tokens
+                    f"api://{ service_app_id }",  # used by version 1.0 tokens
+                ],
+            },
             "exp": {"essential": True},
             "nbf": {"essential": True},
             "iat": {"essential": True},

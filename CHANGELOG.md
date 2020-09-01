@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 * Typo in 'invalid token signature' exception detail
 * Correcting invalid `token.dumps()` calls in README examples
+* Support for version 1.0 tokens (issuer and audience claim values)
 
 ### Changed
 
