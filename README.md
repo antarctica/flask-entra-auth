@@ -129,6 +129,13 @@ Before these options can be set you will need to:
 3. [register the application(s) that will use the protected application](#registering-an-application-in-azure)
 4. [assign permissions to users and/or client application(s)](#assigning-permissions-and-roles-to-users-and-applications)
 
+### Flask session support
+
+This provider extends the AuthLib ResourceProtector to support detecting access tokens stored in the Flask session. 
+
+This is intended for browser based applications where the `Authorization` header cannot be easily set to include the
+access token. This support will be enabled automatically if an `access_token` session key is set.
+
 ### Access token versions
 
 Since version 0.5.0, this provider is compatible with Azure access token versions 1.0 and 2.0. Prior to version 0.5.0 

@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Refactored classes for creating test JWKS and JWTs to a `flask_azure_oauth.mocks` module
 * Refactored references to the `TestJwks` class from non-test objects, patching during tests should now be used instead
 
+### Added
+
+* Support for access tokens from the Flask session (using `access_token` as a key)
+
 ### Fixed
 
 * Typo in 'invalid token signature' exception detail

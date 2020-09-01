@@ -166,6 +166,25 @@ class FlaskOAuthProviderJWTTestCase(FlaskOAuthProviderBaseTestCase):
         response = self.client.get("/meta/auth/introspection", headers={"authorization": f"Bearer {token}"})
         self.assertEqual(HTTPStatus.OK, response.status_code)
 
+    def test_auth_successful_token_set_in_session(self):
+        # Generate JWT
+        token_payload = {
+            "aud": "test",
+            "exp": int(time.time() + 10000),
+            "iat": int(time.time()),
+            "iss": "https://login.microsoftonline.com/test/v2.0",
+            "nbf": int(time.time()),
+            "sub": None,
+            "azp": "test",
+        }
+        token = self._create_auth_token(payload=token_payload)
+
+        # Auth introspection used as a stable test endpoint
+        with self.client.session_transaction() as session:
+            session["access_token"] = token
+        response = self.client.get("/meta/auth/introspection")
+        self.assertEqual(HTTPStatus.OK, response.status_code)
+
     def test_auth_successful_multiple_token_client_applications(self):
         azps = ["test", "test2"]
 
