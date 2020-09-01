@@ -23,7 +23,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir poetry==1.0.0
 
 COPY pyproject.toml poetry.toml poetry.lock $APPPATH
-RUN poetry update --no-interaction --no-ansi
 RUN poetry install --no-root --no-interaction --no-ansi
 
 

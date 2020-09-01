@@ -38,7 +38,7 @@ Other scenarios may be added in future versions of this provider.
 
 **Note:** This provider does not support client applications requesting tokens from Azure. See the
 [Microsoft Authentication Library (MSAL) for Python](https://github.com/AzureAD/microsoft-authentication-library-for-python)
-if you need to do this.
+package if you need to do this.
 
 ## Installation
 
@@ -151,8 +151,8 @@ tenancies).
 
 In the Azure management portal:
 
-* applications are represented by [Application registrations]()
-* users are represented by [users]()
+* applications are represented by *Application registrations*
+* users are represented by *users*, or optionally *groups* of users
 
 ### Permissions, roles and scopes
 
@@ -217,7 +217,7 @@ Permissions and roles (collectively, application roles) are assigned through the
     * [roles to users/groups](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps)
     * [permissions to client applications](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow#request-the-permissions-in-the-app-registration-portal)
 
-For assigning permissions permissions:
+For assigning permissions:
 
 * permissions can be delegated to client applications, with the agreement of the current user
 * permissions can be directly assigned to client applications, with the agreement of a tenancy administrator
@@ -339,11 +339,29 @@ Python dependencies for this project are managed with [Poetry](https://python-po
 Non-code files, such as static files, can also be included in the [Python package](#python-package) using the
 `include` key in `pyproject.toml`.
 
+#### Adding new dependencies
+
 To add a new (development) dependency:
 
 ```shell
 $ docker-compose run app ash
 $ poetry add [dependency] (--dev)
+```
+
+Then rebuild the development container, and if you can, push to GitLab:
+
+```shell
+$ docker-compose build app
+$ docker-compose push app
+```
+
+#### Updating dependencies
+
+To update dependencies:
+
+```shell
+$ docker-compose run app ash
+$ poetry update
 ```
 
 Then rebuild the development container, and if you can, push to GitLab:
