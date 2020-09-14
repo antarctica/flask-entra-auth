@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.5.0] - 2020-09-14
+
 ### Changed [BREAKING!]
 
 * Refactored classes for creating test JWKS and JWTs to a `flask_azure_oauth.mocks` module
