@@ -108,6 +108,7 @@ def protected_with_scope():
     loginname = claims["preferred_username"]
     return f"hello {name}! your user id is {userobjectid} and login id: {loginname}"
 ```
+For full list of claims Azure AD would provide for access tokens - refer to [Microsoft Documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens) 
 
 To restrict a route to any valid user or client application (authentication):
 
