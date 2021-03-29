@@ -88,6 +88,26 @@ def protected_with_scope():
 def protected_with_multiple_scopes():
     return 'hello authenticated and authorised entity'
 ```
+to access token and claims from within a protected resource (decorated function). These are only available for valid and verified token.
+properties available on token:
+```
+claims
+scopes
+jwks
+```
+```python
+@app.route('/protected-with-single-scope')
+@auth('user.login')
+def protected_with_scope():
+    token = auth.validator.token
+    claims = token.claims
+    scopes = token.scopes
+    jwks = token.jwks
+    name = claims["name"]
+    userobjectid = claims["oid"]
+    loginname = claims["preferred_username"]
+    return f"hello {name}! your user id is {userobjectid} and login id: {loginname}"
+```
 
 To restrict a route to any valid user or client application (authentication):
 

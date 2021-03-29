@@ -519,6 +519,7 @@ class AzureTokenValidator(BearerTokenValidator):
         self.application_id = azure_application_id
         self.client_application_ids = azure_client_application_ids
         self.jwks = azure_jwks
+        self.token : AzureToken = None
 
         super().__init__(realm=None)
 
@@ -568,7 +569,7 @@ class AzureTokenValidator(BearerTokenValidator):
             azure_jwks=self.jwks,
         )
         token.claims.validate()
-
+        self.token = token
         return token
 
     def request_invalid(self, request: Request) -> bool:
