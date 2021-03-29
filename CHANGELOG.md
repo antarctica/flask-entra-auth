@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+* Examples of using the `current_token` proxy provided by AuthLib
+
 ## [0.5.0] - 2020-09-14
 
 ### Changed [BREAKING!]

@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 import click
+from authlib.integrations.flask_oauth2 import current_token
 
 from flask import Flask, current_app, session, request
 from msal import PublicClientApplication, ConfidentialClientApplication
@@ -99,11 +100,28 @@ def create_app():
     def protected_with_multiple_scopes():
         return "Protected resource requiring multiple scopes."
 
+    @app.route("/introspection")
+    @app.auth()
+    def introspection():
+        return current_token.introspect()
+
+    @app.route("/claims")
+    @app.auth()
+    def claims():
+        return current_token.claims
+
     @app.cli.command("access-resource")
     @click.argument(
         "resource",
         type=click.Choice(
-            ["unprotected", "protected", "protected-with-single-scope", "protected-with-multiple-scopes"]
+            [
+                "unprotected",
+                "protected",
+                "protected-with-single-scope",
+                "protected-with-multiple-scopes",
+                "introspection",
+                "claims",
+            ]
         ),
     )
     @click.option("-t", "--access-token")
