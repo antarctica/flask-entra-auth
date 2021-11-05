@@ -113,11 +113,14 @@ app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS'] = ['xxx']`
 The resource protector requires two configuration options to validate tokens correctly. These are read from the Flask
 [config object](http://flask.pocoo.org/docs/1.0/config/) through the `init_app()` method.
 
-| Configuration Option                 | Data Type | Required | Description                                                                                                                |
-| ------------------------------------ | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `AZURE_OAUTH_TENANCY`                | Str       | Yes      | ID of the Azure AD tenancy all applications and users are registered within                                                |
-| `AZURE_OAUTH_APPLICATION_ID`         | Str       | Yes      | ID of the Azure AD application registration for the application being protected                                            |
-| `AZURE_OAUTH_CLIENT_APPLICATION_IDS` | List[Str] | No       | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected |
+| Configuration Option                    | Data Type | Required | Description                                                                                                                              |
+| --------------------------------------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `AZURE_OAUTH_TENANCY`                   | Str       | Yes      | ID of the Azure AD tenancy all applications and users are registered within                                                              |
+| `AZURE_OAUTH_APPLICATION_ID`            | Str       | Yes      | ID of the Azure AD application registration for the application being protected                                                          |
+| `AZURE_OAUTH_CLIENT_APPLICATION_IDS`    | List[Str] | No       | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected               |
+| `AZURE_B2C_TENANT_MODE`                 | Bool      | No       | Enables support for Azure AD B2C tenancy, enabling dynamic JWKS source acquisition from userflows (Default: False)                       |
+| `AZURE_TENANT_NAME`                     | Str       | No       | The name of your Azure AD B2C tenancy, only required when `AZURE_B2C_TENANT_MODE` is enabled                                             |
+| `AZURE_B2C_REGISTERLOGIN_USERFLOW_NAME` | Str       | No       | The name which represents the registration and login userflow in your B2C tenancy. Only required when `AZURE_B2C_TENANT_MODE` is enabled |
 
 **Note:** If the `AZURE_OAUTH_CLIENT_APPLICATION_IDS` option is not set, all client applications will be trusted and the 
 `azp` claim, if present, is ignored.

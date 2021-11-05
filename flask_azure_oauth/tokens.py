@@ -74,7 +74,8 @@ class AzureJWTClaims(JWTClaims):
     }
 
     def __init__(
-        self, *, payload: dict, header: dict, tenancy_id: str, service_app_id: str, client_app_ids: Optional[List[str]]
+        self, *, payload: dict, header: dict, tenancy_id: str, service_app_id: str, client_app_ids: Optional[List[str]],
+        azure_b2c_tenant_mode: bool = False, azure_b2c_issuer: str = None
     ):
         """
         :type payload: dict
@@ -94,10 +95,7 @@ class AzureJWTClaims(JWTClaims):
         options = {
             "iss": {
                 "essential": True,
-                "values": [
-                    f"https://login.microsoftonline.com/{ tenancy_id }/v2.0",  # used by version 2.0 tokens
-                    f"https://sts.windows.net/{ tenancy_id }/",  # used by version 1.0 tokens
-                ],
+                "values": [],
             },
             "sub": {"essential": True},
             "aud": {
@@ -112,6 +110,15 @@ class AzureJWTClaims(JWTClaims):
             "iat": {"essential": True},
             "azp": {"essential": False, "values": client_app_ids},
         }
+
+        if azure_b2c_tenant_mode:
+            options["iss"]["values"] = [azure_b2c_issuer]
+        else:
+            options["iss"]["values"] = [
+                f"https://login.microsoftonline.com/{ tenancy_id }/v2.0",   # used by version 2.0 tokens
+                f"https://sts.windows.net/{ tenancy_id }/"                  # used by version 1.0 tokens
+            ]
+
         params = None
 
         super().__init__(payload, header, options=options, params=params)
@@ -266,6 +273,8 @@ class AzureToken:
         azure_application_id: str,
         azure_client_application_ids: Optional[List[str]],
         azure_jwks: dict,
+        azure_b2c_tenant_mode: bool = False,
+        azure_b2c_issuer: str = None
     ):
         """
         :type token_string: str
@@ -287,6 +296,8 @@ class AzureToken:
             payload=self._payload,
             header=self._header,
             tenancy_id=azure_tenancy_id,
+            azure_b2c_tenant_mode=azure_b2c_tenant_mode,
+            azure_b2c_issuer=azure_b2c_issuer,
             service_app_id=azure_application_id,
             client_app_ids=azure_client_application_ids,
         )
@@ -503,6 +514,8 @@ class AzureTokenValidator(BearerTokenValidator):
         azure_application_id: str,
         azure_client_application_ids: Optional[List[str]],
         azure_jwks: dict,
+        azure_b2c_tenant_mode: bool = False,
+        azure_b2c_issuer: str = None
     ):
         """
         :type azure_tenancy_id: str
@@ -516,6 +529,8 @@ class AzureTokenValidator(BearerTokenValidator):
         :param azure_jwks: trusted JWKs formatted as a JSON Web Key Set
         """
         self.tenancy_id = azure_tenancy_id
+        self.azure_b2c_tenant_mode = azure_b2c_tenant_mode
+        self.azure_b2c_issuer = azure_b2c_issuer
         self.application_id = azure_application_id
         self.client_application_ids = azure_client_application_ids
         self.jwks = azure_jwks
@@ -542,6 +557,8 @@ class AzureTokenValidator(BearerTokenValidator):
             token = AzureToken(
                 token_string=token_string,
                 azure_tenancy_id=self.tenancy_id,
+                azure_b2c_tenant_mode=self.azure_b2c_tenant_mode,
+                azure_b2c_issuer=self.azure_b2c_issuer,
                 azure_application_id=self.application_id,
                 azure_client_application_ids=self.client_application_ids,
                 azure_jwks=self.jwks,
@@ -563,6 +580,8 @@ class AzureTokenValidator(BearerTokenValidator):
         token = AzureToken(
             token_string=token_string,
             azure_tenancy_id=self.tenancy_id,
+            azure_b2c_tenant_mode=self.azure_b2c_tenant_mode,
+            azure_b2c_issuer=self.azure_b2c_issuer,
             azure_application_id=self.application_id,
             azure_client_application_ids=self.client_application_ids,
             azure_jwks=self.jwks,
