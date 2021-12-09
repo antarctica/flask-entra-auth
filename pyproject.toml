@@ -23,8 +23,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-authlib = "^0.14.1"
-Flask = "^1.1.2"
+authlib = "^0.15.0"
+Flask = "^2.0.0"
 requests = "^2.23.0"
 python = "^3.6"
 

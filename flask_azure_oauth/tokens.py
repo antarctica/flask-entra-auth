@@ -6,7 +6,7 @@ from typing import List, Union, Callable, Optional
 # noinspection PyPackageRequirements
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from flask import Request
-from authlib.jose import JWTClaims, JWK, JWK_ALGORITHMS, jwt
+from authlib.jose import JWTClaims, JWK, jwt
 from authlib.jose.errors import (
     MissingClaimError,
     InvalidClaimError,
@@ -256,7 +256,7 @@ class AzureToken:
     errors.
     """
 
-    _jwk_lib = JWK(algorithms=JWK_ALGORITHMS)
+    _jwk_lib = JWK()
 
     def __init__(
         self,
@@ -376,9 +376,9 @@ class AzureToken:
         """
         try:
             self._jwk = self._get_jwk(self.jwks)
-            jwk = self._jwk_lib.loads(self._jwk)
+            jwk = self._jwk_lib.import_key(self._jwk)
 
-            return jwk.public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode()
+            return jwk.as_pem().decode()
         except ValueError:
             auth_error_token_key_decode()
 
