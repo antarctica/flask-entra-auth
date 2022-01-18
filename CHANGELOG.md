@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 * Examples of using the `current_token` proxy provided by AuthLib
 
+### Changed
+
+* Switched to Poetry for local development environments
+  [#30](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/30)
+* Switched to `src/` package directory layout
+  [#32](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/32)
+
 ## [0.5.0] - 2020-09-14
 
 ### Changed [BREAKING!]

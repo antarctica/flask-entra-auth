@@ -1,9 +1,0 @@
-[virtualenvs]
-create = false
-
-[repositories]
-[repositories.pypi-testing]
-url = "https://test.pypi.org/legacy/"
-
-[repositories.pypi]
-url = "https://upload.pypi.org/legacy/"
