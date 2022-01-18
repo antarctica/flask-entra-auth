@@ -18,10 +18,6 @@ classifiers = [
     "Intended Audience :: Developers"
 ]
 
-packages = [
-    {include = "flask_azure_oauth"},
-]
-
 [tool.poetry.dependencies]
 authlib = "^0.14.1"
 Flask = "^1.1.2"
