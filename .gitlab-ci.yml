@@ -12,15 +12,13 @@
 # - PyPi (production) - create tokens at https://pypi.org/manage/account/
 # > PYPI_TOKEN (protected): "[Sensitive]"
 #
-# - PyPi (staging) - create tokens at https://test.pypi.org/manage/account/
-# > PYPI_TEST_TOKEN (protected): "[Sensitive]"
 
 # == Global settings ==
 
 stages:
-  - 💥 setup
   - 🧪 test
-  - 📦 package
+  - 📋 lint
+  - 🏗 build
   - 🚚 publish
 
 variables:
@@ -30,93 +28,76 @@ image:
   name: docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:latest
   entrypoint: [""]
 
+default:
+  before_script:
+    - "ln -s /.venv .venv"
+    - "poetry install --no-interaction --no-ansi"
+
 # == Jobs ==
 
-version:
-  stage: 💥 setup
-  image:
-    name: docker-registry.data.bas.ac.uk/magic/infrastructure/python-version-parser:latest
-    entrypoint: [""]
-  before_script:
-    - "python3 /usr/src/app/python_version_parser $(git describe --tags) > _version && export VERSION=$(cat _version)"
-    - "export VERSION=${VERSION:-0.0.0}"
-  script:
-    - 'echo $VERSION'
-    - 'echo "VERSION=$VERSION" >> build.env'
-  needs: []
-  artifacts:
-    reports:
-      dotenv: build.env
-
-tests:
+test:
   stage: 🧪 test
+  needs: []
+  variables:
+    FLASK_ENV: testing
   before_script:
+    - "ln -s /.venv .venv"
+    - "poetry install --no-interaction --no-ansi"
     - "cp support/python-tests-junit/tests.py ./"
   script:
-    - "python ./tests.py"
-  needs: []
+    - "poetry run python ./tests.py"
   artifacts:
     reports:
       junit: test-results.xml
+    expire_in: 1 month
+  rules:
+    - changes:
+        - '**/*.py'
 
-black:
-  stage: 🧪 test
-  script:
-    - "black --check flask_azure_oauth/"
+lint:
+  stage: 📋 lint
   needs: []
-
-bandit:
-  stage: 🧪 test
   script:
-    - "bandit -r ."
+    - "poetry check"
+    - "poetry run black --check src/"
+    - "poetry run bandit -r src/"
+  rules:
+    - changes:
+        - '**/*.py'
+
+build:
+  stage: 🏗 build
   needs: []
-
-package:
-  stage: 📦 package
   script:
-    - "poetry version $VERSION"
-    - 'poetry build'
-  needs:
-    - job: tests
-    - job: version
-      artifacts: true
+    - "poetry version 0.0.0"
+    - "poetry build"
   artifacts:
     paths:
       - dist
     expire_in: 1 week
+  rules:
+    -
+      if: '$CI_COMMIT_TAG == null'
+      changes:
+        - '**/*.py'
 
-pypi-testing:
+publish:
   stage: 🚚 publish
-  before_script:
-    - "poetry config pypi-token.pypi-testing $PYPI_TEST_TOKEN --local"
-  script:
-    - "poetry version $VERSION"
-    - "poetry publish --repository pypi-testing --no-interaction"
   needs:
-    - job: version
-      artifacts: true
-    - job: package
-      artifacts: true
-  only:
-    - master
-  environment:
-    name: staging
-    url: https://test.pypi.org/project/flask-azure-oauth/
-
-pypi:
-  stage: 🚚 publish
+    - test
+    - lint
   before_script:
+    - "ln -s /.venv .venv"
+    - "poetry install --no-interaction --no-ansi"
     - "poetry config pypi-token.pypi $PYPI_TOKEN --local"
-    - "poetry version $VERSION"
   script:
-    - "poetry publish --repository pypi --no-interaction"
-  needs:
-    - job: version
-      artifacts: true
-    - job: package
-      artifacts: true
-  only:
-    - tags
+    - "poetry publish --build --no-interaction"
+  artifacts:
+    paths:
+      - dist
+    expire_in: 1 month
+  rules:
+    - if: '$CI_COMMIT_TAG != null'
   environment:
     name: production
     url: https://pypi.org/project/flask-azure-oauth/

@@ -6,6 +6,9 @@ from flask_azure_oauth.resource_protector import ResourceProtector
 from flask_azure_oauth.tokens import AzureTokenValidator, AzureToken
 
 
+foo = "b"
+
+
 class FlaskAzureOauth(ResourceProtector):
     def __init__(self):
         super().__init__()
