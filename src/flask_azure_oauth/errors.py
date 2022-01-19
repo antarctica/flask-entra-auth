@@ -3,9 +3,47 @@ from http import HTTPStatus
 from uuid import uuid4
 
 from authlib.common.errors import AuthlibHTTPError
-from authlib.integrations.flask_oauth2.errors import raise_http_exception
 from authlib.jose.errors import MissingClaimError
 from flask import jsonify, make_response, Response
+from werkzeug.exceptions import HTTPException
+
+
+class _HTTPException(HTTPException):
+    """
+    Duplicated version of `authlib.integrations.flask_oauth2.errors._HTTPException`
+
+    This is needed because Flask 2.x changed the signature of the `get_body` and `get_headers` methods. This has been
+    fixed in AuthLib but hasn't been back ported to the 0.14.x release series (and we can't use the 0.15.x releases
+    because of an issue with JWKs).
+
+    Once Authlib 1.x has been released (which will fix the JWK issue), we can revert to the AuthLib version of this
+    class.
+
+    Sources: https://github.com/lepture/authlib/issues/346 and https://github.com/lepture/authlib/pull/371/files
+    """
+
+    def __init__(self, code, body, headers, response=None):
+        super(_HTTPException, self).__init__(None, response)
+        self.code = code
+
+        self.body = body
+        self.headers = headers
+
+    def get_body(self, environ=None, scope=None):
+        return self.body
+
+    def get_headers(self, environ=None, scope=None):
+        return self.headers
+
+
+def raise_http_exception(status, body, headers):
+    """
+    Duplicated version of `authlib.integrations.flask_oauth2.errors._HTTPException`
+
+    See comments for the `_HTTPException` class which this method is used to call. Once the issues with that class have
+    been resolved, and removed, this method can as well.
+    """
+    raise _HTTPException(status, body, headers)
 
 
 class ApiException(Exception):
