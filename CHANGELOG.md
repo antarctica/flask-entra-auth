@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.6.0] - 2021-01-19 [BREAKING!]
+
 ### Changed [BREAKING!]
 
 * Flask 2.x required (due to changes to Flask's HTTP Exception signature)
