@@ -13,9 +13,9 @@ def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "TPZHP2Ljw82CSXR5BjjfoQ"
 
-    ## Note: If changing between config sets, make sure to update required scopes in routes as well
+    # # Note: If changing between config sets, make sure to update required scopes in routes as well
 
-    ## Config options for 'Flask Azure OAuth Provider - Example App 1' (version 1.0 tokens)
+    # # Config options for 'Flask Azure OAuth Provider - Example App 1' (version 1.0 tokens)
     # app.config["AZURE_OAUTH_TENANCY"] = "d14c529b-5558-4a80-93b6-7655681e55d6"
     # app.config["AZURE_OAUTH_APPLICATION_ID"] = "be76d0cc-26ab-4c07-8bae-ed544224078f"
     # app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"] = ["da553d65-9dca-4393-a604-875addd10f13"]
@@ -25,7 +25,7 @@ def create_app():
     #     "api://be76d0cc-26ab-4c07-8bae-ed544224078f/BAS.WSF.FlaskOAuthProvider.Examples.Example1.Access"
     # ]
 
-    ## Config options for 'Flask Azure OAuth Provider - Example App 2' (version 2.0 tokens)
+    # # Config options for 'Flask Azure OAuth Provider - Example App 2' (version 2.0 tokens)
     app.config["AZURE_OAUTH_TENANCY"] = "d14c529b-5558-4a80-93b6-7655681e55d6"
     app.config["AZURE_OAUTH_APPLICATION_ID"] = "de40e653-e63b-46e3-80f6-52a39f055bf3"
     app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"] = ["c5134fdc-f69a-4b80-ad55-66c4d6e5a2b0"]
