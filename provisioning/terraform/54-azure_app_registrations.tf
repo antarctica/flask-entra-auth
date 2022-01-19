@@ -70,7 +70,7 @@ resource "azuread_application" "example-app1-client" {
   available_to_other_tenants = false
   homepage                   = "https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth"
 
-  reply_urls                 = ["https://login.microsoftonline.com/common/oauth2/nativeclient", "http://localhost:9000/auth/callback"]
+  reply_urls                 = ["https://login.microsoftonline.com/common/oauth2/nativeclient", "http://localhost:5000/auth/callback"]
   oauth2_allow_implicit_flow = false
   group_membership_claims    = "None"
   oauth2_permissions         = []
@@ -148,7 +148,7 @@ resource "azuread_application" "example-app2-client" {
   available_to_other_tenants = false
   homepage                   = "https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth"
 
-  reply_urls                 = ["https://login.microsoftonline.com/common/oauth2/nativeclient", "http://localhost:9000/auth/callback"]
+  reply_urls                 = ["https://login.microsoftonline.com/common/oauth2/nativeclient", "http://localhost:5000/auth/callback"]
   oauth2_allow_implicit_flow = false
   group_membership_claims    = "None"
   oauth2_permissions         = []
