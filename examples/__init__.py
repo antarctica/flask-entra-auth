@@ -42,16 +42,20 @@ def create_app():
     @app.route("/auth/sign-in")
     def auth_sign_in():
         session["state"] = str(uuid4())
-        auth_url = ConfidentialClientApplication(
+        auth_client = ConfidentialClientApplication(
             app.config["AUTH_CLIENT_ID"],
             authority=current_app.config["AUTH_CLIENT_TENANCY"],
             client_credential=app.config["AUTH_CLIENT_SECRET"],
-        ).get_authorization_request_url(
+        )
+        auth_code_flow = auth_client.initiate_auth_code_flow(
             scopes=current_app.config["AUTH_CLIENT_SCOPES"],
             state=session.get("state"),
-            redirect_uri="http://localhost:9000/auth/callback",
+            redirect_uri="http://localhost:5000/auth/callback",
         )
-        return f'<a href="{auth_url}">Click to Login</a>.'
+        session["auth_code_flow"] = auth_code_flow
+        auth_uri = auth_code_flow.get("auth_uri")
+
+        return f'<a href="{auth_uri}">Click to Login</a>.'
 
     @app.route("/auth/callback")
     def auth_callback():
@@ -62,14 +66,13 @@ def create_app():
         if not request.args.get("code"):
             return "Sign-in failed, no auth code.", 403
 
-        result = ConfidentialClientApplication(
-            app.config["AUTH_CLIENT_ID"],
-            authority=current_app.config["AUTH_CLIENT_TENANCY"],
-            client_credential=app.config["AUTH_CLIENT_SECRET"],
-        ).acquire_token_by_authorization_code(
-            code=request.args.get("code"),
+        auth_client = PublicClientApplication(
+            client_id=app.config["AUTH_CLIENT_ID"], authority=current_app.config["AUTH_CLIENT_TENANCY"]
+        )
+        result = auth_client.acquire_token_by_auth_code_flow(
+            auth_code_flow=session.get("auth_code_flow"),
+            auth_response=request.args,
             scopes=current_app.config["AUTH_CLIENT_SCOPES"],
-            redirect_uri="http://localhost:9000/auth/callback",
         )
         if result.get("error"):
             return "Sign-in failed.", 403
