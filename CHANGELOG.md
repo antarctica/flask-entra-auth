@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed [BREAKING!]
+
+* Flask 2.x required (due to changes to Flask's HTTP Exception signature)
+  [#29](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/29)
+
 ### Added
 
 * Examples of using the `current_token` proxy provided by AuthLib
 * Flake8 linters
   [#34](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/34)
+* Upgrading dependencies, including Flask and Authlib (but only to latest 0.14.x release)
+  [#29](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/29)
 
 ### Changed
 
