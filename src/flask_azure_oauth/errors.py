@@ -2,10 +2,10 @@ import json
 from http import HTTPStatus
 from uuid import uuid4
 
-from flask import make_response, jsonify, Response
 from authlib.common.errors import AuthlibHTTPError
 from authlib.integrations.flask_oauth2.errors import raise_http_exception
 from authlib.jose.errors import MissingClaimError
+from flask import jsonify, make_response, Response
 
 
 class ApiException(Exception):
@@ -65,7 +65,7 @@ class ApiException(Exception):
         if about_link is not None:
             self.links = {"about": about_link}
 
-    def dict(self) -> dict:
+    def as_dict(self) -> dict:
         """
         Formats the error as a dictionary
 
@@ -93,7 +93,7 @@ class ApiException(Exception):
         :return: JSON serialised error
         """
 
-        return json.dumps(self.dict())
+        return json.dumps(self.as_dict())
 
     def response(self) -> Response:
         """
@@ -102,7 +102,7 @@ class ApiException(Exception):
         :rtype Response
         :return: Flask response containing the error, formatted as JSON
         """
-        payload = {"errors": [self.dict()]}
+        payload = {"errors": [self.as_dict()]}
         return make_response(jsonify(payload), self.status.value)
 
 
@@ -123,7 +123,7 @@ class ApiAuthError(ApiException):
         This method overloads the default method in the 'ApiException' class to make it compatible with the AuthLib
         library.
         """
-        payload = {"errors": [self.dict()]}
+        payload = {"errors": [self.as_dict()]}
 
         raise_http_exception(self.status, json.dumps(payload), {"content-type": "application/json"})
 

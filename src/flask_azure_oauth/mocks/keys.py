@@ -2,15 +2,9 @@ import random
 import string
 
 from authlib.jose import JWK, JWK_ALGORITHMS
-
-# noinspection PyPackageRequirements
-from cryptography.hazmat.backends import default_backend
-
-# noinspection PyPackageRequirements
-from cryptography.hazmat.primitives import serialization
-
-# noinspection PyPackageRequirements
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend  # noinspection PyPackageRequirements
+from cryptography.hazmat.primitives import serialization  # noinspection PyPackageRequirements
+from cryptography.hazmat.primitives.asymmetric import rsa  # noinspection PyPackageRequirements
 
 
 class TestJwk:
@@ -28,11 +22,19 @@ class TestJwk:
     key_use = "sig"
 
     def __init__(self):
+        """
+        Note: As this method is used in a testing context, this method is not considered to be used for a
+        security/cryptographic purpose. Rather this method mocks and simplifies real code that is to aid in testing.
+
+        Linting tools flag the construction of the key ID as using a pseudo-random generator in a security/cryptographic
+        context, which given the above would be true but isn't in this case and is therefore exempted.
+        """
+        _identifier = random.choices(  # noqa: S311 - nosec
+            string.ascii_lowercase + string.ascii_uppercase + string.digits, k=7
+        )
         self.private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
         self.public_key = self.private_key.public_key()
-        self.key_id = "test-" + "".join(
-            random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=7)
-        )
+        self.key_id = f"test-{_identifier}"
 
     def private_key_pem(self) -> str:
         """

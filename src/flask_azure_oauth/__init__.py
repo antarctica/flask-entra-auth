@@ -1,12 +1,8 @@
 import requests
-
 from flask import Flask as App
 
 from flask_azure_oauth.resource_protector import ResourceProtector
-from flask_azure_oauth.tokens import AzureTokenValidator, AzureToken
-
-
-foo = "b"
+from flask_azure_oauth.tokens import AzureToken, AzureTokenValidator
 
 
 class FlaskAzureOauth(ResourceProtector):

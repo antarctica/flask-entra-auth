@@ -59,8 +59,8 @@ lint:
   needs: []
   script:
     - "poetry check"
-    - "poetry run black --check src/"
-    - "poetry run bandit -r src/"
+    - "poetry run flake8 src/"
+    - "poetry export --without-hashes -f requirements.txt | poetry run safety check --full-report --stdin"
   rules:
     - changes:
         - '**/*.py'

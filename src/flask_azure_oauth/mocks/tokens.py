@@ -1,7 +1,7 @@
 import time
 
-from flask import Flask as App
 from authlib.jose import JWT
+from flask import Flask as App
 
 
 class TestJwt:

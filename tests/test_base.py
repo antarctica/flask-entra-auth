@@ -25,7 +25,7 @@ class FlaskOAuthProviderBaseTestCase(unittest.TestCase):
 
     @staticmethod
     def _prepare_expected_error_payload(error: ApiAuthError):
-        error = error.dict()
+        error = error.as_dict()
         # Overwrite dynamic error ID with static value to allow comparision
         error["id"] = "a611b89f-f1bb-43c5-8efa-913c83c9109e"
 
