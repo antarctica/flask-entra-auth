@@ -1,39 +1,38 @@
 import time
-
 from datetime import datetime
-from typing import List, Union, Callable, Optional
+from typing import Callable, List, Optional, Union
 
 # noinspection PyPackageRequirements
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-from flask import Request
-from authlib.jose import JWTClaims, JWK, JWK_ALGORITHMS, jwt
+from authlib.jose import JWK, JWK_ALGORITHMS, jwt, JWTClaims
 from authlib.jose.errors import (
-    MissingClaimError,
-    InvalidClaimError,
-    InvalidTokenError,
-    ExpiredTokenError,
-    DecodeError,
     BadSignatureError,
+    DecodeError,
+    ExpiredTokenError,
+    InvalidClaimError,
     InvalidHeaderParameterName,
+    InvalidTokenError,
+    MissingClaimError,
 )
 from authlib.jose.util import extract_header
 from authlib.oauth2.rfc6749.util import scope_to_list
 from authlib.oauth2.rfc6750 import BearerTokenValidator, InsufficientScopeError
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from flask import Request
 
 from flask_azure_oauth.errors import (
     auth_error_token_decode,
-    auth_error_token_missing_kid,
-    auth_error_token_untrusted_jwk,
-    auth_error_token_key_decode,
-    auth_error_token_signature_invalid,
-    auth_error_token_missing_claim,
-    auth_error_token_untrusted_claim_issuer,
     auth_error_token_invalid_claim_audience,
-    auth_error_token_invalid_claim_expiry,
     auth_error_token_invalid_claim_client_application,
+    auth_error_token_invalid_claim_expiry,
     auth_error_token_invalid_claim_issued_at,
     auth_error_token_invalid_claim_not_before,
+    auth_error_token_key_decode,
+    auth_error_token_missing_claim,
+    auth_error_token_missing_kid,
     auth_error_token_scopes_insufficient,
+    auth_error_token_signature_invalid,
+    auth_error_token_untrusted_claim_issuer,
+    auth_error_token_untrusted_jwk,
 )
 
 
@@ -116,7 +115,7 @@ class AzureJWTClaims(JWTClaims):
 
         super().__init__(payload, header, options=options, params=params)
 
-    def validate(self, now: float = None, leeway: float = 0) -> None:
+    def validate(self, now: float = None, leeway: float = 0) -> None:  # noqa: C901
         """
         Overloaded implementation of the 'validate' method in the AuthLib default 'JWTClaims' class.
 
@@ -126,6 +125,10 @@ class AzureJWTClaims(JWTClaims):
         - wrapping calls to validator methods to catch exceptions as API errors, which will be returned to the client
 
         When validating, options defined __init__ will be used, i.e. allowed audience claim values etc.
+
+        Note: linting tools flag this method as being too complex (complexity score 18, normal limit 10). In this case
+        we are overriding a method from Authlib, so I don't think it's appropriate to deviate too much from their
+        implementation, and therefore the complexity should be maintained.
 
         :type now: float
         :param now: current time, in the form of seconds past the Unix Epoch
@@ -151,7 +154,7 @@ class AzureJWTClaims(JWTClaims):
         try:
             self.validate_sub()
         except InvalidClaimError:
-            raise NotImplementedError()
+            raise NotImplementedError() from None
         try:
             self.validate_iat(now, leeway)
         except (InvalidClaimError, InvalidTokenError):

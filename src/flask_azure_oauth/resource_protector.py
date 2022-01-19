@@ -2,14 +2,14 @@ from typing import Optional, Union
 
 from authlib.common.errors import AuthlibHTTPError
 from authlib.integrations.flask_oauth2 import ResourceProtector as _ResourceProtector
-from authlib.oauth2.rfc6749 import MissingAuthorizationError, UnsupportedTokenTypeError, HttpRequest
+from authlib.oauth2.rfc6749 import HttpRequest, MissingAuthorizationError, UnsupportedTokenTypeError
 from authlib.oauth2.rfc6750 import BearerTokenValidator
 from flask import session
 
 from flask_azure_oauth.errors import (
+    auth_error_fallback,
     auth_error_missing_authorization,
     auth_error_token_type_unsupported,
-    auth_error_fallback,
 )
 
 
