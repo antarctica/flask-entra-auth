@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 * Examples of using the `current_token` proxy provided by AuthLib
+* Flake8 linters
+  [#34](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/34)
 
 ### Changed
 
