@@ -59,7 +59,7 @@ lint:
   needs: []
   script:
     - "poetry check"
-    - "poetry run flake8 src/"
+    - "poetry run flake8 src/ examples/"
     - "poetry export --without-hashes -f requirements.txt | poetry run safety check --full-report --stdin"
   rules:
     - changes:

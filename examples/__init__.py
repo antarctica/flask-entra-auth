@@ -2,16 +2,15 @@ from uuid import uuid4
 
 import click
 from authlib.integrations.flask_oauth2 import current_token
-
-from flask import Flask, current_app, session, request
-from msal import PublicClientApplication, ConfidentialClientApplication
+from flask import current_app, Flask, request, session
+from msal import ConfidentialClientApplication, PublicClientApplication
 
 from flask_azure_oauth import FlaskAzureOauth
 
 
-def create_app():
+def create_app():  # noqa: C901 - this demonstration app is not reflective of a real world application
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "TPZHP2Ljw82CSXR5BjjfoQ"
+    app.config["SECRET_KEY"] = "TPZHP2Ljw82CSXR5BjjfoQ"  # noqa: S105 - nosec - not a secret in this context
 
     # # Note: If changing between config sets, make sure to update required scopes in routes as well
 
@@ -30,7 +29,7 @@ def create_app():
     app.config["AZURE_OAUTH_APPLICATION_ID"] = "de40e653-e63b-46e3-80f6-52a39f055bf3"
     app.config["AZURE_OAUTH_CLIENT_APPLICATION_IDS"] = ["c5134fdc-f69a-4b80-ad55-66c4d6e5a2b0"]
     app.config["AUTH_CLIENT_ID"] = "c5134fdc-f69a-4b80-ad55-66c4d6e5a2b0"
-    app.config["AUTH_CLIENT_SECRET"] = "yq__4pGnY4RQ.Z3w~g_~ZFBF09S_07ergR"
+    app.config["AUTH_CLIENT_SECRET"] = "yq__4pGnY4RQ.Z3w~g_~ZFBF09S_07ergR"  # noqa: S105 - nosec - not a secret
     app.config["AUTH_CLIENT_TENANCY"] = "https://login.microsoftonline.com/d14c529b-5558-4a80-93b6-7655681e55d6"
     app.config["AUTH_CLIENT_SCOPES"] = [
         "api://de40e653-e63b-46e3-80f6-52a39f055bf3/BAS.WSF.FlaskOAuthProvider.Examples.Example2.Access"
@@ -150,11 +149,12 @@ def create_app():
         )
         auth_flow = auth_client.initiate_device_flow(scopes=current_app.config["AUTH_CLIENT_SCOPES"])
         click.pause(
-            f"To sign-in, visit 'https://microsoft.com/devicelogin', enter this code '{auth_flow['user_code']}' and then press any key..."
+            f"To sign-in, visit 'https://microsoft.com/devicelogin', enter this code '{auth_flow['user_code']}' "
+            f"and then press any key..."
         )
         auth_payload = auth_client.acquire_token_by_device_flow(auth_flow)
         current_app.config["AUTH_TOKEN"] = auth_payload["access_token"]
         click.echo(current_app.config["AUTH_TOKEN"])
-        click.echo(f"Ok. Access token set.")
+        click.echo("Ok. Access token set.")
 
     return app
