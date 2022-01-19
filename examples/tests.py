@@ -1,13 +1,11 @@
 import unittest
-
 from http import HTTPStatus
 from unittest.mock import patch
 
+from examples import create_app
 from flask_azure_oauth import FlaskAzureOauth
 from flask_azure_oauth.mocks.keys import TestJwk
 from flask_azure_oauth.mocks.tokens import TestJwt
-
-from examples import create_app
 
 
 class AppTestCase(unittest.TestCase):

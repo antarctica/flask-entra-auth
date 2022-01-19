@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.6.0] - 2021-01-19 [BREAKING!]
+
 ### Changed [BREAKING!]
 
 * Flask 2.x required (due to changes to Flask's HTTP Exception signature)
   [#29](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/29)
+* Relicensing project under the MIT licence (from the UK Open Government Licence)
+  [#31](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/31)
 
 ### Added
 

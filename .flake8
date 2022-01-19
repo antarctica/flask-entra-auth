@@ -26,5 +26,5 @@ max-line-length = 120
 max-complexity = 10
 
 # for flake8-import-order
-application-import-names = flask_azure_oauth,tests
+application-import-names = flask_azure_oauth,tests,examples
 import-order-style = smarkets
