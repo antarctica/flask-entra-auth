@@ -4,20 +4,18 @@ Python Flask extension for securing apps with Azure Active Directory OAuth
 
 ## Purpose
 
-This provider defines an [AuthLib](https://authlib.org)
-[Resource Protector](https://docs.authlib.org/en/latest/flask/2/resource-server.html) to authenticate and authorise
-users and other applications to access features or resources within a Flask application using the OAuth functionality
-offered by [Azure Active Directory](https://azure.microsoft.com/en-us/services/active-directory/), as part of the
+Provide an [AuthLib](https://authlib.org)
+[Resource Protector/Server](https://docs.authlib.org/en/latest/flask/2/resource-server.html) to authenticate and 
+authorise users and applications using a Flask application with OAuth functionality offered by 
+[Azure Active Directory](https://azure.microsoft.com/en-us/services/active-directory/), as part of the 
 [Microsoft identity platform](https://docs.microsoft.com/en-us/azure/active-directory/develop/about-microsoft-identity-platform).
 
-This provider depends on Azure Active Directory, which acts as a identity provider, to issue
-[OAuth access tokens](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens). These contain
-various claims including the identity of the user and client application (used for authentication) and any permissions
-assigned or delegated to the user or application (used for authorisation).
+Azure Active Directory, acting as an identity provider, issues
+[OAuth access tokens](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens), the claims of 
+which are validated by this provider. These claims include the identity of the user and client application (used for 
+authentication), and any permissions/scopes assigned or delegated to the user or application (used for authorisation).
 
-This provider will validate and interpret information in these tokens to restrict access to parts of a Flask app.
-
-Specifically this provider supports these scenarios:
+This provider supports these scenarios:
 
 1. *application to application*
    * supports authentication and authorisation
@@ -26,19 +24,23 @@ Specifically this provider supports these scenarios:
    * optionally, uses the identity of the client application for authentication
    * optionally, uses permissions assigned directly to the client application for authorisation
 2. *user to application*
-    * supports authentication and authorisation
-    * used to allow users access to some functionality or resources provided by another application
-    * can be used for interactive console (using the Device Authorization Grant) or web application (using the OAuth
-      Authorization Code Grant) processes
-    * uses the identity of the user, and optionally, the client application they are using, for authentication
-    * optionally, uses permissions assigned to the user, permissions delegated by the user to the client application,
-      and/or permissions assigned directly to the client application for authorisation
+   * supports authentication and authorisation
+   * used to allow users access to some functionality or resources provided by another application
+   * can be used for interactive console (using the Device Authorization Grant) or web application (using the OAuth
+     Authorization Code Grant) processes
+   * uses the identity of the user, and optionally, the client application they are using, for authentication
+   * optionally, uses permissions assigned to the user, permissions delegated by the user to the client application,
+     and/or permissions assigned directly to the client application for authorisation
 
-Other scenarios may be added in future versions of this provider.
+Other scenarios may work but are not officially supported, this may change in the future.
 
 **Note:** This provider does not support client applications requesting tokens from Azure. See the
 [Microsoft Authentication Library (MSAL) for Python](https://github.com/AzureAD/microsoft-authentication-library-for-python)
 package if you need to do this.
+
+**Note:** This provider has been written to solve an internal need within applications used by the British Antarctic 
+Survey. It is offered to others in the hope that's useful for your needs as well, however it does not (and cannot) 
+cover every option available.
 
 ## Installation
 
@@ -47,6 +49,8 @@ This package can be installed using Pip from [PyPi](https://pypi.org/project/fla
 ```
 $ pip install flask-azure-oauth
 ```
+
+**Note:** Since version 0.6.0, this package requires Flask 2.0 or greater.
 
 ## Usage
 
@@ -97,7 +101,7 @@ To restrict a route to specific users (authorisation):
 
 * add any required [Scopes](#permissions-roles-and-scopes) to the decorator - for example the `/projected-with-*` routes
 
-Independently of these options, it's possible to require specific, trusted, client applications, regardless of the user 
+Independently of these options, it's possible to require specific, trusted, client applications, regardless of the user
 using them. This is useful in circumstances where a user may be authorised but the client can't be trusted:
 
 * set the `AZURE_OAUTH_CLIENT_APPLICATION_IDS` config option to a list of Azure application identifiers
@@ -119,7 +123,7 @@ The resource protector requires two configuration options to validate tokens cor
 | `AZURE_OAUTH_APPLICATION_ID`         | Str       | Yes      | ID of the Azure AD application registration for the application being protected                                            |
 | `AZURE_OAUTH_CLIENT_APPLICATION_IDS` | List[Str] | No       | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected |
 
-**Note:** If the `AZURE_OAUTH_CLIENT_APPLICATION_IDS` option is not set, all client applications will be trusted and the 
+**Note:** If the `AZURE_OAUTH_CLIENT_APPLICATION_IDS` option is not set, all client applications will be trusted and the
 `azp` claim, if present, is ignored.
 
 Before these options can be set you will need to:
@@ -131,21 +135,21 @@ Before these options can be set you will need to:
 
 ### Flask session support
 
-This provider extends the AuthLib ResourceProtector to support detecting access tokens stored in the Flask session. 
+This provider extends the AuthLib ResourceProtector to support detecting access tokens stored in the Flask session.
 
 This is intended for browser based applications where the `Authorization` header cannot be easily set to include the
 access token. This support will be enabled automatically if an `access_token` session key is set.
 
 ### Access token versions
 
-Since version 0.5.0, this provider is compatible with Azure access token versions 1.0 and 2.0. Prior to version 0.5.0 
-only version 2.0 tokens could be used. See 
-[Microsoft's documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens) for the 
+Since version 0.5.0, this provider is compatible with Azure access token versions 1.0 and 2.0. Prior to version 0.5.0
+only version 2.0 tokens could be used. See
+[Microsoft's documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens) for the
 differences between token versions.
 
-**Note:** If you use version 1.0 tokens, this provider expects at least one of the `identifierUris` property values to 
+**Note:** If you use version 1.0 tokens, this provider expects at least one of the `identifierUris` property values to
 be `api://{protected_application_id}`, where `{protected_application_id}` is the application ID of the app registration
-representing the application being protected by this provider. Without this, you will receive errors for an invalid 
+representing the application being protected by this provider. Without this, you will receive errors for an invalid
 audience.
 
 ### Applications, users, groups and tenancies
@@ -252,12 +256,12 @@ those that will be granted access to use such applications, possibly by a user (
 
 ### Testing support
 
-For testing applications, a local/test JSON Web Key Set (JWKS) can be used to sign local/test JSON Web Tokens (JWTs) 
-without relying on Azure. Local tokens can include, or not include, arbitrary scopes/roles, which can ensure 
+For testing applications, a local/test JSON Web Key Set (JWKS) can be used to sign local/test JSON Web Tokens (JWTs)
+without relying on Azure. Local tokens can include, or not include, arbitrary scopes/roles, which can ensure
 requirements for specific scopes are properly enforced by this provider.
 
-This requires using local tokens signed by the test keys, and patching the `FlaskAzureOauth._get_jwks` method to 
-validate tokens using the same test keys. 
+This requires using local tokens signed by the test keys, and patching the `FlaskAzureOauth._get_jwks` method to
+validate tokens using the same test keys.
 
 For example:
 
@@ -316,51 +320,55 @@ class AppTestCase(unittest.TestCase):
 
 ## Developing
 
-This project is developed as a Python library. A bundled Flask application is used to simulate its usage and to act as
+This provider is developed as a Python library. A bundled Flask application is used to simulate its usage and act as
 framework for running tests etc.
-
-```shell
-$ git clone https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth.git
-$ cd flask-azure-oauth
-```
 
 ### Development environment
 
-Docker and Docker Compose are required to setup a local development environment of this application.
+Git and [Poetry](https://python-poetry.org) are required to set up a local development environment of this project.
 
-If you have access to the [BAS GitLab instance](https://gitlab.data.bas.ac.uk), you can pull the application Docker
-image from the BAS Docker Registry. Otherwise you will need to build the Docker image locally.
+**Note:** If you use [Pyenv](https://github.com/pyenv/pyenv), this project sets a local Python version for consistency.
 
 ```shell
-# If you have access to gitlab.data.bas.ac.uk:
-$ docker login docker-registry.data.bas.ac.uk
-$ docker-compose pull
-# If you don't have access:
-$ docker-compose build
+# clone from the BAS GitLab instance if possible
+$ git clone https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth.git
+
+# alternatively, clone from the GitHub mirror
+$ git clone https://github.com/antarctica/flask-azure-oauth.git
+
+# setup virtual environment
+$ cd flask-azure-oauth
+$ poetry install
 ```
 
 ### Code Style
 
-PEP-8 style and formatting guidelines must be used for this project, with the exception of the 80 character line limit.
+PEP-8 style and formatting guidelines must be used for this project, except the 80 character line limit.
+[Black](https://github.com/psf/black) is used for formatting, configured in `pyproject.toml` and enforced as part of
+[Python code linting](#code-linting-python).
 
-[Black](https://github.com/psf/black) is used to ensure compliance, configured in `pyproject.toml`.
-
-Black can be [integrated](https://black.readthedocs.io/en/stable/editor_integration.html#pycharm-intellij-idea) with a
-range of editors, such as PyCharm, to perform formatting automatically.
+Black can be integrated with a range of editors, such as 
+[PyCharm](https://black.readthedocs.io/en/stable/integrations/editors.html#pycharm-intellij-idea), to apply formatting 
+automatically when saving files.
 
 To apply formatting manually:
 
 ```shell
-$ docker-compose run app black flask_azure_oauth/
+$ poetry run black src/ tests/
 ```
 
-To check compliance manually:
+### Code Linting (Python)
+
+[Flake8](https://flake8.pycqa.org) and various extensions are used to lint Python files in the `bas_metadata_library` 
+module. Specific checks, and any configuration options, are documented in the `./.flake8` config file.
+
+To check files manually:
 
 ```shell
-$ docker-compose run app black --check flask_azure_oauth/
+$ poetry run flake8 src/ examples/
 ```
 
-Checks are ran automatically in [Continuous Integration](#continuous-integration).
+Checks are run automatically in [Continuous Integration](#continuous-integration).
 
 ### Dependencies
 
@@ -374,56 +382,68 @@ Non-code files, such as static files, can also be included in the [Python packag
 To add a new (development) dependency:
 
 ```shell
-$ docker-compose run app ash
 $ poetry add [dependency] (--dev)
 ```
 
-Then rebuild the development container, and if you can, push to GitLab:
+Then update the Docker image used for CI/CD builds and push to the BAS Docker Registry (which is provided by GitLab):
 
 ```shell
-$ docker-compose build app
-$ docker-compose push app
+$ docker build -f gitlab-ci.Dockerfile -t docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:latest .
+$ docker push docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:latest
 ```
 
 #### Updating dependencies
 
-To update dependencies:
-
 ```shell
-$ docker-compose run app ash
 $ poetry update
 ```
 
-Then rebuild the development container, and if you can, push to GitLab:
+See the instructions above to update the Docker image used in CI/CD.
+
+#### Dependency vulnerability checks
+
+The [Safety](https://pypi.org/project/safety/) package is used to check dependencies against known vulnerabilities.
+
+**IMPORTANT!** As with all security tools, Safety is an aid for spotting common mistakes, not a guarantee of secure 
+code. In particular this is using the free vulnerability database, which is updated less frequently than paid options.
+
+This is a good tool for spotting low-hanging fruit in terms of vulnerabilities. It isn't a substitute for proper 
+vetting of dependencies, or a proper audit of potential issues by security professionals. If in any doubt you MUST seek
+proper advice.
+
+Checks are run automatically in [Continuous Integration](#continuous-integration).
+
+To check locally:
 
 ```shell
-$ docker-compose build app
-$ docker-compose push app
+$ poetry export --without-hashes -f requirements.txt | poetry run safety check --full-report --stdin
 ```
 
-### Supported Python versions
+#### `authlib` package
 
-This project is only tested against the Python version used in the project container.
-
-Other Python versions may be compatible with this project but these are not tested or officially supported.
-
-A minimum Python version is set in `pyproject.toml`.
+The `authlib` dependency is locked to version `0.14.3` as the `0.15.x` release series contains a bug that prevents the
+`kid` claim from being accessed from Jason Web Key (JWK) instances. This is a known issue and will be resolved in the
+`1.x` release. See https://github.com/lepture/authlib/issues/314 for more information.
 
 ### Static security scanning
 
-To ensure the security of this API, source code is checked against [Bandit](https://github.com/PyCQA/bandit) for issues
-such as not sanitising user inputs or using weak cryptography.
+To ensure the security of this API, source code is checked against [Bandit](https://github.com/PyCQA/bandit)
+and enforced as part of [Python code linting](#code-linting-python).
 
 **Warning:** Bandit is a static analysis tool and can't check for issues that are only be detectable when running the
 application. As with all security tools, Bandit is an aid for spotting common mistakes, not a guarantee of secure code.
 
-To check manually from the command line:
+To check manually:
 
 ```shell
-$ docker-compose run app bandit -r .
+$ poetry run bandit -r src/ examples/
 ```
 
-Checks are ran automatically in [Continuous Integration](#continuous-integration).
+**Note:** This package contains a number of testing methods that deliberately do insecure or nonsensical things. These
+are necessary to test failure modes and error handling, they are not a risk when using this package as intended. These 
+workarounds have been exempted from these security checks where they apply.
+
+Checks are run automatically in [Continuous Integration](#continuous-integration).
 
 ## Testing
 
@@ -436,13 +456,13 @@ The Python [UnitTest](https://docs.python.org/3/library/unittest.html) library i
 test framework. Test cases are defined in files within `tests/` and are automatically loaded when using the `test`
 Flask CLI command included in the local Flask application in the development environment.
 
+To run tests manually using PyCharm, use the included *App (tests)* run/debug configuration.
+
 To run tests manually:
 
 ```shell
-$ docker-compose run -e FLASK_ENV=testing app flask test --test-runner text
+$ FLASK_APP=examples FLASK_ENV=testing poetry run python -m unittest discover
 ```
-
-To run tests manually using PyCharm, use the included *App (Tests)* run/debug configuration.
 
 Tests are ran automatically in [Continuous Integration](#continuous-integration).
 
@@ -452,26 +472,25 @@ All commits will trigger a Continuous Integration process using GitLab's CI/CD p
 
 ### Test/Example applications
 
-For verifying this provider works for real-world use-cases, a test Flask application is included in 
+For verifying this provider works for real-world use-cases, a test Flask application is included in
 `examples/__init__.py`. This test application acts as both an application providing access to, and accessing, protected
 resources. It can use a number of application registrations registered in the BAS Web & Applications Test Azure AD.
 
-These applications allow testing different versions of access tokens for example. These applications are intended for 
-testing only. They do not represent real applications, or contain any sensitive or protected information. 
+These applications allow testing different versions of access tokens for example. These applications are intended for
+testing only. They do not represent real applications, or contain any sensitive or protected information.
 
-To test requesting resources from protected resources as an API, set the appropriate config options and run the 
+To test requesting resources from protected resources as an API, set the appropriate config options and run the
 application container:
 
 ```shell
-$ docker-compose run app
-$ flask access-resource [resource]
+$ FLASK_APP=examples poetry run flask
 ```
 
-To test requesting resources from protected resources as a browser application, set the appropriate config options and 
+To test requesting resources from protected resources as a browser application, set the appropriate config options and
 start the application container:
 
 ```shell
-$ docker-compose up
+$ FLASK_APP=examples poetry run flask run
 ```
 
 Terraform is used to provision the application registrations used:
@@ -485,7 +504,7 @@ $ terraform validate
 $ terraform apply
 ```
 
-**Note:** Several properties in the application registration resources require setting once the registration has been 
+**Note:** Several properties in the application registration resources require setting once the registration has been
 initially made (identifiers for example). These will need commenting out before use.
 
 Some properties, such as client secrets, can only be set once applications have been registered in the Azure Portal.
@@ -499,9 +518,10 @@ Terraform state information is held in the BAS Terraform Remote State project (i
 This project is distributed as a Python package, hosted in [PyPi](https://pypi.org/project/flask-azure-oauth).
 
 Source and binary packages are built and published automatically using
-[Poetry](https://python-poetry.org/docs/cli/#publish) in [Continuous Delivery](#continuous-deployment).
+[Poetry](https://python-poetry.org) in [Continuous Deployment](#continuous-deployment).
 
-Package versions are determined automatically using the `support/python-packaging/parse_version.py` script.
+**Note:** Except for tagged releases, Python packages built in CD will use `0.0.0` as a version to indicate they are
+not formal releases.
 
 ### Continuous Deployment
 
@@ -512,8 +532,9 @@ A Continuous Deployment process using GitLab's CI/CD platform is configured in `
 For all releases:
 
 1. create a `release` branch
-2. close release in `CHANGELOG.md`
-3. push changes, merge the `release` branch into `master` and tag with version
+2. bump the version as appropriate in `pyproject.toml`
+3. close release in `CHANGELOG.md`
+4. push changes, merge the `release` branch into `main`, and tag with version
 
 The project will be built and published to PyPi automatically through [Continuous Deployment](#continuous-deployment).
 
