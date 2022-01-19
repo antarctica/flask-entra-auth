@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "flask-azure-oauth"
 version = "0.0.0"
-license = "OGL-UK-3.0"
+license = "MIT"
 description = "Python Flask extension for using Azure Active Directory with OAuth to protect applications"
 authors = [
     "Felix Fennell <felnne@bas.ac.uk>"
