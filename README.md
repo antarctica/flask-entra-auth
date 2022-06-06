@@ -5,14 +5,14 @@ Python Flask extension for securing apps with Azure Active Directory OAuth
 ## Purpose
 
 Provide an [AuthLib](https://authlib.org)
-[Resource Protector/Server](https://docs.authlib.org/en/latest/flask/2/resource-server.html) to authenticate and 
-authorise users and applications using a Flask application with OAuth functionality offered by 
-[Azure Active Directory](https://azure.microsoft.com/en-us/services/active-directory/), as part of the 
+[Resource Protector/Server](https://docs.authlib.org/en/latest/flask/2/resource-server.html) to authenticate and
+authorise users and applications using a Flask application with OAuth functionality offered by
+[Azure Active Directory](https://azure.microsoft.com/en-us/services/active-directory/), as part of the
 [Microsoft identity platform](https://docs.microsoft.com/en-us/azure/active-directory/develop/about-microsoft-identity-platform).
 
 Azure Active Directory, acting as an identity provider, issues
-[OAuth access tokens](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens), the claims of 
-which are validated by this provider. These claims include the identity of the user and client application (used for 
+[OAuth access tokens](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens), the claims of
+which are validated by this provider. These claims include the identity of the user and client application (used for
 authentication), and any permissions/scopes assigned or delegated to the user or application (used for authorisation).
 
 This provider supports these scenarios:
@@ -38,8 +38,8 @@ Other scenarios may work but are not officially supported, this may change in th
 [Microsoft Authentication Library (MSAL) for Python](https://github.com/AzureAD/microsoft-authentication-library-for-python)
 package if you need to do this.
 
-**Note:** This provider has been written to solve an internal need within applications used by the British Antarctic 
-Survey. It is offered to others in the hope that's useful for your needs as well, however it does not (and cannot) 
+**Note:** This provider has been written to solve an internal need within applications used by the British Antarctic
+Survey. It is offered to others in the hope that's useful for your needs as well, however it does not (and cannot)
 cover every option available.
 
 ## Installation
@@ -345,10 +345,10 @@ $ poetry install
 
 PEP-8 style and formatting guidelines must be used for this project, except the 80 character line limit.
 [Black](https://github.com/psf/black) is used for formatting, configured in `pyproject.toml` and enforced as part of
-[Python code linting](#code-linting-python).
+[Python code linting](#code-linting).
 
-Black can be integrated with a range of editors, such as 
-[PyCharm](https://black.readthedocs.io/en/stable/integrations/editors.html#pycharm-intellij-idea), to apply formatting 
+Black can be integrated with a range of editors, such as
+[PyCharm](https://black.readthedocs.io/en/stable/integrations/editors.html#pycharm-intellij-idea), to apply formatting
 automatically when saving files.
 
 To apply formatting manually:
@@ -357,10 +357,10 @@ To apply formatting manually:
 $ poetry run black src/ tests/
 ```
 
-### Code Linting (Python)
+### Code Linting
 
-[Flake8](https://flake8.pycqa.org) and various extensions are used to lint Python files in the `bas_metadata_library` 
-module. Specific checks, and any configuration options, are documented in the `./.flake8` config file.
+[Flake8](https://flake8.pycqa.org) and various extensions are used to lint Python files. Specific checks, and any
+configuration options, are documented in the `./.flake8` config file.
 
 To check files manually:
 
@@ -404,10 +404,10 @@ See the instructions above to update the Docker image used in CI/CD.
 
 The [Safety](https://pypi.org/project/safety/) package is used to check dependencies against known vulnerabilities.
 
-**IMPORTANT!** As with all security tools, Safety is an aid for spotting common mistakes, not a guarantee of secure 
+**IMPORTANT!** As with all security tools, Safety is an aid for spotting common mistakes, not a guarantee of secure
 code. In particular this is using the free vulnerability database, which is updated less frequently than paid options.
 
-This is a good tool for spotting low-hanging fruit in terms of vulnerabilities. It isn't a substitute for proper 
+This is a good tool for spotting low-hanging fruit in terms of vulnerabilities. It isn't a substitute for proper
 vetting of dependencies, or a proper audit of potential issues by security professionals. If in any doubt you MUST seek
 proper advice.
 
@@ -440,7 +440,7 @@ $ poetry run bandit -r src/ examples/
 ```
 
 **Note:** This package contains a number of testing methods that deliberately do insecure or nonsensical things. These
-are necessary to test failure modes and error handling, they are not a risk when using this package as intended. These 
+are necessary to test failure modes and error handling, they are not a risk when using this package as intended. These
 workarounds have been exempted from these security checks where they apply.
 
 Checks are run automatically in [Continuous Integration](#continuous-integration).
