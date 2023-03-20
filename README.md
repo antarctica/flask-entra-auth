@@ -99,7 +99,7 @@ To restrict a route to any valid user or client application (authentication):
 
 To restrict a route to specific users (authorisation):
 
-* add any required [Scopes](#permissions-roles-and-scopes) to the decorator - for example the `/projected-with-*` routes
+* add any required [Scopes](#permissions-roles-and-scopes) to the decorator - for example the `/protected-with-*` routes
 
 Independently of these options, it's possible to require specific, trusted, client applications, regardless of the user
 using them. This is useful in circumstances where a user may be authorised but the client can't be trusted:
