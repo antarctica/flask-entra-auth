@@ -1,3 +1,4 @@
+import jwt
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -17,8 +18,27 @@ def restricted():
 
 @app.route("/introspect")
 def introspect():
-    return {
-        "headers": dict(request.headers),
-        "auth": request.headers.get("Authorization"),
-        "token": request.headers.get("Authorization").split(" ")[1],
+    payload = {"headers": dict(request.headers)}
+
+    if "Authorization" not in request.headers:
+        return payload
+
+    payload["auth"] = request.headers.get("Authorization")
+
+    if "Bearer" not in request.headers.get("Authorization"):
+        return payload
+
+    payload["token_raw"] = request.headers.get("Authorization").split(" ")[1]
+    payload["token_decoded"] = jwt.decode(
+        payload["token_raw"], options={"verify_signature": False}
+    )
+
+    selected_claims = ["email", "family_name", "given_name", "name", "roles"]
+    payload["selected_claims"] = {
+        claim: payload["token_decoded"].get(claim) for claim in selected_claims
     }
+
+    if "selected-only" in request.args:
+        return {"selected_claims": payload["selected_claims"]}
+
+    return payload

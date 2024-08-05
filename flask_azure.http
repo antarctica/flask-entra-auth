@@ -1,13 +1,40 @@
-### @name unrestricted
-// @no-cookie-jar
+
+### @name Auth client authorise
+# @no-cookie-jar
+POST https://login.microsoftonline.com/b311db95-32ad-438f-a101-7ba061712a4e/oauth2/v2.0/devicecode
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+
+client_id = 91c284e7-6522-4eb4-9943-f4ec08e98cb9 &
+scope = api%3A%2F%2F8bfe65d3-9509-4b0a-acd2-8ce8cdc0c01e%2FBAS.MAGIC.ADD.Access
+
+> {% client.global.set("device_code", response.body.device_code); %}
+
+### @name Auth Client token
+# @no-cookie-jar
+POST https://login.microsoftonline.com/b311db95-32ad-438f-a101-7ba061712a4e/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+
+grant_type = urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code &
+client_id = 91c284e7-6522-4eb4-9943-f4ec08e98cb9 &
+device_code = {{device_code}}
+
+> {% client.global.set("access_token", response.body.access_token); %}
+
+### App unrestricted
+# @no-cookie-jar
 POST http://localhost:5005/unrestricted
 
-### @name restricted
-// @no-cookie-jar
+### App restricted
+# @no-cookie-jar
 POST http://localhost:5005/restricted
-Authorization: Bearer xxx
+Authorization: Bearer {{access_token}}
 
-### @name introspection
-// @no-cookie-jar
+### App introspection (selected)
+# @no-cookie-jar
+GET http://localhost:5005/introspect?selected-only
+Authorization: Bearer {{access_token}}
+
+### App introspection (full)
+# @no-cookie-jar
 GET http://localhost:5005/introspect
-Authorization: Bearer xxx
+Authorization: Bearer {{access_token}}
