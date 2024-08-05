@@ -9,6 +9,10 @@ packages = [{include = "flask_azure", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
+flask = "^3.0.3"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.6"
 
 [build-system]
 requires = ["poetry-core"]

@@ -9,6 +9,12 @@ To find a replacement for the now outdated
 
 See https://gitlab.data.bas.ac.uk/MAGIC/add-metadata-toolbox/-/issues/384 for background.
 
+## Usage
+
+```
+$ poetry run flask --app=flask_azure.__main__:app run --debug --port 5005
+```
+
 ## Experiments
 
 ...

@@ -1,0 +1,13 @@
+### @name unrestricted
+// @no-cookie-jar
+POST http://localhost:5005/unrestricted
+
+### @name restricted
+// @no-cookie-jar
+POST http://localhost:5005/restricted
+Authorization: Bearer xxx
+
+### @name introspection
+// @no-cookie-jar
+GET http://localhost:5005/introspect
+Authorization: Bearer xxx
