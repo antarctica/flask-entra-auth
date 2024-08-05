@@ -33,6 +33,10 @@ Validation steps:
 
 - initially https://pyjwt.readthedocs.io/en/latest/usage.html#encoding-decoding-tokens-with-rs256-rsa
   - which checks signing key and audience (`aud`) claim
+- then https://github.com/Intility/fastapi-azure-auth/blob/main/fastapi_azure_auth/auth.py#L189
+  - which additionally checks `iss` claim
+- then from various parts of https://github.com/AzureAD/microsoft-authentication-library-for-python/issues/147:
+  - which includes clock skew (not been a problem for us inclined to omit for now)
 
 ## Licence
 

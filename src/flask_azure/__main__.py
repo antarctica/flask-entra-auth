@@ -18,12 +18,14 @@ def validate_token(token: str):
 
     jwks_client = jwt.PyJWKClient(oidc_config["jwks_uri"])
     public_key = jwks_client.get_signing_key_from_jwt(token)
+    issuer = oidc_config["issuer"]
 
     return jwt.decode(
         jwt=token,
         key=public_key,
         algorithms=["RS256"],
         audience=app.config["client_id"],
+        issuer=issuer,
     )
 
 
