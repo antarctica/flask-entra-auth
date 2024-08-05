@@ -11,13 +11,28 @@ See https://gitlab.data.bas.ac.uk/MAGIC/add-metadata-toolbox/-/issues/384 for ba
 
 ## Usage
 
+Start server:
+
 ```
 $ poetry run flask --app=flask_azure.__main__:app run --debug --port 5005
 ```
 
+From [`flask_azure.http`](flask_azure.http) using PyCharm run:
+
+- the `login.microsoftonline.com/.../devicecode` request, following the prompt to sign in with the device code
+- then the `login.microsoftonline.com/.../token` request, to set an access token for use in app requests
+
+Run one of the app requests from [`flask_azure.http`](flask_azure.http) using PyCharm:
+
+- use the `/introspect` `/introspect?selected-only` request to validate the token and list claims
+  - if the token is invalid, claims will still be shown but `token_valid` will be `false`
+
 ## Experiments
 
-...
+Validation steps:
+
+- initially https://pyjwt.readthedocs.io/en/latest/usage.html#encoding-decoding-tokens-with-rs256-rsa
+  - which checks signing key and audience (`aud`) claim
 
 ## Licence
 

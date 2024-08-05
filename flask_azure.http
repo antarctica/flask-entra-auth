@@ -1,5 +1,5 @@
 
-### @name Auth client authorise
+### Auth client authorise
 # @no-cookie-jar
 POST https://login.microsoftonline.com/b311db95-32ad-438f-a101-7ba061712a4e/oauth2/v2.0/devicecode
 Content-Type: application/x-www-form-urlencoded; charset=utf-8
@@ -9,7 +9,7 @@ scope = api%3A%2F%2F8bfe65d3-9509-4b0a-acd2-8ce8cdc0c01e%2FBAS.MAGIC.ADD.Access
 
 > {% client.global.set("device_code", response.body.device_code); %}
 
-### @name Auth Client token
+### Auth Client token
 # @no-cookie-jar
 POST https://login.microsoftonline.com/b311db95-32ad-438f-a101-7ba061712a4e/oauth2/v2.0/token
 Content-Type: application/x-www-form-urlencoded; charset=utf-8

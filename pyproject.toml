@@ -10,7 +10,8 @@ packages = [{include = "flask_azure", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 flask = "^3.0.3"
-pyjwt = "^2.9.0"
+pyjwt = {extras = ["crypto"], version = "^2.9.0"}
+requests = "^2.32.3"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.6"
