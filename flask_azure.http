@@ -29,12 +29,9 @@ POST http://localhost:5005/unrestricted
 POST http://localhost:5005/restricted
 Authorization: Bearer {{access_token}}
 
-### App introspection (selected)
-# @no-cookie-jar
-GET http://localhost:5005/introspect?selected-only
-Authorization: Bearer {{access_token}}
-
-### App introspection (full)
+### App introspection
 # @no-cookie-jar
 GET http://localhost:5005/introspect
-Authorization: Bearer {{access_token}}
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+
+token = {{access_token}}
