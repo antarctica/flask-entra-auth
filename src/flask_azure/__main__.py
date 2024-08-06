@@ -117,11 +117,11 @@ def restricted():
 @app.route("/introspect")
 def introspect():
     payload = {"token_valid": False}
-    if "Authorization" not in request.headers:
-        return {"headers": dict(request.headers)}
-    if "Bearer" not in request.headers.get("Authorization"):
-        return {"auth": request.headers.get("Authorization")}
+    status = 401
 
+    if "Authorization" not in request.headers:
+        return {**payload, "headers": dict(request.headers)}
+    if "Bearer" not in request.headers.get("Authorization"):
         return {**payload, "auth": request.headers.get("Authorization")}
 
     payload["token"] = request.headers.get("Authorization").split(" ")[1]
@@ -129,10 +129,12 @@ def introspect():
     payload["token_decoded"]: token_decoded
     payload["token_valid"] = False
     payload["token_error"] = "unknown"
+
     try:
         payload["token_decoded"] = validate_token(payload["token"])
         payload["token_valid"] = True
         payload["token_error"] = "-"
+        status = 200
     except jwt.exceptions.ExpiredSignatureError:
         payload["token_error"] = "expired"
     except jwt.exceptions.InvalidAudienceError:
@@ -140,7 +142,7 @@ def introspect():
 
     if not payload["token_valid"]:
         payload["token_decoded_invalid"] = jwt.decode(
-            payload["token_raw"], options={"verify_signature": False}
+            payload["token"], options={"verify_signature": False}
         )
 
     selected_claims = ["email", "family_name", "given_name", "name", "roles"]
@@ -153,8 +155,8 @@ def introspect():
 
     if "selected-only" in request.args:
         return {
-            "token_valid": payload["token_valid"],
+            **payload,
             "selected_claims": payload["selected_claims"],
         }
 
-    return payload
+    return payload, status
