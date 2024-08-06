@@ -29,7 +29,9 @@ Run one of the app requests from [`flask_azure.http`](flask_azure.http) using Py
 
 ## Experiments
 
-Validation steps:
+### Token validation
+
+Sources:
 
 - initially https://pyjwt.readthedocs.io/en/latest/usage.html#encoding-decoding-tokens-with-rs256-rsa
   - which checks signing key and audience (`aud`) claim
@@ -37,6 +39,16 @@ Validation steps:
   - which additionally checks `iss` claim
 - then from various parts of https://github.com/AzureAD/microsoft-authentication-library-for-python/issues/147:
   - which includes clock skew (not been a problem for us inclined to omit for now)
+- then from https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/blob/main/src/flask_azure_oauth/tokens.py:
+  - which additionally required the `sub` and `azp` claim for optionally filtering the security principle and application
+  - which also exposed a leeway value with a default of 0
+  - it also checked the `iat` claim but given we didn't do anything with its value, I don't think this adds anything
+
+Summary:
+
+- we check all standard claims (not sure about `nbf` and we ignore `iat` as we don't have a use for it)
+- we additionally check the `ver` Entra specific claim is '2.0'
+- we optionally additionally check the `sub` and/or `azp` claim values are allowed as per a list
 
 ## Licence
 
