@@ -20,6 +20,13 @@ device_code = {{device_code}}
 
 > {% client.global.set("access_token", response.body.access_token); %}
 
+### App introspection
+# @no-cookie-jar
+GET http://localhost:5005/introspect
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+
+token = {{access_token}}
+
 ### App unrestricted
 # @no-cookie-jar
 POST http://localhost:5005/unrestricted
@@ -29,9 +36,7 @@ POST http://localhost:5005/unrestricted
 POST http://localhost:5005/restricted
 Authorization: Bearer {{access_token}}
 
-### App introspection
+### App restricted scope
 # @no-cookie-jar
-GET http://localhost:5005/introspect
-Content-Type: application/x-www-form-urlencoded; charset=utf-8
-
-token = {{access_token}}
+POST http://localhost:5005/restricted-scope
+Authorization: Bearer {{access_token}}

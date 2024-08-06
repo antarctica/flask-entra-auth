@@ -93,6 +93,7 @@ class EntraToken:
         self._allowed_azps: list | None = allowed_azps
 
         self.claims = self.validate()
+        self.valid = True
 
     @property
     def _public_key(self) -> PyJWK:

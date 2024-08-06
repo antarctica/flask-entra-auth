@@ -49,6 +49,20 @@ Summary:
 - we additionally check the `ver` Entra specific claim is '2.0'
 - we optionally additionally check the `sub` and/or `azp` claim values are allowed as per a list
 
+### Resource protector
+
+There are various implementations of a similar concept (decorator for routes). As we know the AuthLib version works I've
+stuck with that.
+
+At a minimum this needs a bearer token validator, a class that requires an `authenticate()` (not validate) method for a 
+token (taken from the `Authorization` request header). This assumes we're running our own OAuth server, and so have a 
+record of tokens we've issued. We don't and instead use this method to validate the token.
+
+This validator class then calls its own `validate()` method which checks the token is specified, not revoked/expired 
+and has the required set of scopes present.
+
+The resource protector class itself then registers this validator. We don't need to make any changes to it.
+
 ## Licence
 
 Copyright (c) 2024 UK Research and Innovation (UKRI), British Antarctic Survey (BAS).
