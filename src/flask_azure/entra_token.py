@@ -67,7 +67,7 @@ class Rfc7662Members(TypedDict):
 
 class EntraToken:
     @property
-    def required_claims(self) -> list[str]:
+    def _required_claims(self) -> list[str]:
         return [
             "iss",  # issuer - who issued the token - checked by default
             "sub",  # subject - who the token was issued to - additionally checked by `allowed_subs` list
@@ -136,7 +136,7 @@ class EntraToken:
                 algorithms=["RS256"],
                 audience=self._client_id,
                 issuer=self._issuer,
-                options={"require": self.required_claims},
+                options={"require": self._required_claims},
             )
         except ExpiredSignatureError:
             raise EntraTokenExpiredError("Token has expired")
