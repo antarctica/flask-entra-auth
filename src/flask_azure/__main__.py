@@ -48,8 +48,8 @@ def introspect_rfc7662():
     try:
         token = EntraToken(
             token=request.form.get("token"),
-            oidc_endpoint=app.config["oidc_endpoint"],
-            client_id=app.config["client_id"],
+            oidc_endpoint=app.config["auth_oidc_endpoint"],
+            client_id=app.config["auth_client_id"],
         )
         return token.rfc7662_introspection
     except EntraTokenError as e:

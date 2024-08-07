@@ -22,7 +22,7 @@ device_code = {{device_code}}
 
 ### App introspection
 # @no-cookie-jar
-GET http://localhost:5005/introspect
+POST http://localhost:5005/introspect
 Content-Type: application/x-www-form-urlencoded; charset=utf-8
 
 token = {{access_token}}
@@ -41,7 +41,7 @@ Authorization: Bearer {{access_token}}
 POST http://localhost:5005/restricted/scope
 Authorization: Bearer {{access_token}}
 
-### App restricted current user
+### App restricted current token
 # @no-cookie-jar
 GET http://localhost:5005/restricted/current-token
 Authorization: Bearer {{access_token}}
