@@ -1,7 +1,7 @@
-from authlib.integrations.flask_oauth2 import ResourceProtector
+from authlib.integrations.flask_oauth2 import ResourceProtector, current_token
 from flask import Flask, request
 
-from flask_azure.entra_protector import EntraBearerTokenValidator
+from flask_azure.entra_protector import EntraBearerTokenValidator, EntraTokenAuthlib
 from flask_azure.entra_token import EntraToken, EntraTokenError
 
 app = Flask(__name__)
@@ -27,13 +27,24 @@ def unrestricted():
 @app.route("/restricted", methods=["POST"])
 @auth()
 def restricted():
-    return "Restricted route", 200
+    return "Restricted route"
 
 
-@app.route("/restricted-scope", methods=["POST"])
+@app.route("/restricted/scope", methods=["POST"])
 @auth(["BAS.MAGIC.ADD.Access"])
 def restricted_scope():
-    return "Restricted route with required scope.", 200
+    return "Restricted route with required scope."
+
+
+@app.route("/restricted/current-token", methods=["GET"])
+@auth()
+def restricted_current_token():
+    token: EntraTokenAuthlib = current_token
+    payload = {
+        'claims': token.claims
+    }
+
+    return payload
 
 
 @app.route("/introspect")

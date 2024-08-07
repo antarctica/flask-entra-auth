@@ -38,5 +38,10 @@ Authorization: Bearer {{access_token}}
 
 ### App restricted scope
 # @no-cookie-jar
-POST http://localhost:5005/restricted-scope
+POST http://localhost:5005/restricted/scope
+Authorization: Bearer {{access_token}}
+
+### App restricted current user
+# @no-cookie-jar
+GET http://localhost:5005/restricted/current-token
 Authorization: Bearer {{access_token}}
