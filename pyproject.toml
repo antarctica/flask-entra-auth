@@ -17,6 +17,50 @@ authlib = "^1.3.1"
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.6"
 
+[tool.ruff]
+src = ["src"]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ['A', 'ANN', 'B', 'B9', 'C90', 'C4', 'D', 'DTZ', 'E', 'EM', 'ERA', 'F', 'FA', 'I', 'N', 'PT', 'PTH', 'RET', 'RUF', 'S', 'SIM', 'TD', 'TRY', 'UP', 'W']
+#   A | builtins (variables named after builtin names)
+# ANN | annotations (type hints)
+#   B | bug-bear (bad code)
+#  B9 | bug-bear opinionated (additional bad code)
+# C90 | mccabe (code complexity)
+#  C4 | comprehensions (list/dict/set comprehensions)
+#   D | pydocstyle (docstring)
+# DTZ | datetimez (date/time)
+#   E | pycodestyle errors (PEP8)
+#  EM | errmsg (exceptions)
+# ERA | eraticate (comments)
+#   F | pyflakes (invalid/bad code)
+#  FA | uture-annotations (type hints)
+#   I | isort (import ordering)
+#   N | pep8-naming (PEP8)
+#  PT | pytest-style (tests)
+# PTH | use-pathlib (old syntax)
+# RET | return (return statements)
+# RUF | ruff (other)
+#   S | bandit (static security)
+# SIM | simplicity (code complexity)
+#  TD | todos (comments)
+# TRY | tryceratops (exceptions)
+#  UP | pyupgrade (old syntax)
+#   W | pycodestyle warnings (PEP8)
+
+ignore = ["ANN101", 'D100', 'D104', 'D107', 'D203', 'D212', 'D401', 'D402', 'E501', 'TD002']
+# ANN101 | ignore missing self type (can't be used in Python 3.9)
+#   D100 | for avoding module level docstrings
+#   D104 | for avoding package level docstrings
+#   D203 | for requring blank line before classes (which looks silly)
+#   D212 | for docstring requring multi-line comments to start on first line (which looks silly)
+#   D401 | for docstring being in interpretive mood (which isn't correctly determined)
+#   D402 | for docstring that can't resemble their signatures (despite them being completely different)
+#   E501 | for bug-bear compatibility (as B905 overrides line length checks)
+#  TD002 | for allowing TODOs without an author (as an issue should assign ownership)
+
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN201", "S101"]
 #   tests/* |   S101 | ignore use of assert
