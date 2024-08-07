@@ -25,8 +25,8 @@ class EntraBearerTokenValidator(BearerTokenValidator):
         self._oidc_endpoint = oidc_endpoint
         self._client_id = client_id
 
-    def authenticate_token(self, token_string) -> None:
-        EntraTokenAuthlib(
+    def authenticate_token(self, token_string) -> EntraTokenAuthlib:
+        return EntraTokenAuthlib(
             token=token_string,
             oidc_endpoint=self._oidc_endpoint,
             client_id=self._client_id,
