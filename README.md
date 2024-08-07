@@ -17,14 +17,86 @@ Start server:
 $ poetry run flask --app=flask_azure.__main__:app run --debug --port 5005
 ```
 
-From [`flask_azure.http`](flask_azure.http) using PyCharm run:
+Get auth token:
 
-- the `login.microsoftonline.com/.../devicecode` request, following the prompt to sign in with the device code
-- then the `login.microsoftonline.com/.../token` request, to set an access token for use in app requests
+- from [`flask_azure.http`](flask_azure.http) using PyCharm run:
+  - the `login.microsoftonline.com/.../devicecode` request, following the prompt to sign in with the device code
+  - then the `login.microsoftonline.com/.../token` request, to set an access token for use in app requests
 
-Run the `/introspect` request from [`flask_azure.http`](flask_azure.http) using PyCharm:
+To view details about the current token:
 
-- data is returned according to RFC7662
+- from [`flask_azure.http`](flask_azure.http) using PyCharm run either:
+  - the `/introspect` request, where data is returned according to RFC7662
+  - the `/restricted/current-token` request, where all token claims are returned as a JSON object
+
+## Tests
+
+To run tests:
+
+```
+$ poetry run pytest
+```
+
+To run coverage:
+
+
+```
+$ poetry run pytest --cov --cov-report=html
+```
+
+## Roadmap
+
+v0.1.0
+
+- [x] what else did my app do to check a token?
+- [x] logically we should ensure `ver` claim is '2.0'
+- [x] resource protector v1
+- [x] get current token
+- [x] refactor validator to skip auth method and overload validator to prevent needing derived token
+- [x] refactored into an extension (resource protector v2)
+- [x] minimal tests
+
+Then:
+
+- [ ] fake token auth for tests
+
+Then:
+
+- reimplement error handling as exceptions to be handled by the app
+  - generic:
+    - [ ] missing authorisation header
+    - [ ] authentication scheme not bearer
+    - [ ] missing credentials
+  - https://pyjwt.readthedocs.io/en/latest/api.html#exceptions:
+    - [ ] (invalid token base)
+    - [ ] decode error
+    - [ ] invalid signature
+    - [ ] expired
+    - [ ] invalid audience
+    - [ ] invalid issuer
+    - [ ] invalid subject
+    - [ ] invalid issued-at
+    - [ ] not issued (nbf)
+    - [ ] missing required claim
+    - [ ] invalid key
+    - [ ] invalid alg
+- [ ] more tests
+
+Later:
+
+- [ ] does `pyjwt` validate `nbf` claim? It lists it but doesn't mention it validates it specifically
+- [ ] caching for `_get_oidc_metadata`
+  - `JWKSclient` already caches the fetching of the key
+- [ ] handle all validation errors (including generic/catch-all error)
+  - https://pyjwt.readthedocs.io/en/latest/api.html#exceptions
+- [ ] support invalid tokens?
+  - `jwt.decode(payload["token"], options={"verify_signature": False})`
+- [ ] warn that initialising an EntraToken will fetch OIDC metadata and the JWKS
+- [ ] doc blocks
+
+Even later:
+
+- [ ] using MSAL cache written to user's home directory
 
 ## Experiments
 
@@ -70,7 +142,7 @@ As an evolved version of the resource protector:
 - overloads `validate()` method of bearer token validator as much of its validation checks are done implicitly by
   initialising an `EntraToken` (such as expiry), now only checks for required scopes
 - means we can remove the derived `EntraTokenAuthlib` class
-- means we essentially have a authenticate and authorise method (with the later called 'validate')
+- means we essentially have an authenticate and authorise method (but with the latter called 'validate')
 - refactors into a Flask extension
 
 ## Licence
