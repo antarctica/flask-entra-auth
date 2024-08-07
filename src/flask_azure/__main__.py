@@ -1,22 +1,17 @@
-from authlib.integrations.flask_oauth2 import ResourceProtector, current_token
 from flask import Flask, request
 
-from flask_azure.entra_protector import EntraBearerTokenValidator, EntraTokenAuthlib
+from flask_azure.entra_protector import EntraProtector
 from flask_azure.entra_token import EntraToken, EntraTokenError
+
+auth = EntraProtector()
 
 app = Flask(__name__)
 app.json.sort_keys = False
-app.config["client_id"] = "8b45581e-1b2e-4b8c-b667-e5a1360b6906"
-app.config["oidc_endpoint"] = (
+app.config["auth_client_id"] = "8b45581e-1b2e-4b8c-b667-e5a1360b6906"
+app.config["auth_oidc_endpoint"] = (
     "https://login.microsoftonline.com/b311db95-32ad-438f-a101-7ba061712a4e/v2.0/.well-known/openid-configuration"
 )
-
-auth = ResourceProtector()
-auth.register_token_validator(
-    EntraBearerTokenValidator(
-        oidc_endpoint=app.config["oidc_endpoint"], client_id=app.config["client_id"]
-    )
-)
+auth.init_app(app)
 
 
 @app.route("/unrestricted", methods=["POST"])
@@ -25,24 +20,22 @@ def unrestricted():
 
 
 @app.route("/restricted", methods=["POST"])
-@auth()
+@app.auth()
 def restricted():
     return "Restricted route"
 
 
 @app.route("/restricted/scope", methods=["POST"])
-@auth(["BAS.MAGIC.ADD.Access"])
+@app.auth(["BAS.MAGIC.ADD.Access"])
 def restricted_scope():
     return "Restricted route with required scope."
 
 
 @app.route("/restricted/current-token", methods=["GET"])
-@auth()
+@app.auth()
 def restricted_current_token():
-    token: EntraTokenAuthlib = current_token
-    payload = {
-        'claims': token.claims
-    }
+    token: EntraToken = app.auth.current_token
+    payload = {"claims": token.claims}
 
     return payload
 

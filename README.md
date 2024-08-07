@@ -49,7 +49,7 @@ Summary:
 - we additionally check the `ver` Entra specific claim is '2.0'
 - we optionally additionally check the `sub` and/or `azp` claim values are allowed as per a list
 
-### Resource protector
+### Resource protector 1
 
 There are various implementations of a similar concept (decorator for routes). As we know the AuthLib version works I've
 stuck with that.
@@ -62,6 +62,16 @@ This validator class then calls its own `validate()` method which checks the tok
 and has the required set of scopes present.
 
 The resource protector class itself then registers this validator. We don't need to make any changes to it.
+
+### Resource protector 2
+
+As an evolved version of the resource protector:
+
+- overloads `validate()` method of bearer token validator as much of its validation checks are done implicitly by
+  initialising an `EntraToken` (such as expiry), now only checks for required scopes
+- means we can remove the derived `EntraTokenAuthlib` class
+- means we essentially have a authenticate and authorise method (with the later called 'validate')
+- refactors into a Flask extension
 
 ## Licence
 
