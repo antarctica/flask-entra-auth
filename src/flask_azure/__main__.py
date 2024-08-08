@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from flask import Flask, request
 
-from flask_azure.entra_protector import EntraProtector
-from flask_azure.entra_token import EntraToken, EntraTokenError
+from flask_azure.entra_exceptions import EntraAuthError
+from flask_azure.entra_protector import FlaskEntraAuth
+from flask_azure.entra_token import EntraToken
 
-auth = EntraProtector()
+auth = FlaskEntraAuth()
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -63,5 +64,5 @@ def introspect_rfc7662() -> dict | tuple:
             client_id=app.config["auth_client_id"],
         )
         return token.rfc7662_introspection  # noqa: TRY300
-    except EntraTokenError as e:
+    except EntraAuthError as e:
         return {"error": str(e)}, 400

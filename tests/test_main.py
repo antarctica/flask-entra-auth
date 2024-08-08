@@ -1,4 +1,14 @@
+from dataclasses import asdict
+
 from flask.testing import FlaskClient
+from werkzeug.test import TestResponse
+
+from flask_azure.entra_exceptions import EntraRequestNoAuthHeaderError
+
+
+def _assert_entra_error(error: callable, response: TestResponse) -> None:
+    assert response.status_code == 401
+    assert response.json == asdict(error().problem)
 
 
 class TestMainUnrestricted:
@@ -20,6 +30,11 @@ class TestMainRestricted:
         response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
         assert response.text == "Restricted route."
+
+    def test_no_auth(self, fx_app_client: FlaskClient):
+        """Returns no auth header error."""
+        response = fx_app_client.post("/restricted")
+        _assert_entra_error(EntraRequestNoAuthHeaderError, response)
 
 
 class TestMainRestrictedScope:

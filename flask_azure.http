@@ -45,3 +45,7 @@ Authorization: Bearer {{access_token}}
 # @no-cookie-jar
 GET http://localhost:5005/restricted/current-token
 Authorization: Bearer {{access_token}}
+
+### App error no auth header
+# @no-cookie-jar
+POST http://localhost:5005/restricted
