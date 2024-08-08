@@ -49,3 +49,8 @@ Authorization: Bearer {{access_token}}
 ### App error no auth header
 # @no-cookie-jar
 POST http://localhost:5005/restricted
+
+### App error bad auth scheme
+# @no-cookie-jar
+POST http://localhost:5005/restricted
+Authorization: xxx

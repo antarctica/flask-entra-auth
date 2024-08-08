@@ -1,9 +1,10 @@
 from dataclasses import asdict
 
+import pytest
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
-from flask_azure.entra_exceptions import EntraRequestNoAuthHeaderError
+from flask_azure.entra_exceptions import EntraRequestInvalidAuthHeaderError, EntraRequestNoAuthHeaderError
 
 
 def _assert_entra_error(error: callable, response: TestResponse) -> None:
@@ -36,6 +37,12 @@ class TestMainRestricted:
         response = fx_app_client.post("/restricted")
         _assert_entra_error(EntraRequestNoAuthHeaderError, response)
 
+    # parameterise
+    @pytest.mark.parametrize('auth_value', ['Bearer', '<token>', 'Invalid <token>'])
+    def test_bad_auth(self, fx_app_client: FlaskClient, auth_value: str):
+        """Returns invalid auth header error."""
+        response = fx_app_client.post("/restricted", headers={'Authorization': auth_value})
+        _assert_entra_error(EntraRequestInvalidAuthHeaderError, response)
 
 class TestMainRestrictedScope:
     """Test restricted route with required scope."""

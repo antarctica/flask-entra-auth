@@ -39,3 +39,15 @@ class EntraRequestNoAuthHeaderError(EntraAuthError):
             title="Missing authorization header",
             detail="Ensure your request includes an 'Authorization' header and try again.",
         )
+
+
+class EntraRequestInvalidAuthHeaderError(EntraAuthError):
+    """Raise when the auth header has a missing/unsupported auth scheme or missing credential."""
+
+    def __init__(self):
+        super().__init__(
+            type_="header_invalid",
+            title="Invalid authorization header",
+            detail="Ensure the 'Authorization' header scheme is 'Bearer' with a valid credential and try again. \n "
+                   "E.g. 'Authorization: Bearer <token>'",
+        )

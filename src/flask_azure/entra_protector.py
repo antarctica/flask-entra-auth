@@ -7,7 +7,11 @@ from authlib.oauth2 import OAuth2Error
 from authlib.oauth2.rfc6750 import BearerTokenValidator, InsufficientScopeError
 from flask import Flask, Request
 
-from flask_azure.entra_exceptions import EntraAuthError, EntraRequestNoAuthHeaderError
+from flask_azure.entra_exceptions import (
+    EntraAuthError,
+    EntraRequestInvalidAuthHeaderError,
+    EntraRequestNoAuthHeaderError,
+)
 from flask_azure.entra_token import EntraToken
 
 
@@ -47,6 +51,8 @@ class EntraResourceProtector(ResourceProtector):
         error_ = EntraAuthError()
         if error.error == "missing_authorization":
             error_ = EntraRequestNoAuthHeaderError()
+        elif error.error == "unsupported_token_type":
+            error_ = EntraRequestInvalidAuthHeaderError()
 
         raise_http_exception(
             status=error_.problem.status,
