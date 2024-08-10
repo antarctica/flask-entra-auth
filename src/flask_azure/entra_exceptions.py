@@ -182,7 +182,7 @@ class EntraAuthInvalidAudienceError(EntraAuthError):
 
 class EntraAuthInvalidExpirationError(EntraAuthError):
     """
-    Raised when the JWT has expired.
+    Raised when the JWT has expired (exp invalid).
 
     Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.ExpiredSignatureError
     """
@@ -211,4 +211,45 @@ class EntraAuthNotValidBeforeError(EntraAuthError):
             title="Auth token not yet valid",
             detail="The auth token is not valid yet. This is an uncommon error, please try again with a new token or "
                    "report this error if it persists. https://jwt.ms can be used to check a token.",
+        )
+
+
+class EntraAuthInvalidSubjectError(EntraAuthError):
+    """Raised when the JWT subject is not trusted (sub invalid)."""
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_subject_not_trusted",
+            title="Auth token subject not trusted",
+            detail="The subject/account of the auth token (typically 'you') is not trusted/allowed by this application."
+                   "This is a common error and can usually only be resolved by reporting this error. https://jwt.ms"
+                   "can be used to check which account is being used."
+        )
+
+
+class EntraAuthInvalidAppError(EntraAuthError):
+    """Raised when the JWT Azure app is not trusted (azp invalid)."""
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_azp_not_trusted",
+            title="Auth token application not trusted",
+            detail="The application/client you are using is not trusted/allowed by this application."
+                   "This is a uncommon error and can usually only be resolved by reporting this error. https://jwt.ms"
+                   "can be used to get which application is being used, which can be checked against allowed apps."
+        )
+
+
+class EntraAuthInvalidTokenVersionError(EntraAuthError):
+    """Raised when the Entra version claim in the JWT is unsupported (ver invalid)."""
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_ver_not_supported",
+            title="Auth token version not supported",
+            detail="The auth token internal version (as defined by Entra) is not supported. Tokens must use version"
+                   "'2.0'. This is an uncommon error, https://jwt.ms can be used to check the token version."
         )

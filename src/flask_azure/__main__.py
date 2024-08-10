@@ -14,6 +14,8 @@ app.config["ENTRA_AUTH_CLIENT_ID"] = "8b45581e-1b2e-4b8c-b667-e5a1360b6906"
 app.config["ENTRA_AUTH_OIDC_ENDPOINT"] = (
     "https://login.microsoftonline.com/b311db95-32ad-438f-a101-7ba061712a4e/v2.0/.well-known/openid-configuration"
 )
+app.config["ENTRA_AUTH_ALLOWED_SUBJECTS"] = []
+app.config['ENTRA_AUTH_ALLOWED_APPS'] = []
 auth.init_app(app)
 
 

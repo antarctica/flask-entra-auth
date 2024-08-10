@@ -5,13 +5,18 @@ from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
 from flask_azure.entra_exceptions import (
+    EntraAuthInvalidAppError,
+    EntraAuthInvalidAudienceError,
+    EntraAuthInvalidExpirationError,
     EntraAuthInvalidSignatureError,
+    EntraAuthInvalidSubjectError,
     EntraAuthInvalidTokenError,
+    EntraAuthInvalidTokenVersionError,
     EntraAuthKeyError,
     EntraAuthMissingClaimError,
     EntraAuthOidcError,
     EntraAuthRequestInvalidAuthHeaderError,
-    EntraAuthRequestNoAuthHeaderError, EntraAuthInvalidAudienceError, EntraAuthInvalidExpirationError,
+    EntraAuthRequestNoAuthHeaderError,
 )
 
 
@@ -131,6 +136,10 @@ class TestMainRestricted:
         """Returns missing required claim error."""
         response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_nbf}"})
         _assert_entra_error(EntraAuthJwtMissingClaimError, response, claim='azp')
+    def test_bad_jwt_no_azp(self, fx_app_client: FlaskClient, fx_jwt_iat: str):
+        """Returns missing required claim error."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_iat}"})
+        _assert_entra_error(EntraAuthMissingClaimError, response, claim='azp')
 
     def test_bad_jwk_no_ver(self, fx_app_client: FlaskClient, fx_jwt_azp: str):
         """Returns missing required claim error."""
@@ -157,6 +166,20 @@ class TestMainRestricted:
         response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_nbf}"})
         _assert_entra_error(EntraAuthInvalidExpirationError, response)
 
+    def test_bad_jwt_sub(self, fx_app_client_bad_subs: FlaskClient, fx_jwt: str):
+        """Returns untrusted subject error."""
+        response = fx_app_client_bad_subs.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt}"})
+        _assert_entra_error(EntraAuthInvalidSubjectError, response)
+
+    def test_bad_jwt_azp(self, fx_app_client_bad_apps: FlaskClient, fx_jwt: str):
+        """Returns invalid claim error."""
+        response = fx_app_client_bad_apps.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt}"})
+        _assert_entra_error(EntraAuthInvalidAppError, response)
+
+    def test_bad_jwt_ver(self, fx_app_client: FlaskClient, fx_jwt_bad_ver: str):
+        """Returns invalid token version error."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_ver}"})
+        _assert_entra_error(EntraAuthInvalidTokenVersionError, response)
 
 class TestMainRestrictedScope:
     """Test restricted route with required scope."""

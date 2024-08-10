@@ -23,6 +23,8 @@ class EntraBearerTokenValidator(BearerTokenValidator):
                 token=token_str,
                 oidc_endpoint=current_app.config["ENTRA_AUTH_OIDC_ENDPOINT"],
                 client_id=current_app.config["ENTRA_AUTH_CLIENT_ID"],
+                allowed_subjects=current_app.config.get("ENTRA_AUTH_ALLOWED_SUBJECTS", []),
+                allowed_apps=current_app.config.get("ENTRA_AUTH_ALLOWED_APPS", []),
             )
         except EntraAuthError as e:
             raise_http_exception(

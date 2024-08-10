@@ -6,39 +6,32 @@ from typing import TypedDict
 import requests
 from jwt import (
     DecodeError,
+    ExpiredSignatureError,
+    ImmatureSignatureError,
+    InvalidAudienceError,
+    InvalidIssuerError,
     InvalidSignatureError,
     MissingRequiredClaimError,
     PyJWK,
     PyJWKClient,
     PyJWKClientError,
-    PyJWKSetError, InvalidIssuerError, InvalidAudienceError, ExpiredSignatureError, ImmatureSignatureError,
+    PyJWKSetError,
 )
 from jwt import decode as jwt_decode
 
-
-class EntraTokenError(Exception):
-    pass
-
-
-class EntraTokenSubjectNotAllowedError(EntraTokenError):
-    pass
-
-
-class EntraTokenClientAppNotAllowedError(EntraTokenError):
-    pass
-
-
-class EntraTokenVersionNotAllowedError(EntraTokenError):
-    pass
-from flask_azure.entra_exceptions import EntraAuthJwksError
-from flask_azure.entra_exceptions import EntraAuthJwksError, EntraAuthJwtMissingClaimError
 from flask_azure.entra_exceptions import (
+    EntraAuthInvalidAppError,
+    EntraAuthInvalidAudienceError,
+    EntraAuthInvalidExpirationError,
+    EntraAuthInvalidIssuerError,
     EntraAuthInvalidSignatureError,
+    EntraAuthInvalidSubjectError,
     EntraAuthInvalidTokenError,
+    EntraAuthInvalidTokenVersionError,
     EntraAuthKeyError,
     EntraAuthMissingClaimError,
-    EntraAuthOidcError, EntraAuthInvalidIssuerError, EntraAuthInvalidAudienceError, EntraAuthInvalidExpirationError,
     EntraAuthNotValidBeforeError,
+    EntraAuthOidcError,
 )
 
 
@@ -99,14 +92,14 @@ class EntraToken:
         token: str,
         oidc_endpoint: str,
         client_id: str,
-        allowed_subs: list | None = None,
-        allowed_azps: list | None = None,
+        allowed_subjects: list | None = None,
+        allowed_apps: list | None = None,
     ) -> None:
         self._token = token
         self._oidc_endpoint = oidc_endpoint
         self._client_id = client_id
-        self._allowed_subs: list | None = allowed_subs
-        self._allowed_azps: list | None = allowed_azps
+        self._allowed_subjects: list | None = allowed_subjects
+        self._allowed_apps: list | None = allowed_apps
 
         self.claims = self.validate()
         self.valid = True
@@ -141,22 +134,18 @@ class EntraToken:
         else:
             return oidc_data
 
+    def _validate_sub(self, sub: str) -> None:
+        if self._allowed_subjects and sub not in self._allowed_subjects:
+            raise EntraAuthInvalidSubjectError() from None
+
+    def _validate_azp(self, azp: str) -> None:
+        if self._allowed_apps and azp not in self._allowed_apps:
+            raise EntraAuthInvalidAppError() from None
+
     @staticmethod
-    def _validate_ver(ver: str):
+    def _validate_ver(ver: str) -> None:
         if ver != "2.0":
-            raise EntraTokenVersionNotAllowedError(f"Version '{ver}' not allowed")
-
-    def _validate_sub(self, sub: str):
-        if self._allowed_subs:
-            if sub not in self._allowed_subs:
-                raise EntraTokenSubjectNotAllowedError(f"Subject '{sub}' not allowed")
-
-    def _validate_azp(self, azp: str):
-        if self._allowed_azps:
-            if azp not in self._allowed_azps:
-                raise EntraTokenClientAppNotAllowedError(
-                    f"Azure client application '{azp}' not allowed"
-                )
+            raise EntraAuthInvalidTokenVersionError() from None
 
     def validate(self) -> EntraTokenClaims:
         try:
@@ -166,14 +155,11 @@ class EntraToken:
                 algorithms=["RS256"],
                 audience=self._client_id,
                 issuer=self._issuer,
-                options={"require": self._required_claims},
+                options={"require": self._required_claims, "verify_iat": False,},
             )
-
-        self._validate_ver(claims["ver"])
-        self._validate_sub(claims["sub"])
-        self._validate_azp(claims["azp"])
-
-        return claims
+            self._validate_ver(claims["ver"])
+            self._validate_sub(claims["sub"])
+            self._validate_azp(claims["azp"])
         except InvalidSignatureError as e:
             raise EntraAuthInvalidSignatureError from e
         except DecodeError as e:
@@ -188,6 +174,8 @@ class EntraToken:
             raise EntraAuthInvalidExpirationError from e
         except ImmatureSignatureError as e:
             raise EntraAuthNotValidBeforeError from e
+        else:
+            return claims
 
     @property
     def scopes(self) -> list[str]:
