@@ -11,16 +11,12 @@ from jwt import (
     PyJWK,
     PyJWKClient,
     PyJWKClientError,
-    PyJWKSetError,
+    PyJWKSetError, InvalidIssuerError, InvalidAudienceError, ExpiredSignatureError, ImmatureSignatureError,
 )
 from jwt import decode as jwt_decode
 
 
 class EntraTokenError(Exception):
-    pass
-
-
-class EntraTokenExpiredError(EntraTokenError):
     pass
 
 
@@ -41,7 +37,8 @@ from flask_azure.entra_exceptions import (
     EntraAuthInvalidTokenError,
     EntraAuthKeyError,
     EntraAuthMissingClaimError,
-    EntraAuthOidcError,
+    EntraAuthOidcError, EntraAuthInvalidIssuerError, EntraAuthInvalidAudienceError, EntraAuthInvalidExpirationError,
+    EntraAuthNotValidBeforeError,
 )
 
 
@@ -182,7 +179,15 @@ class EntraToken:
         except DecodeError as e:
             raise EntraAuthInvalidTokenError from e
         except MissingRequiredClaimError as e:
-            raise EntraAuthJwtMissingClaimError(claim=e.claim) from e
+            raise EntraAuthMissingClaimError(claim=e.claim) from e
+        except InvalidIssuerError as e:
+            raise EntraAuthInvalidIssuerError from e
+        except InvalidAudienceError as e:
+            raise EntraAuthInvalidAudienceError from e
+        except ExpiredSignatureError as e:
+            raise EntraAuthInvalidExpirationError from e
+        except ImmatureSignatureError as e:
+            raise EntraAuthNotValidBeforeError from e
 
     @property
     def scopes(self) -> list[str]:

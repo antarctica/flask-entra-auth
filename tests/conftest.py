@@ -154,6 +154,28 @@ def fx_jwt_ver(fx_jwk_private: str, fx_jwk_kid: str, fx_claim_iss: str, fx_claim
 
 
 @pytest.fixture()
+def fx_jwt_bad_iss(fx_jwk_private: str, fx_jwk_kid: str, fx_claim_sub: str, fx_claim_aud: str, fx_claim_exp: int, fx_claim_nbf: int, fx_claim_azp: str, fx_claim_ver: str) -> str:
+    """Jason Web Token (JWT) with invalid Issuer (iss) claim."""
+    return jwt_encode(payload={'iss': '-', 'sub': fx_claim_sub, 'aud': fx_claim_aud, 'exp': fx_claim_exp, 'nbf': fx_claim_nbf, 'azp': fx_claim_azp, 'ver': fx_claim_ver}, key=fx_jwk_private, algorithm="RS256", headers={"kid": fx_jwk_kid})
+
+
+@pytest.fixture()
+def fx_jwt_bad_aud(fx_jwk_private: str, fx_jwk_kid: str, fx_claim_iss: str, fx_claim_sub: str, fx_claim_exp: int, fx_claim_nbf: int, fx_claim_azp: str, fx_claim_ver: str) -> str:
+    """Jason Web Token (JWT) with invalid Audience (aud) claim."""
+    return jwt_encode(payload={'iss': fx_claim_iss, 'sub': fx_claim_sub, 'aud': '-', 'exp': fx_claim_exp, 'nbf': fx_claim_nbf, 'azp': fx_claim_azp, 'ver': fx_claim_ver}, key=fx_jwk_private, algorithm="RS256", headers={"kid": fx_jwk_kid})
+
+
+@pytest.fixture()
+def fx_jwt_bad_exp(fx_jwk_private: str, fx_jwk_kid: str, fx_claim_iss: str, fx_claim_sub: str, fx_claim_aud: str, fx_claim_nbf: int, fx_claim_azp: str, fx_claim_ver: str) -> str:
+    """Jason Web Token (JWT) with invalid Expiration (exp) claim."""
+    return jwt_encode(payload={'iss': fx_claim_iss, 'sub': fx_claim_sub, 'aud': fx_claim_aud, 'exp': 0, 'nbf': fx_claim_nbf, 'azp': fx_claim_azp, 'ver': fx_claim_ver}, key=fx_jwk_private, algorithm="RS256", headers={"kid": fx_jwk_kid})
+
+
+@pytest.fixture()
+def fx_jwt_bad_nbf(fx_jwk_private: str, fx_jwk_kid: str, fx_claim_iss: str, fx_claim_sub: str, fx_claim_aud: str, fx_claim_exp: int, fx_claim_azp: str, fx_claim_ver: str) -> str:
+    """Jason Web Token (JWT) with invalid Not Before (nbf) claim."""
+    return jwt_encode(payload={'iss': fx_claim_iss, 'sub': fx_claim_sub, 'aud': fx_claim_aud, 'exp': fx_claim_exp, 'nbf': 4070908800, 'azp': fx_claim_azp, 'ver': fx_claim_ver}, key=fx_jwk_private, algorithm="RS256", headers={"kid": fx_jwk_kid})
+@pytest.fixture()
 def fx_app(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str, fx_jwks: KeySet) -> Flask:
     """Application."""
     oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claim_iss}

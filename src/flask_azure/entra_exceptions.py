@@ -143,4 +143,72 @@ class EntraAuthInvalidSignatureError(EntraAuthError):
             detail="The auth token's signature cannot be verified using the signing key specified by the token, and "
                    "cannot therefore be trusted. This is an atypical error, please try again with a new token "
                    "or report this error if it persists. https://jwt.ms can be used to check a token.",
+
+
+class EntraAuthInvalidIssuerError(EntraAuthError):
+    """
+    Raised when the JWT issuer is invalid.
+
+    Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.InvalidIssuerError
+    """
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_issuer_untrusted",
+            title="Auth token untrusted issuer",
+            detail="The auth token's issuer is not trusted. This is an uncommon error, please try again with a new "
+                   "token or report this error if it persists. https://jwt.ms can be used to check a token.",
+        )
+
+
+class EntraAuthInvalidAudienceError(EntraAuthError):
+    """
+    Raised when the JWT audience is invalid.
+
+    Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.InvalidAudienceError
+    """
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_audience_invalid",
+            title="Auth token audience invalid",
+            detail="The auth token's audience does not correspond to this application. This is an uncommon error, "
+                   "please try again with a new token or report this error if it persists. "
+                   "https://jwt.ms can be used to check a token.",
+        )
+
+
+class EntraAuthInvalidExpirationError(EntraAuthError):
+    """
+    Raised when the JWT has expired.
+
+    Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.ExpiredSignatureError
+    """
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_expired",
+            title="Auth token expired",
+            detail="The auth token has expired. This is a common error, please try again with a new token or report "
+                   "this error if it persists. https://jwt.ms can be used to check a token.",
+        )
+
+
+class EntraAuthNotValidBeforeError(EntraAuthError):
+    """
+    Raised when the JWT is not valid yet.
+
+    Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.ImmatureSignatureError
+    """
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_immature",
+            title="Auth token not yet valid",
+            detail="The auth token is not valid yet. This is an uncommon error, please try again with a new token or "
+                   "report this error if it persists. https://jwt.ms can be used to check a token.",
         )

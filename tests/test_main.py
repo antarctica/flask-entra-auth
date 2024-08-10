@@ -11,7 +11,7 @@ from flask_azure.entra_exceptions import (
     EntraAuthMissingClaimError,
     EntraAuthOidcError,
     EntraAuthRequestInvalidAuthHeaderError,
-    EntraAuthRequestNoAuthHeaderError,
+    EntraAuthRequestNoAuthHeaderError, EntraAuthInvalidAudienceError, EntraAuthInvalidExpirationError,
 )
 
 
@@ -136,6 +136,26 @@ class TestMainRestricted:
         """Returns missing required claim error."""
         response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_azp}"})
         _assert_entra_error(EntraAuthJwtMissingClaimError, response, claim='ver')
+
+    def test_bad_jwt_iss(self, fx_app_client: FlaskClient, fx_jwt_bad_iss: str):
+        """Returns invalid issuer error."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_iss}"})
+        _assert_entra_error(EntraAuthInvalidSignatureError, response)
+
+    def test_bad_jwt_aud(self, fx_app_client: FlaskClient, fx_jwt_bad_aud: str):
+        """Returns invalid audience error."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_aud}"})
+        _assert_entra_error(EntraAuthInvalidAudienceError, response)
+
+    def test_bad_jwt_exp(self, fx_app_client: FlaskClient, fx_jwt_bad_exp: str):
+        """Returns expired error."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_exp}"})
+        _assert_entra_error(EntraAuthInvalidExpirationError, response)
+
+    def test_bad_jwt_nbf(self, fx_app_client: FlaskClient, fx_jwt_bad_nbf: str):
+        """Returns expired error."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_nbf}"})
+        _assert_entra_error(EntraAuthInvalidExpirationError, response)
 
 
 class TestMainRestrictedScope:
