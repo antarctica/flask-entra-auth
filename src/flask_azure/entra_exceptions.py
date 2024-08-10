@@ -77,12 +77,12 @@ class EntraAuthJwtMissingClaimError(EntraAuthError):
     """Raised when a required claim is missing from the JSON Web Token (JWT)."""
 
     def __init__(self, claim: str):
+        self.claim = claim
+
         super().__init__(
             status=HTTPStatus.UNAUTHORIZED,
             type_="jwt_claim_missing",
             title="Missing required claim",
-            detail="A required claim is missing from the token. Please try again with a new token "
-                   "or report this error if it persists.",
+            detail=f"Required claim '{self.claim}' is missing from the token. Please try again with a new token "
+                   "or report this error if it persists. https://jwt.ms can be used to check claims in a token.",
         )
-
-        self.claim = claim
