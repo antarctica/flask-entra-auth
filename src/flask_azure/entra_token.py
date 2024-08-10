@@ -78,13 +78,13 @@ class EntraToken:
     @property
     def _required_claims(self) -> list[str]:
         return [
-            "iss",  # issuer - who issued the token - checked by default
-            "sub",  # subject - who the token was issued to - additionally checked by `allowed_subs` list
-            "aud",  # audience - who the token was intended for - checked by default
-            "exp",  # expiration - when the token is valid to - checked by default
-            "nbf",  # not before - when the token is valid from - ?
-            "azp",  # Azure client applications - the client application - additionally checked by `allowed_azps` list
-            "ver",  # version - the version of the token - additionally checked, must be '2.0'
+            "iss",  # issuer - who issued the token, checked against expected value, built-in check
+            "sub",  # subject - who the token was issued to, checked against `allowed_subs` list, additional check
+            "aud",  # audience - who the token was intended for, checked against expected value, built-in check
+            "exp",  # expiration - when the token is valid to, must be after now, built-in check
+            "nbf",  # not before - when the token is valid from, must be before now, built-in check
+            "azp",  # client app - app token is used within, checked against `allowed_azps` list, additional check
+            "ver",  # version - token version, must be '2.0', additional check
         ]
 
     def __init__(
@@ -105,7 +105,7 @@ class EntraToken:
         self.valid = True
 
     @property
-    def _public_key(self) -> PyJWK:
+    def _signing_key(self) -> PyJWK:
         oidc_config = self._get_oidc_metadata()
         jwks_client = PyJWKClient(oidc_config["jwks_uri"])
         try:
@@ -151,29 +151,32 @@ class EntraToken:
         try:
             claims: EntraTokenClaims = jwt_decode(
                 jwt=self._token,
-                key=self._public_key,
+                key=self._signing_key,
                 algorithms=["RS256"],
                 audience=self._client_id,
                 issuer=self._issuer,
-                options={"require": self._required_claims, "verify_iat": False,},
+                options={
+                    "require": self._required_claims,
+                    "verify_iat": False,
+                },
             )
             self._validate_ver(claims["ver"])
             self._validate_sub(claims["sub"])
             self._validate_azp(claims["azp"])
         except InvalidSignatureError as e:
-            raise EntraAuthInvalidSignatureError from e
+            raise EntraAuthInvalidSignatureError() from e
         except DecodeError as e:
-            raise EntraAuthInvalidTokenError from e
+            raise EntraAuthInvalidTokenError() from e
         except MissingRequiredClaimError as e:
             raise EntraAuthMissingClaimError(claim=e.claim) from e
         except InvalidIssuerError as e:
-            raise EntraAuthInvalidIssuerError from e
+            raise EntraAuthInvalidIssuerError() from e
         except InvalidAudienceError as e:
-            raise EntraAuthInvalidAudienceError from e
+            raise EntraAuthInvalidAudienceError() from e
         except ExpiredSignatureError as e:
-            raise EntraAuthInvalidExpirationError from e
+            raise EntraAuthInvalidExpirationError() from e
         except ImmatureSignatureError as e:
-            raise EntraAuthNotValidBeforeError from e
+            raise EntraAuthNotValidBeforeError() from e
         else:
             return claims
 

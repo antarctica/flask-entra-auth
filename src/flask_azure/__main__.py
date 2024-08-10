@@ -15,7 +15,7 @@ app.config["ENTRA_AUTH_OIDC_ENDPOINT"] = (
     "https://login.microsoftonline.com/b311db95-32ad-438f-a101-7ba061712a4e/v2.0/.well-known/openid-configuration"
 )
 app.config["ENTRA_AUTH_ALLOWED_SUBJECTS"] = []
-app.config['ENTRA_AUTH_ALLOWED_APPS'] = []
+app.config["ENTRA_AUTH_ALLOWED_APPS"] = []
 auth.init_app(app)
 
 
@@ -62,8 +62,8 @@ def introspect_rfc7662() -> dict | tuple:
     try:
         token = EntraToken(
             token=request.form.get("token"),
-            oidc_endpoint=app.config["auth_oidc_endpoint"],
-            client_id=app.config["auth_client_id"],
+            oidc_endpoint=app.config['ENTRA_AUTH_OIDC_ENDPOINT'],
+            client_id=app.config['ENTRA_AUTH_CLIENT_ID'],
         )
         return token.rfc7662_introspection  # noqa: TRY300
     except EntraAuthError as e:

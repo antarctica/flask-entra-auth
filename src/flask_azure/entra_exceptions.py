@@ -25,7 +25,7 @@ class EntraAuthError(Exception):
         detail: str = "An unknown authentication error has occurred. Please try again later or report this error.",
     ):
         self._status = status
-        self._type = f"#auth_{type_}"
+        self._type = type_
 
         self.problem = HttpProblem(
             type=self._type,
@@ -45,8 +45,8 @@ class EntraAuthOidcError(EntraAuthError):
             type_="auth_oidc_error",
             title="OIDC metadata error",
             detail="The OIDC metadata endpoint used to get trusted signing keys and other setting is unavailable or "
-                   "invalid. This is an atypical server error, please try again later, or report this error if it "
-                   "persists.",
+            "invalid. This is an uncommon server error, please try again later, or report this error if it "
+            "persists.",
         )
 
 
@@ -56,7 +56,7 @@ class EntraAuthRequestNoAuthHeaderError(EntraAuthError):
     def __init__(self):
         super().__init__(
             status=HTTPStatus.UNAUTHORIZED,
-            type_="header_missing",
+            type_="auth_header_missing",
             title="Missing authorization header",
             detail="Ensure your request includes an 'Authorization' header and try again.",
         )
@@ -68,10 +68,10 @@ class EntraAuthRequestInvalidAuthHeaderError(EntraAuthError):
     def __init__(self):
         super().__init__(
             status=HTTPStatus.UNAUTHORIZED,
-            type_="header_invalid",
+            type_="auth_header_invalid",
             title="Invalid authorization header",
-            detail="Ensure the 'Authorization' header scheme is 'Bearer' with a valid credential and try again. \n "
-                   "E.g. 'Authorization: Bearer <token>'",
+            detail="Ensure the 'Authorization' header scheme is 'Bearer' with a valid credential (token) and try again "
+            "E.g. 'Authorization: Bearer <token>'",
         )
 
 
@@ -90,24 +90,26 @@ class EntraAuthKeyError(EntraAuthError):
             status=HTTPStatus.UNAUTHORIZED,
             type_="auth_token_key_error",
             title="Token signing key error",
-            detail="The key used to sign the auth token could not be loaded. This is an atypical error. Please check "
-                   "the token includes a valid 'kid' header parameter and try again later, or report this error if it "
-                   "persists. https://jwt.ms can be used to check a token.",
+            detail="The key used to sign the auth token could not be loaded. This is an uncommon error. Please check "
+            "the token includes a valid 'kid' header parameter and try again later, or report this error if it "
+            "persists. https://jwt.ms can be used to check a token.",
         )
 
 
-class EntraAuthJwtMissingClaimError(EntraAuthError):
-    """Raised when a required claim is missing from the JSON Web Token (JWT)."""
+class EntraAuthMissingClaimError(EntraAuthError):
+    """Raised when a required claim is missing from the JWT."""
 
     def __init__(self, claim: str):
         self.claim = claim
 
         super().__init__(
             status=HTTPStatus.UNAUTHORIZED,
-            type_="jwt_claim_missing",
-            title="Missing required claim",
-            detail=f"Required claim '{self.claim}' is missing from the token. Please try again with a new token "
-                   "or report this error if it persists. https://jwt.ms can be used to check claims in a token.",
+            type_="auth_token_claim_missing",
+            title="Auth token missing required claim",
+            detail=f"Required claim '{self.claim}' is missing from auth token. This is an uncommon error, please try "
+            f"again with a new token or report this error if it persists. https://jwt.ms can be used to check "
+            f"claims in a token.",
+        )
 
 
 class EntraAuthInvalidTokenError(EntraAuthError):
@@ -122,15 +124,15 @@ class EntraAuthInvalidTokenError(EntraAuthError):
             status=HTTPStatus.UNAUTHORIZED,
             type_="auth_token_invalid",
             title="Auth token invalid",
-            detail="Auth token could not be decoded. This an atypical error, please check the token is a JWT "
-                   "(JSON Web Token) and try again, or report this error if it persists. https://jwt.ms can be used to "
-                   "check a token.",
+            detail="Auth token could not be decoded. This an uncommon error, please check the token is a JWT "
+            "(JSON Web Token) and try again, or report this error if it persists. https://jwt.ms can be used to "
+            "check a token.",
         )
 
 
 class EntraAuthInvalidSignatureError(EntraAuthError):
     """
-    Raised when the JWT signature cannot be verified against it's signing key.
+    Raised when the JWT signature cannot be verified against it's signing key (kid).
 
     Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.InvalidSignatureError
     """
@@ -138,16 +140,17 @@ class EntraAuthInvalidSignatureError(EntraAuthError):
     def __init__(self):
         super().__init__(
             status=HTTPStatus.UNAUTHORIZED,
-            type_="jwt_invalid_signature",
-            title="Invalid token signature",
+            type_="auth_token_signature_untrusted",
+            title="Auth token signature not trusted",
             detail="The auth token's signature cannot be verified using the signing key specified by the token, and "
-                   "cannot therefore be trusted. This is an atypical error, please try again with a new token "
-                   "or report this error if it persists. https://jwt.ms can be used to check a token.",
+            "cannot be trusted. This is an uncommon error, please try again with a new token or report this "
+            "error if it persists. https://jwt.ms can be used to check a token.",
+        )
 
 
 class EntraAuthInvalidIssuerError(EntraAuthError):
     """
-    Raised when the JWT issuer is invalid.
+    Raised when the JWT issuer is invalid (iss).
 
     Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.InvalidIssuerError
     """
@@ -158,13 +161,13 @@ class EntraAuthInvalidIssuerError(EntraAuthError):
             type_="auth_token_issuer_untrusted",
             title="Auth token untrusted issuer",
             detail="The auth token's issuer is not trusted. This is an uncommon error, please try again with a new "
-                   "token or report this error if it persists. https://jwt.ms can be used to check a token.",
+            "token or report this error if it persists. https://jwt.ms can be used to check a token.",
         )
 
 
 class EntraAuthInvalidAudienceError(EntraAuthError):
     """
-    Raised when the JWT audience is invalid.
+    Raised when the JWT audience is invalid (aud).
 
     Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.InvalidAudienceError
     """
@@ -175,8 +178,8 @@ class EntraAuthInvalidAudienceError(EntraAuthError):
             type_="auth_token_audience_invalid",
             title="Auth token audience invalid",
             detail="The auth token's audience does not correspond to this application. This is an uncommon error, "
-                   "please try again with a new token or report this error if it persists. "
-                   "https://jwt.ms can be used to check a token.",
+            "please try again with a new token or report this error if it persists. "
+            "https://jwt.ms can be used to check a token.",
         )
 
 
@@ -193,13 +196,13 @@ class EntraAuthInvalidExpirationError(EntraAuthError):
             type_="auth_token_expired",
             title="Auth token expired",
             detail="The auth token has expired. This is a common error, please try again with a new token or report "
-                   "this error if it persists. https://jwt.ms can be used to check a token.",
+            "this error if it persists. https://jwt.ms can be used to check a token.",
         )
 
 
 class EntraAuthNotValidBeforeError(EntraAuthError):
     """
-    Raised when the JWT is not valid yet.
+    Raised when the JWT is not valid yet (nbf invalid).
 
     Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.ImmatureSignatureError
     """
@@ -210,7 +213,7 @@ class EntraAuthNotValidBeforeError(EntraAuthError):
             type_="auth_token_immature",
             title="Auth token not yet valid",
             detail="The auth token is not valid yet. This is an uncommon error, please try again with a new token or "
-                   "report this error if it persists. https://jwt.ms can be used to check a token.",
+            "report this error if it persists. https://jwt.ms can be used to check a token.",
         )
 
 
@@ -223,8 +226,8 @@ class EntraAuthInvalidSubjectError(EntraAuthError):
             type_="auth_token_subject_not_trusted",
             title="Auth token subject not trusted",
             detail="The subject/account of the auth token (typically 'you') is not trusted/allowed by this application."
-                   "This is a common error and can usually only be resolved by reporting this error. https://jwt.ms"
-                   "can be used to check which account is being used."
+            "This is a common error and can usually only be resolved by reporting this error. https://jwt.ms"
+            "can be used to check which account is being used.",
         )
 
 
@@ -237,8 +240,8 @@ class EntraAuthInvalidAppError(EntraAuthError):
             type_="auth_token_azp_not_trusted",
             title="Auth token application not trusted",
             detail="The application/client you are using is not trusted/allowed by this application."
-                   "This is a uncommon error and can usually only be resolved by reporting this error. https://jwt.ms"
-                   "can be used to get which application is being used, which can be checked against allowed apps."
+            "This is a uncommon error and can usually only be resolved by reporting this error. https://jwt.ms"
+            "can be used to get which application is being used, which can be checked against allowed apps.",
         )
 
 
@@ -251,5 +254,5 @@ class EntraAuthInvalidTokenVersionError(EntraAuthError):
             type_="auth_token_ver_not_supported",
             title="Auth token version not supported",
             detail="The auth token internal version (as defined by Entra) is not supported. Tokens must use version"
-                   "'2.0'. This is an uncommon error, https://jwt.ms can be used to check the token version."
+            "'2.0'. This is an uncommon error, https://jwt.ms can be used to check the token version.",
         )

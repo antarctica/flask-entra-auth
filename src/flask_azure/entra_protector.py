@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from dataclasses import asdict
 
@@ -59,12 +61,9 @@ class EntraResourceProtector(ResourceProtector):
             headers={"content-type": "application/json"},
         )
 
-        # # temp
-        # super().raise_error_response(error)
-
 
 class FlaskEntraAuth:
-    def __init__(self, app: Flask = None) -> None:
+    def __init__(self, app: Flask | None = None) -> None:
         if app is not None:
             self.init_app(app)
 
