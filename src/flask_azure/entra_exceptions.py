@@ -108,4 +108,39 @@ class EntraAuthJwtMissingClaimError(EntraAuthError):
             title="Missing required claim",
             detail=f"Required claim '{self.claim}' is missing from the token. Please try again with a new token "
                    "or report this error if it persists. https://jwt.ms can be used to check claims in a token.",
+
+
+class EntraAuthInvalidTokenError(EntraAuthError):
+    """
+    Raised when the JWT can't be decoded.
+
+    Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.DecodeError
+    """
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_invalid",
+            title="Auth token invalid",
+            detail="Auth token could not be decoded. This an atypical error, please check the token is a JWT "
+                   "(JSON Web Token) and try again, or report this error if it persists. https://jwt.ms can be used to "
+                   "check a token.",
+        )
+
+
+class EntraAuthInvalidSignatureError(EntraAuthError):
+    """
+    Raised when the JWT signature cannot be verified against it's signing key.
+
+    Corresponds to https://pyjwt.readthedocs.io/en/latest/api.html#jwt.exceptions.InvalidSignatureError
+    """
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="jwt_invalid_signature",
+            title="Invalid token signature",
+            detail="The auth token's signature cannot be verified using the signing key specified by the token, and "
+                   "cannot therefore be trusted. This is an atypical error, please try again with a new token "
+                   "or report this error if it persists. https://jwt.ms can be used to check a token.",
         )

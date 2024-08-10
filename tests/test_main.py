@@ -87,6 +87,20 @@ class TestMainRestricted:
         """Returns invalid signing key error when JWT missing 'kid' header parameter."""
         response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_empty}"})
         _assert_entra_error(EntraAuthJwksError, response)
+    def test_bad_jwt_decode(self, fx_app_client: FlaskClient):
+        """Returns invalid token error when JWT can't be parsed."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": "Bearer Invalid"})
+        _assert_entra_error(EntraAuthInvalidTokenError, response)
+
+    def test_bad_jwt_kid(self, fx_app_client: FlaskClient, fx_jwt_bad_kid: str):
+        """Returns invalid signing key error when JWT specifies a signing key not in JWKS."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_kid}"})
+        _assert_entra_error(EntraAuthKeyError, response)
+
+    def test_bad_jwt_sig(self, fx_app_client: FlaskClient, fx_jwt_bad_sig: str):
+        """Returns invalid signature error."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_sig}"})
+        _assert_entra_error(EntraAuthInvalidSignatureError, response)
 
     def test_bad_jwk_no_iss(self, fx_app_client: FlaskClient, fx_jwt_kid: str):
         """Returns missing required claim error."""

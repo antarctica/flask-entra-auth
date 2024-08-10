@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from json import JSONDecodeError
 from typing import TypedDict
 
 import requests
@@ -176,6 +177,10 @@ class EntraToken:
         self._validate_azp(claims["azp"])
 
         return claims
+        except InvalidSignatureError as e:
+            raise EntraAuthInvalidSignatureError from e
+        except DecodeError as e:
+            raise EntraAuthInvalidTokenError from e
         except MissingRequiredClaimError as e:
             raise EntraAuthJwtMissingClaimError(claim=e.claim) from e
 
