@@ -5,8 +5,11 @@ from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
 from flask_azure.entra_exceptions import (
-    EntraAuthJwksError,
-    EntraAuthJwtMissingClaimError,
+    EntraAuthInvalidSignatureError,
+    EntraAuthInvalidTokenError,
+    EntraAuthKeyError,
+    EntraAuthMissingClaimError,
+    EntraAuthOidcError,
     EntraAuthRequestInvalidAuthHeaderError,
     EntraAuthRequestNoAuthHeaderError,
 )
@@ -14,8 +17,8 @@ from flask_azure.entra_exceptions import (
 
 def _assert_entra_error(error: callable, response: TestResponse, **kwargs) -> None:
     error_ = error(**kwargs)
-    assert response.status_code == error_.problem.status
     assert response.json == asdict(error_.problem)
+    assert response.status_code == error_.problem.status
 
 
 class TestMainUnrestricted:
@@ -50,6 +53,38 @@ class TestMainRestricted:
         _assert_entra_error(EntraRequestInvalidAuthHeaderError, response)
     def test_bad_jwks(self, fx_app_client: FlaskClient, fx_jwt_empty: str):
         """Returns JWKS error."""
+    def test_bad_oidc_missing(self, fx_app_client_no_oidc: FlaskClient, fx_jwt_kid: str):
+        """Returns invalid signing key error when JWKS not available."""
+        response = fx_app_client_no_oidc.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
+        _assert_entra_error(EntraAuthOidcError, response)
+
+    def test_bad_oidc_invalid(self, fx_app_client_bad_oidc: FlaskClient, fx_jwt_kid: str):
+        """Returns invalid signing key error when JWKS is invalid."""
+        response = fx_app_client_bad_oidc.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
+        _assert_entra_error(EntraAuthOidcError, response)
+
+    def test_bad_oidc_empty(self, fx_app_client_empty_oidc: FlaskClient, fx_jwt_kid: str):
+        """Returns invalid signing key error when JWKS is empty."""
+        response = fx_app_client_empty_oidc.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
+        _assert_entra_error(EntraAuthOidcError, response)
+
+    def test_bad_jwks_missing(self, fx_app_client_no_jwks: FlaskClient, fx_jwt_kid: str):
+        """Returns invalid signing key error when JWKS not available."""
+        response = fx_app_client_no_jwks.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
+        _assert_entra_error(EntraAuthKeyError, response)
+
+    def test_bad_jwks_invalid(self, fx_app_client_bad_jwks: FlaskClient, fx_jwt_kid: str):
+        """Returns invalid signing key error when JWKS is invalid."""
+        response = fx_app_client_bad_jwks.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
+        _assert_entra_error(EntraAuthKeyError, response)
+
+    def test_bad_jwks_empty(self, fx_app_client_empty_jwks: FlaskClient, fx_jwt_kid: str):
+        """Returns invalid signing key error when JWKS is empty."""
+        response = fx_app_client_empty_jwks.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
+        _assert_entra_error(EntraAuthKeyError, response)
+
+    def test_bad_jwt_no_kid(self, fx_app_client: FlaskClient, fx_jwt_empty: str):
+        """Returns invalid signing key error when JWT missing 'kid' header parameter."""
         response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_empty}"})
         _assert_entra_error(EntraAuthJwksError, response)
 

@@ -3,7 +3,15 @@ from __future__ import annotations
 from typing import TypedDict
 
 import requests
-from jwt import MissingRequiredClaimError, PyJWK, PyJWKClient, PyJWKClientError
+from jwt import (
+    DecodeError,
+    InvalidSignatureError,
+    MissingRequiredClaimError,
+    PyJWK,
+    PyJWKClient,
+    PyJWKClientError,
+    PyJWKSetError,
+)
 from jwt import decode as jwt_decode
 
 
@@ -27,6 +35,13 @@ class EntraTokenVersionNotAllowedError(EntraTokenError):
     pass
 from flask_azure.entra_exceptions import EntraAuthJwksError
 from flask_azure.entra_exceptions import EntraAuthJwksError, EntraAuthJwtMissingClaimError
+from flask_azure.entra_exceptions import (
+    EntraAuthInvalidSignatureError,
+    EntraAuthInvalidTokenError,
+    EntraAuthKeyError,
+    EntraAuthMissingClaimError,
+    EntraAuthOidcError,
+)
 
 
 class EntraTokenClaims(TypedDict):
@@ -102,7 +117,14 @@ class EntraToken:
     def _public_key(self) -> PyJWK:
         oidc_config = self._get_oidc_metadata()
         jwks_client = PyJWKClient(oidc_config["jwks_uri"])
-        return jwks_client.get_signing_key_from_jwt(self._token)
+        try:
+            return jwks_client.get_signing_key_from_jwt(self._token)
+        except PyJWKClientError as e:
+            raise EntraAuthKeyError from e
+        except JSONDecodeError as e:
+            raise EntraAuthKeyError from e
+        except PyJWKSetError as e:
+            raise EntraAuthKeyError from e
 
     @property
     def _issuer(self) -> str:
@@ -110,9 +132,16 @@ class EntraToken:
         return oidc_config["issuer"]
 
     def _get_oidc_metadata(self) -> dict:
-        oidc_req = requests.get(self._oidc_endpoint)
-        oidc_req.raise_for_status()
-        return oidc_req.json()
+        try:
+            oidc_req = requests.get(self._oidc_endpoint, timeout=10)
+            oidc_req.raise_for_status()
+            oidc_data = oidc_req.json()
+            if "jwks_uri" not in oidc_data or "issuer" not in oidc_data:
+                raise EntraAuthOidcError
+        except requests.RequestException as e:
+            raise EntraAuthOidcError from e
+        else:
+            return oidc_data
 
     @staticmethod
     def _validate_ver(ver: str):
@@ -147,8 +176,6 @@ class EntraToken:
         self._validate_azp(claims["azp"])
 
         return claims
-        except PyJWKClientError as e:
-            raise EntraAuthJwksError from e
         except MissingRequiredClaimError as e:
             raise EntraAuthJwtMissingClaimError(claim=e.claim) from e
 

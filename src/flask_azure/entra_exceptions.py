@@ -36,6 +36,20 @@ class EntraAuthError(Exception):
         super().__init__(title)
 
 
+class EntraAuthOidcError(EntraAuthError):
+    """Raised when the OIDC metadata endpoint is unavailable or invalid."""
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            type_="auth_oidc_error",
+            title="OIDC metadata error",
+            detail="The OIDC metadata endpoint used to get trusted signing keys and other setting is unavailable or "
+                   "invalid. This is an atypical server error, please try again later, or report this error if it "
+                   "persists.",
+        )
+
+
 class EntraAuthRequestNoAuthHeaderError(EntraAuthError):
     """Raised when no auth header is in request."""
 
@@ -61,15 +75,24 @@ class EntraAuthRequestInvalidAuthHeaderError(EntraAuthError):
         )
 
 
-class EntraAuthJwksError(EntraAuthError):
-    """Raised when the JSON Web Key Set (JWKS) containing the token signing key is unavailable or invalid."""
+class EntraAuthKeyError(EntraAuthError):
+    """
+    Raised when the JWT signing key is unavailable or invalid.
+
+    Covers a few situations:
+    - JWKS endpoint is unavailable, malformed or empty
+    - JWT does not contain a key ID (kid) header parameter
+    - JWKS does not contain the key specified by the JWT
+    """
 
     def __init__(self):
         super().__init__(
-            status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            type_="jwks_error",
-            title="Error processing JWKS",
-            detail="The token signing key could not be loaded. Please try again later or report this error.",
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_key_error",
+            title="Token signing key error",
+            detail="The key used to sign the auth token could not be loaded. This is an atypical error. Please check "
+                   "the token includes a valid 'kid' header parameter and try again later, or report this error if it "
+                   "persists. https://jwt.ms can be used to check a token.",
         )
 
 

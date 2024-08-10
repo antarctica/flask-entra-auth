@@ -99,6 +99,19 @@ def fx_jwt_kid(fx_jwk_private: str, fx_jwk_kid: str) -> str:
 
 
 @pytest.fixture()
+def fx_jwt_bad_kid(fx_jwk_private: str, fx_jwk_kid: str) -> str:
+    """Jason Web Token (JWT) with an invalid Key ID (kid) header that is not in JWKS."""
+    return jwt_encode(payload={}, key=fx_jwk_private, algorithm="RS256", headers={"kid": 'invalid'})
+
+
+@pytest.fixture()
+def fx_jwt_bad_sig(fx_jwt_kid: str) -> str:
+    """Jason Web Token (JWT) with invalid signature."""
+    parts = fx_jwt_kid.split('.')
+    return '.'.join([parts[0], parts[1], 'invalid_sig'])
+
+
+@pytest.fixture()
 def fx_jwt_iss(fx_jwk_private: str, fx_jwk_kid: str, fx_claim_iss: str) -> str:
     """Jason Web Token (JWT) with Issuer (iss) claim."""
     return jwt_encode(payload={'iss': fx_claim_iss}, key=fx_jwk_private, algorithm="RS256", headers={"kid": fx_jwk_kid})
@@ -157,3 +170,76 @@ def fx_app(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str, fx
 @pytest.fixture()
 def fx_app_client(fx_app) -> FlaskClient:
     return fx_app.test_client()
+
+@pytest.fixture()
+def fx_app_client_no_oidc(httpserver: HTTPServer, fx_client_id_self: str) -> FlaskClient:
+    """App test client with an inaccessible OIDC metadata endpoint."""
+    httpserver.expect_request("/.well-known/openid-configuration").respond_with_data("Not found", status=404, content_type="text/plain")
+
+    app_.config["TESTING"] = True
+    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
+    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
+
+    return app_.test_client()
+
+
+@pytest.fixture()
+def fx_app_client_bad_oidc(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+    """App test client with invalid OIDC metadata."""
+    httpserver.expect_request("/.well-known/openid-configuration").respond_with_data("Invalid", status=200, content_type="text/plain")
+    app_.config["TESTING"] = True
+    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
+    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
+
+    return app_.test_client()
+
+
+@pytest.fixture()
+def fx_app_client_empty_oidc(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+    """App test client with empty/invalid OIDC metadata."""
+    httpserver.expect_request("/.well-known/openid-configuration").respond_with_json({})
+    app_.config["TESTING"] = True
+    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
+    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
+
+    return app_.test_client()
+
+
+@pytest.fixture()
+def fx_app_client_no_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+    """App test client with an inaccessible JWKS endpoint."""
+    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claim_iss}
+    httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
+    httpserver.expect_request("/keys").respond_with_data("Not found", status=404, content_type="text/plain")
+
+    app_.config["TESTING"] = True
+    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
+    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
+
+    return app_.test_client()
+
+
+@pytest.fixture()
+def fx_app_client_bad_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+    """App test client with an invalid JWKS endpoint."""
+    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claim_iss}
+    httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
+    httpserver.expect_request("/keys").respond_with_data("Invalid", status=200, content_type="text/plain")
+    app_.config["TESTING"] = True
+    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
+    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
+
+    return app_.test_client()
+
+
+@pytest.fixture()
+def fx_app_client_empty_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+    """App test client with an JWKS endpoint that has no keys."""
+    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claim_iss}
+    httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
+    httpserver.expect_request("/keys").respond_with_json({"keys": []})
+    app_.config["TESTING"] = True
+    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
+    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
+
+    return app_.test_client()
