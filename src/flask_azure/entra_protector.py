@@ -5,22 +5,17 @@ from authlib.integrations.flask_oauth2 import ResourceProtector, current_token
 from authlib.integrations.flask_oauth2.errors import raise_http_exception
 from authlib.oauth2 import OAuth2Error
 from authlib.oauth2.rfc6750 import BearerTokenValidator, InsufficientScopeError
-from flask import Flask, Request
+from flask import Flask, Request, current_app
 
 from flask_azure.entra_exceptions import (
     EntraAuthError,
-    EntraRequestInvalidAuthHeaderError,
-    EntraRequestNoAuthHeaderError,
+    EntraAuthRequestInvalidAuthHeaderError,
+    EntraAuthRequestNoAuthHeaderError,
 )
 from flask_azure.entra_token import EntraToken
 
 
 class EntraBearerTokenValidator(BearerTokenValidator):
-    def __init__(self, oidc_endpoint: str, client_id: str):
-        super().__init__()
-        self._oidc_endpoint = oidc_endpoint
-        self._client_id = client_id
-
     def authenticate_token(self, token_str: str) -> EntraToken:
         # initialising token implicitly validates it
         try:
@@ -43,16 +38,11 @@ class EntraBearerTokenValidator(BearerTokenValidator):
 
 
 class EntraResourceProtector(ResourceProtector):
-    def __init__(self, oidc_endpoint: str, client_id: str):
+    def __init__(self):
         super().__init__()
-
         self.current_token = current_token
-        self.register_token_validator(
-            EntraBearerTokenValidator(
-                oidc_endpoint=oidc_endpoint,
-                client_id=client_id,
-            )
-        )
+
+        self.register_token_validator(EntraBearerTokenValidator())
 
     def raise_error_response(self, error: OAuth2Error) -> None:
         error_ = EntraAuthError()
@@ -76,9 +66,7 @@ class FlaskEntraAuth:
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app: Flask) -> None:
-        auth = EntraResourceProtector(
-            oidc_endpoint=app.config["auth_oidc_endpoint"],
-            client_id=app.config["auth_client_id"],
-        )
+    @staticmethod
+    def init_app(app: Flask) -> None:
+        auth = EntraResourceProtector()
         app.auth = auth
