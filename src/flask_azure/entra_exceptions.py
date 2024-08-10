@@ -71,4 +71,18 @@ class EntraAuthJwksError(EntraAuthError):
             title="Error processing JWKS",
             detail="The token signing key could not be loaded. Please try again later or report this error.",
         )
+
+
+class EntraAuthJwtMissingClaimError(EntraAuthError):
+    """Raised when a required claim is missing from the JSON Web Token (JWT)."""
+
+    def __init__(self, claim: str):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="jwt_claim_missing",
+            title="Missing required claim",
+            detail="A required claim is missing from the token. Please try again with a new token "
+                   "or report this error if it persists.",
         )
+
+        self.claim = claim

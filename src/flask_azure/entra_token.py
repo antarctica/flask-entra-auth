@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import TypedDict
 
 import requests
-from jwt import PyJWK, PyJWKClient, decode as jwt_decode, ExpiredSignatureError
+from jwt import MissingRequiredClaimError, PyJWK, PyJWKClient, PyJWKClientError
+from jwt import decode as jwt_decode
 
 
 class EntraTokenError(Exception):
@@ -25,6 +26,7 @@ class EntraTokenClientAppNotAllowedError(EntraTokenError):
 class EntraTokenVersionNotAllowedError(EntraTokenError):
     pass
 from flask_azure.entra_exceptions import EntraAuthJwksError
+from flask_azure.entra_exceptions import EntraAuthJwksError, EntraAuthJwtMissingClaimError
 
 
 class EntraTokenClaims(TypedDict):
@@ -147,6 +149,8 @@ class EntraToken:
         return claims
         except PyJWKClientError as e:
             raise EntraAuthJwksError from e
+        except MissingRequiredClaimError as e:
+            raise EntraAuthJwtMissingClaimError(claim=e.claim) from e
 
     @property
     def scopes(self) -> list[str]:

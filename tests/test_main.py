@@ -6,13 +6,14 @@ from werkzeug.test import TestResponse
 
 from flask_azure.entra_exceptions import (
     EntraAuthJwksError,
+    EntraAuthJwtMissingClaimError,
     EntraAuthRequestInvalidAuthHeaderError,
     EntraAuthRequestNoAuthHeaderError,
 )
 
 
-def _assert_entra_error(error: callable, response: TestResponse) -> None:
-    error_ = error()
+def _assert_entra_error(error: callable, response: TestResponse, **kwargs) -> None:
+    error_ = error(**kwargs)
     assert response.status_code == error_.problem.status
     assert response.json == asdict(error_.problem)
 
@@ -52,6 +53,11 @@ class TestMainRestricted:
         """Returns JWKS error."""
         response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_empty}"})
         _assert_entra_error(EntraAuthJwksError, response)
+
+    def test_bad_jwk_no_iss(self, fx_app_client: FlaskClient, fx_jwt_kid: str):
+        """Returns missing required claim error."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
+        _assert_entra_error(EntraAuthJwtMissingClaimError, response, claim='iss')
 
 
 class TestMainRestrictedScope:
