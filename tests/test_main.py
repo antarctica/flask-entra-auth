@@ -4,12 +4,17 @@ import pytest
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
-from flask_azure.entra_exceptions import EntraRequestInvalidAuthHeaderError, EntraRequestNoAuthHeaderError
+from flask_azure.entra_exceptions import (
+    EntraAuthJwksError,
+    EntraAuthRequestInvalidAuthHeaderError,
+    EntraAuthRequestNoAuthHeaderError,
+)
 
 
 def _assert_entra_error(error: callable, response: TestResponse) -> None:
-    assert response.status_code == 401
-    assert response.json == asdict(error().problem)
+    error_ = error()
+    assert response.status_code == error_.problem.status
+    assert response.json == asdict(error_.problem)
 
 
 class TestMainUnrestricted:
@@ -35,7 +40,7 @@ class TestMainRestricted:
     def test_no_auth(self, fx_app_client: FlaskClient):
         """Returns no auth header error."""
         response = fx_app_client.post("/restricted")
-        _assert_entra_error(EntraRequestNoAuthHeaderError, response)
+        _assert_entra_error(EntraAuthRequestNoAuthHeaderError, response)
 
     # parameterise
     @pytest.mark.parametrize('auth_value', ['Bearer', '<token>', 'Invalid <token>'])
@@ -43,6 +48,11 @@ class TestMainRestricted:
         """Returns invalid auth header error."""
         response = fx_app_client.post("/restricted", headers={'Authorization': auth_value})
         _assert_entra_error(EntraRequestInvalidAuthHeaderError, response)
+    def test_bad_jwks(self, fx_app_client: FlaskClient, fx_jwt_empty: str):
+        """Returns JWKS error."""
+        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_empty}"})
+        _assert_entra_error(EntraAuthJwksError, response)
+
 
 class TestMainRestrictedScope:
     """Test restricted route with required scope."""

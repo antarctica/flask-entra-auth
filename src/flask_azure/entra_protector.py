@@ -23,11 +23,18 @@ class EntraBearerTokenValidator(BearerTokenValidator):
 
     def authenticate_token(self, token_str: str) -> EntraToken:
         # initialising token implicitly validates it
-        return EntraToken(
-            token=token_str,
-            oidc_endpoint=self._oidc_endpoint,
-            client_id=self._client_id,
-        )
+        try:
+            return EntraToken(
+                token=token_str,
+                oidc_endpoint=current_app.config["ENTRA_AUTH_OIDC_ENDPOINT"],
+                client_id=current_app.config["ENTRA_AUTH_CLIENT_ID"],
+            )
+        except EntraAuthError as e:
+            raise_http_exception(
+                status=e.problem.status,
+                body=json.dumps(asdict(e.problem)),
+                headers={"content-type": "application/json"},
+            )
 
     def validate_token(self, token: EntraToken, required_scopes: list[str], request: Request) -> None:
         # token authenticated so only need to check authorisation via scopes
@@ -50,9 +57,9 @@ class EntraResourceProtector(ResourceProtector):
     def raise_error_response(self, error: OAuth2Error) -> None:
         error_ = EntraAuthError()
         if error.error == "missing_authorization":
-            error_ = EntraRequestNoAuthHeaderError()
+            error_ = EntraAuthRequestNoAuthHeaderError()
         elif error.error == "unsupported_token_type":
-            error_ = EntraRequestInvalidAuthHeaderError()
+            error_ = EntraAuthRequestInvalidAuthHeaderError()
 
         raise_http_exception(
             status=error_.problem.status,

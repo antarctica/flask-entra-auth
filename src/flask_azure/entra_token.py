@@ -24,6 +24,7 @@ class EntraTokenClientAppNotAllowedError(EntraTokenError):
 
 class EntraTokenVersionNotAllowedError(EntraTokenError):
     pass
+from flask_azure.entra_exceptions import EntraAuthJwksError
 
 
 class EntraTokenClaims(TypedDict):
@@ -138,14 +139,14 @@ class EntraToken:
                 issuer=self._issuer,
                 options={"require": self._required_claims},
             )
-        except ExpiredSignatureError:
-            raise EntraTokenExpiredError("Token has expired")
 
         self._validate_ver(claims["ver"])
         self._validate_sub(claims["sub"])
         self._validate_azp(claims["azp"])
 
         return claims
+        except PyJWKClientError as e:
+            raise EntraAuthJwksError from e
 
     @property
     def scopes(self) -> list[str]:

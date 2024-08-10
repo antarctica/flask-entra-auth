@@ -467,6 +467,23 @@ MarkupSafe = ">=2.0"
 i18n = ["Babel (>=2.7)"]
 
 [[package]]
+name = "joserfc"
+version = "1.0.0"
+description = "The ultimate Python library for JOSE RFCs, including JWS, JWE, JWK, JWA, JWT"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "joserfc-1.0.0-py3-none-any.whl", hash = "sha256:1de2c3ac203db8fceb2e84c1e78ba357030b195c21af046a1411711927654a09"},
+    {file = "joserfc-1.0.0.tar.gz", hash = "sha256:298a9820c76576f8ca63375d1851cc092f3f225508305c7a36c4632cec38f7bc"},
+]
+
+[package.dependencies]
+cryptography = "*"
+
+[package.extras]
+drafts = ["pycryptodome"]
+
+[[package]]
 name = "markupsafe"
 version = "2.1.5"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -633,6 +650,20 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
+name = "pytest-httpserver"
+version = "1.0.12"
+description = "pytest-httpserver is a httpserver for pytest"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest_httpserver-1.0.12-py3-none-any.whl", hash = "sha256:dae1c79ec7aeda83bfaaf4d0a400867a4b1bc6bf668244daaf13aa814e3022da"},
+    {file = "pytest_httpserver-1.0.12.tar.gz", hash = "sha256:c14600b8efb9ea8d7e63251a242ab987f13028b36d3d397ffaca3c929f67eb16"},
+]
+
+[package.dependencies]
+Werkzeug = ">=2.0.0"
+
+[[package]]
 name = "pytest-random-order"
 version = "1.1.1"
 description = "Randomise the order in which pytest tests are run with some control over the randomness"
@@ -757,4 +788,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "a803373c5bbfd7af8bcbaa4c1f3f5103555e137e612a193a3a57c005c9b628cf"
+content-hash = "d182d0732305b572922fa6de0fcb273a6dbce8b84fbbddaefc2af38c89f04876"
