@@ -58,12 +58,14 @@ v0.2.0
 Then:
 
 - [x] change POST to GET in routes
+- [x] doc blocks
+- [x] document config options
 - [ ] note Token class implicitly validates for safety (currently)
 - [ ] warn that initialising an EntraToken will fetch OIDC metadata and the JWKS
-- [ ] doc blocks
+- [ ] explain custom scopes and how these can be used for authz
+- [ ] explain that other Entra features can control access to applications (user placement)
 - [ ] test for current token?
 - [ ] contact in errors (url, mailto)
-- [x] document config options
 - [ ] link to https://jwt.ms as useful resource
 - [ ] link to MSAL for generating access tokens
 - [ ] review existing README
