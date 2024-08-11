@@ -28,7 +28,7 @@ from flask_azure.entra_exceptions import (
     EntraAuthInvalidSubjectError,
     EntraAuthInvalidTokenError,
     EntraAuthInvalidTokenVersionError,
-    EntraAuthKeyError,
+    EntraAuthSigningKeyError,
     EntraAuthMissingClaimError,
     EntraAuthNotValidBeforeError,
     EntraAuthOidcError,
@@ -111,11 +111,11 @@ class EntraToken:
         try:
             return jwks_client.get_signing_key_from_jwt(self._token)
         except PyJWKClientError as e:
-            raise EntraAuthKeyError from e
+            raise EntraAuthSigningKeyError from e
         except JSONDecodeError as e:
-            raise EntraAuthKeyError from e
+            raise EntraAuthSigningKeyError from e
         except PyJWKSetError as e:
-            raise EntraAuthKeyError from e
+            raise EntraAuthSigningKeyError from e
 
     @property
     def _issuer(self) -> str:

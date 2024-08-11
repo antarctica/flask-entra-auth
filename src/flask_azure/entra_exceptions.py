@@ -75,7 +75,7 @@ class EntraAuthRequestInvalidAuthHeaderError(EntraAuthError):
         )
 
 
-class EntraAuthKeyError(EntraAuthError):
+class EntraAuthSigningKeyError(EntraAuthError):
     """
     Raised when the JWT signing key is unavailable or invalid.
 
@@ -253,8 +253,7 @@ class EntraAuthInvalidTokenVersionError(EntraAuthError):
             status=HTTPStatus.UNAUTHORIZED,
             type_="auth_token_ver_not_supported",
             title="Auth token version not supported",
-            detail="The auth token internal version (as defined by Entra) is not supported. Tokens must use version"
-            "'2.0'. This is an uncommon error, https://jwt.ms can be used to check the token version.",
+            detail="The auth token internal version (as defined by Entra) is not supported. Tokens must use version '2.0'. This is an uncommon error, and can usually only be resolved by reporting this error. https://jwt.ms can be used to check the token version.",
         )
 
 

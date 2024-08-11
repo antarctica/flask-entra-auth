@@ -15,12 +15,12 @@ from flask_azure.entra_exceptions import (
     EntraAuthInvalidSubjectError,
     EntraAuthInvalidTokenError,
     EntraAuthInvalidTokenVersionError,
-    EntraAuthKeyError,
     EntraAuthMissingClaimError,
     EntraAuthNotValidBeforeError,
     EntraAuthOidcError,
     EntraAuthRequestInvalidAuthHeaderError,
     EntraAuthRequestNoAuthHeaderError,
+    EntraAuthSigningKeyError,
 )
 
 
@@ -78,7 +78,7 @@ class TestMainRestricted:
     def test_bad_jwt_no_kid(self, fx_app_client: FlaskClient, fx_jwt_empty: str):
         """Returns invalid signing key error when JWT missing 'kid' header parameter."""
         response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_empty}"})
-        _assert_entra_error(EntraAuthKeyError, response)
+        _assert_entra_error(EntraAuthSigningKeyError, response)
 
     def test_bad_jwt_decode(self, fx_app_client: FlaskClient):
         """Returns invalid token error when JWT can't be parsed."""
@@ -88,7 +88,7 @@ class TestMainRestricted:
     def test_bad_jwt_kid(self, fx_app_client: FlaskClient, fx_jwt_bad_kid: str):
         """Returns invalid signing key error when JWT specifies a signing key not in JWKS."""
         response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_kid}"})
-        _assert_entra_error(EntraAuthKeyError, response)
+        _assert_entra_error(EntraAuthSigningKeyError, response)
 
     def test_bad_jwt_sig(self, fx_app_client: FlaskClient, fx_jwt_bad_sig: str):
         """Returns invalid signature error."""
