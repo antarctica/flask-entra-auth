@@ -28,10 +28,10 @@ from flask_entra_auth.exceptions import (
     EntraAuthInvalidSubjectError,
     EntraAuthInvalidTokenError,
     EntraAuthInvalidTokenVersionError,
-    EntraAuthSigningKeyError,
     EntraAuthMissingClaimError,
     EntraAuthNotValidBeforeError,
     EntraAuthOidcError,
+    EntraAuthSigningKeyError,
 )
 
 

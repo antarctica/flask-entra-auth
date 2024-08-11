@@ -18,7 +18,7 @@ v0.1.0
 - [x] refactored into an extension (resource protector v2)
 - [x] minimal tests
 
-Then:
+v0.2.0
 
 - [x] fake token auth for tests
 - reimplement error handling as exceptions to be handled by the app
@@ -55,7 +55,7 @@ Then:
 - [x] refactor app directly into tests, eliminating `__main__.py`
 - [x] expose allows subs/azp's as config options
 
-- Later:
+Then:
 
 - [x] change POST to GET in routes
 - [ ] note Token class implicitly validates for safety (currently)
@@ -63,7 +63,10 @@ Then:
 - [ ] doc blocks
 - [ ] test for current token?
 - [ ] contact in errors (url, mailto)
-- [ ] document config options
+- [x] document config options
+- [ ] link to https://jwt.ms as useful resource
+- [ ] link to MSAL for generating access tokens
+- [ ] review existing README
 - [ ] caching for `_get_oidc_metadata`
   - `JWKSclient` already caches the fetching of the key
 - [ ] support invalid tokens?
@@ -171,7 +174,10 @@ doesn't hold for Entra tokens and instead we validate the token using `pyjwt` an
 
 ...
 
-...creating an `EntraToken` class automatically and implicitly [Validates](#token-validation) it...
+...creating an `EntraToken` instance will automatically and implicitly [Validate](#token-validation) the token...
+
+...validating an `EntraToken` instance will automatically fetch the OIDC metadata and the JSON Web Key Set (JWKS) from
+their respective URIs...
 
 ...
 
@@ -215,17 +221,6 @@ Detail:
   - which additionally required the `sub` and `azp` claim for optionally filtering the security principle and application
   - which also exposed a leeway value with a default of 0
   - it also checked the `iat` claim but given we didn't do anything with its value, I don't think this adds anything
-
-
-### Resource protector 2
-
-As an evolved version of the resource protector:
-
-- overloads `validate()` method of bearer token validator as much of its validation checks are done implicitly by
-  initialising an `EntraToken` (such as expiry), now only checks for required scopes
-- means we can remove the derived `EntraTokenAuthlib` class
-- means we essentially have an authenticate and authorise method (but with the latter called 'validate')
-- refactors into a Flask extension
 
 ## Token introspection
 

@@ -11,7 +11,7 @@ from flask import Flask, Request, current_app
 
 from flask_entra_auth.exceptions import (
     EntraAuthError,
-    EntraAuthInsufficentScopesError,
+    EntraAuthInsufficientScopesError,
     EntraAuthRequestInvalidAuthHeaderError,
     EntraAuthRequestNoAuthHeaderError,
 )
@@ -67,7 +67,7 @@ class EntraBearerTokenValidator(BearerTokenValidator):
         have already been checked by the `authenticate_token` method and revoking tokens does not apply to Entra tokens.
         """
         if self.scope_insufficient(token_scopes=token.scopes, required_scopes=required_scopes):
-            _raise_exception_response(EntraAuthInsufficentScopesError())
+            _raise_exception_response(EntraAuthInsufficientScopesError())
 
 
 class EntraResourceProtector(ResourceProtector):

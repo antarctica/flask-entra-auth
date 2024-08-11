@@ -84,8 +84,10 @@ def create_app(  # noqa: C901
     @app.auth(["SCOPE_A SCOPE_C ROLE_1 ROLE_3", "SCOPE_B SCOPE_C ROLE_2 ROLE_3"])
     def restricted_scopes_and_or() -> str:
         """Closed route (authenticated and authorised with multiple required scopes, logical OR & AND)."""
-        return ("Restricted route, you have "
-                "((SCOPE_A && SCOPE_C && ROLE_1 && ROLE_3) || (SCOPE_B && SCOPE_C && ROLE_2 && ROLE_3)).")
+        return (
+            "Restricted route, you have "
+            "((SCOPE_A && SCOPE_C && ROLE_1 && ROLE_3) || (SCOPE_B && SCOPE_C && ROLE_2 && ROLE_3))."
+        )
 
     @app.route("/restricted/current-token", methods=["GET"])
     @app.auth()

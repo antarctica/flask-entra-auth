@@ -6,7 +6,7 @@ from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
 from flask_entra_auth.exceptions import (
-    EntraAuthInsufficentScopesError,
+    EntraAuthInsufficientScopesError,
     EntraAuthInvalidAppError,
     EntraAuthInvalidAudienceError,
     EntraAuthInvalidExpirationError,
@@ -165,7 +165,7 @@ class TestMainRestrictedScope:
         url = f"/restricted/scopes/{resource}-and"
 
         response = fx_app_client.get(url, headers={"Authorization": f"Bearer {token}"})
-        _assert_entra_error(EntraAuthInsufficentScopesError, response)
+        _assert_entra_error(EntraAuthInsufficientScopesError, response)
 
     @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
     def test_bad_or(self, fx_app_client: FlaskClient, fx_jwt_no_scopes: str, resource: str):
@@ -173,7 +173,7 @@ class TestMainRestrictedScope:
         url = f"/restricted/scopes/{resource}-or"
 
         response = fx_app_client.get(url, headers={"Authorization": f"Bearer {fx_jwt_no_scopes}"})
-        _assert_entra_error(EntraAuthInsufficentScopesError, response)
+        _assert_entra_error(EntraAuthInsufficientScopesError, response)
 
     @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
     def test_bad_and_or(self, request: FixtureRequest, fx_app_client: FlaskClient, resource: str):
@@ -182,7 +182,7 @@ class TestMainRestrictedScope:
         url = f"/restricted/scopes/{resource}-and-or"
 
         response = fx_app_client.get(url, headers={"Authorization": f"Bearer {token}"})
-        _assert_entra_error(EntraAuthInsufficentScopesError, response)
+        _assert_entra_error(EntraAuthInsufficientScopesError, response)
 
 
 class TestMainRestrictedCurrentToken:
