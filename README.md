@@ -71,6 +71,7 @@ Then:
 
 Later:
 
+- [x] rename package to `flask_entra_auth` (`flask-entra-auth`)
 - [ ] CI
 - [ ] Safety
 - [ ] publish under existing package name?

@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "flask-azure"
+name = "flask-entra-auth"
 version = "0.1.0"
-description = "Experiment to update how access to a Flask app can be controlled using Azure/Entra ID."
+description = "Flask extension for authenticating and authorising requests using Entra identity platform."
 authors = ["Felix Fennell <felnne@bas.ac.uk>"]
 readme = "README.md"
 license = "MIT"
-packages = [{include = "flask_azure", from = "src"}]
+packages = [{include = "flask_entra_auth", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"

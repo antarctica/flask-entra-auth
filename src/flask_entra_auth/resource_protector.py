@@ -9,13 +9,13 @@ from authlib.oauth2 import OAuth2Error
 from authlib.oauth2.rfc6750 import BearerTokenValidator
 from flask import Flask, Request, current_app
 
-from flask_azure.exceptions import (
+from flask_entra_auth.exceptions import (
     EntraAuthError,
     EntraAuthInsufficentScopesError,
     EntraAuthRequestInvalidAuthHeaderError,
     EntraAuthRequestNoAuthHeaderError,
 )
-from flask_azure.token import EntraToken
+from flask_entra_auth.token import EntraToken
 
 
 def _raise_exception_response(error: EntraAuthError) -> None:

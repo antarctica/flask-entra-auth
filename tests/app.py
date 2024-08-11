@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from flask import Flask, request
 
-from flask_azure.exceptions import EntraAuthError
-from flask_azure.token import EntraToken
-from flask_azure.resource_protector import FlaskEntraAuth
+from flask_entra_auth.exceptions import EntraAuthError
+from flask_entra_auth.resource_protector import FlaskEntraAuth
+from flask_entra_auth.token import EntraToken
 
 auth = FlaskEntraAuth()
 
