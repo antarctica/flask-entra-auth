@@ -1,748 +1,225 @@
-from datetime import datetime
-
 import pytest
-from cryptography.hazmat.primitives import serialization
 from flask import Flask
 from flask.testing import FlaskClient
 from joserfc.jwk import KeySet
-from jwt import encode as jwt_encode
 from pytest_httpserver import HTTPServer
 
 from flask_azure.__main__ import app as app_
+from tests.mock_jwks import MockJwks
+from tests.mock_jwt import MockClaims, MockJwtClient
 
 
 @pytest.fixture()
 def fx_client_id_self() -> str:
     """Client ID for app containing protected resources."""
-    return "test_client_1"
+    return "test_app_1"
 
 
 @pytest.fixture()
-def fx_time_anchor() -> datetime:
-    """Temporal reference point for JWT claims."""
-    return datetime.now()  # noqa: DTZ005
+def fx_claims(fx_client_id_self: str) -> MockClaims:
+    """MockClaims."""
+    return MockClaims(fx_client_id_self)
 
 
 @pytest.fixture()
-def fx_jwks() -> KeySet:
-    """JSON Web Key Set for generating local tokens."""
-    return KeySet.generate_key_set(key_type="RSA", crv_or_size=2048, count=1)
+def fx_jwks() -> MockJwks:
+    """JSON Web Key Set."""
+    return MockJwks()
 
 
 @pytest.fixture()
-def fx_jwk_kid(fx_jwks: KeySet) -> str:
-    """Key ID (kid) for JSON Web Key (JWK) in JSON Web Key Set (JWKS)."""
-    return fx_jwks.keys[0].kid
+def fx_jwt(fx_jwks: MockJwks, fx_claims: MockClaims) -> MockJwtClient:
+    """JSON Web Tokens client."""
+    return MockJwtClient(key=fx_jwks.jwk, claims=fx_claims)
 
 
 @pytest.fixture()
-def fx_jwk_private(fx_jwks: KeySet) -> str:
-    """Private key for JSON Web Key (JWK) in JSON Web Key Set (JWKS)."""
-    return fx_jwks.keys[0].private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption(),
-    )
+def fx_jwt_empty(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with no claims."""
+    return fx_jwt.generate_empty()
 
 
 @pytest.fixture()
-def fx_claim_iss() -> str:
-    """Issuer claim."""
-    return "https://issuer.auth.example.com"
+def fx_jwt_kid(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with Key ID (kid) header."""
+    return fx_jwt.generate_kid()
 
 
 @pytest.fixture()
-def fx_claim_sub() -> str:
-    """Subject claim."""
-    return "test_subject"
+def fx_jwt_no_scopes(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims except scopes."""
+    return fx_jwt.generate(scps=False, roles=False)
 
 
 @pytest.fixture()
-def fx_claim_aud(fx_client_id_self: str) -> str:
-    """Audience claim."""
-    return fx_client_id_self
+def fx_jwt_scps_and(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and all app scopes."""
+    return fx_jwt.generate(roles=False)
 
 
 @pytest.fixture()
-def fx_claim_exp(fx_time_anchor: datetime) -> int:
-    """Expiration claim."""
-    return int(fx_time_anchor.timestamp() + 3600)
+def fx_jwt_scps_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and a valid choice from a set of required app scopes."""
+    return fx_jwt.generate(scps=[fx_claims.scps[0]], roles=False)
 
 
 @pytest.fixture()
-def fx_claim_nbf(fx_time_anchor: datetime) -> int:
-    """Not Before claim."""
-    return int(fx_time_anchor.timestamp())
+def fx_jwt_scps_and_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and a valid subset of required app scopes."""
+    return fx_jwt.generate(scps=[fx_claims.scps[0], fx_claims.scps[2]], roles=False)
 
 
 @pytest.fixture()
-def fx_claim_azp(fx_client_id_self: str) -> str:
-    """Azure client application claim."""
-    return "test_client_2"
+def fx_jwt_roles_and(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and all user roles."""
+    return fx_jwt.generate(scps=False)
 
 
 @pytest.fixture()
-def fx_claim_ver() -> str:
-    """Azure token Version claim."""
-    return "2.0"
+def fx_jwt_roles_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and a valid choice from a set of required user roles."""
+    return fx_jwt.generate(scps=False, roles=[fx_claims.roles[0]])
 
 
 @pytest.fixture()
-def fx_claim_scopes() -> list[str]:
-    """Azure token scopes claim (apps)."""
-    return ["SCOPE_A", "SCOPE_B", "SCOPE_C"]
+def fx_jwt_roles_and_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and a valid subset of required user roles."""
+    return fx_jwt.generate(scps=False, roles=[fx_claims.roles[0], fx_claims.roles[2]])
 
 
 @pytest.fixture()
-def fx_claim_roles() -> list[str]:
-    """Azure token roles claim (users)."""
-    return ["ROLE_1", "ROLE_2", "ROLE_3"]
+def fx_jwt_scopes_and(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and all app and user scopes."""
+    return fx_jwt.generate()
 
 
 @pytest.fixture()
-def fx_jwt_empty(fx_jwk_private: str) -> str:
-    """Jason Web Token (JWT) with no claims."""
-    return jwt_encode(payload={}, key=fx_jwk_private, algorithm="RS256")
+def fx_jwt_scopes_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and a valid subset of required app and user scopes."""
+    return fx_jwt.generate(scps=[fx_claims.scps[0]], roles=[fx_claims.roles[0]])
 
 
 @pytest.fixture()
-def fx_jwt_kid(fx_jwk_private: str, fx_jwk_kid: str) -> str:
-    """Jason Web Token (JWT) with Key ID (kid) header."""
-    return jwt_encode(payload={}, key=fx_jwk_private, algorithm="RS256", headers={"kid": fx_jwk_kid})
+def fx_jwt_scopes_or_bad(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and an invalid subset of required app and user scopes."""
+    return fx_jwt.generate(scps=[fx_claims.scps[0]], roles=[fx_claims.roles[1]])  # intentionally don't align
 
 
 @pytest.fixture()
-def fx_jwt(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-) -> str:
-    """Jason Web Token (JWT) with all required claims."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_scopes_and_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with all validated claims and a valid subset of required app and user scopes."""
+    return fx_jwt.generate(scps=[fx_claims.scps[0], fx_claims.scps[2]], roles=[fx_claims.roles[0], fx_claims.roles[2]])
 
 
 @pytest.fixture()
-def fx_jwt_scps_and(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_scopes: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and all scopes."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": " ".join(fx_claim_scopes),
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_scps_or(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_scopes: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and one of a required choice of scopes."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": fx_claim_scopes[0],
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_scps_and_or(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_scopes: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and a valid subset of required scopes."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": " ".join([fx_claim_scopes[0], fx_claim_scopes[2]]),
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_roles_and(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_roles: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and all roles."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": " ".join(fx_claim_roles),
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_roles_or(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_roles: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and one of a required choice of roles."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": fx_claim_roles[0],
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_roles_and_or(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_roles: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and a valid subset of required roles."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": " ".join([fx_claim_roles[0], fx_claim_roles[2]]),
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_scopes_and(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_scopes: list[str],
-    fx_claim_roles: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and all scopes."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": " ".join(fx_claim_scopes),
-            "roles": " ".join(fx_claim_roles),
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_scopes_or(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_scopes: list[str],
-    fx_claim_roles: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and one of a required choice of scopes."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": fx_claim_scopes[0],
-            "roles": fx_claim_roles[0],
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_scopes_or_alt(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_scopes: list[str],
-    fx_claim_roles: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and one of a required choice of scopes."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": fx_claim_scopes[0],
-            "roles": fx_claim_roles[1],
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_scopes_and_or(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-    fx_claim_scopes: list[str],
-    fx_claim_roles: list[str],
-) -> str:
-    """Jason Web Token (JWT) with all required claims and a valid subset of required scopes."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-            "scps": " ".join([fx_claim_scopes[0], fx_claim_scopes[2]]),
-            "roles": " ".join([fx_claim_roles[0], fx_claim_roles[2]]),
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
-
-
-@pytest.fixture()
-def fx_jwt_bad_kid(fx_jwk_private: str, fx_jwk_kid: str) -> str:
-    """Jason Web Token (JWT) with an invalid Key ID (kid) header that is not in JWKS."""
-    return jwt_encode(payload={}, key=fx_jwk_private, algorithm="RS256", headers={"kid": "invalid"})
+def fx_jwt_bad_kid(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with an invalid Key ID (kid) header that is not in JWKS."""
+    return fx_jwt.generate(kid="invalid")
 
 
 @pytest.fixture()
 def fx_jwt_bad_sig(fx_jwt_kid: str) -> str:
-    """Jason Web Token (JWT) with invalid signature."""
+    """JSON Web Token (JWT) with invalid signature."""
     parts = fx_jwt_kid.split(".")
     return ".".join([parts[0], parts[1], "invalid_sig"])
 
 
 @pytest.fixture()
-def fx_jwt_iss(fx_jwk_private: str, fx_jwk_kid: str, fx_claim_iss: str) -> str:
-    """Jason Web Token (JWT) with Issuer (iss) claim."""
-    return jwt_encode(payload={"iss": fx_claim_iss}, key=fx_jwk_private, algorithm="RS256", headers={"kid": fx_jwk_kid})
+def fx_jwt_no_iss(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with no Issuer (iss) claim."""
+    return fx_jwt.generate(iss=False)
 
 
 @pytest.fixture()
-def fx_jwt_sub(fx_jwk_private: str, fx_jwk_kid: str, fx_claim_iss: str, fx_claim_sub: str) -> str:
-    """Jason Web Token (JWT) with Subject (sub) claim."""
-    return jwt_encode(
-        payload={"iss": fx_claim_iss, "sub": fx_claim_sub},
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_no_sub(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with no Subject (sub) claim."""
+    return fx_jwt.generate(sub=False)
 
 
 @pytest.fixture()
-def fx_jwt_aud(fx_jwk_private: str, fx_jwk_kid: str, fx_claim_iss: str, fx_claim_sub: str, fx_claim_aud: str) -> str:
-    """Jason Web Token (JWT) with Audience (aud) claim."""
-    return jwt_encode(
-        payload={"iss": fx_claim_iss, "sub": fx_claim_sub, "aud": fx_claim_aud},
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_no_aud(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with no Audience (aud) claim."""
+    return fx_jwt.generate(aud=False)
 
 
 @pytest.fixture()
-def fx_jwt_exp(
-    fx_jwk_private: str, fx_jwk_kid: str, fx_claim_iss: str, fx_claim_sub: str, fx_claim_aud: str, fx_claim_exp: int
-) -> str:
-    """Jason Web Token (JWT) with Expiry (exp) claim."""
-    return jwt_encode(
-        payload={"iss": fx_claim_iss, "sub": fx_claim_sub, "aud": fx_claim_aud, "exp": fx_claim_exp},
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_no_exp(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with no Expiry (exp) claim."""
+    return fx_jwt.generate(exp=False)
 
 
 @pytest.fixture()
-def fx_jwt_nbf(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-) -> str:
-    """Jason Web Token (JWT) with Not Before (nbf) claim."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_no_nbf(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with no Not Before (nbf) claim."""
+    return fx_jwt.generate(nbf=False)
 
 
 @pytest.fixture()
-def fx_jwt_azp(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-) -> str:
-    """Jason Web Token (JWT) with Azure Client App (azp) claim."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_no_azp(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with no Azure Client App (azp) claim."""
+    return fx_jwt.generate(azp=False)
 
 
 @pytest.fixture()
-def fx_jwt_ver(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-) -> str:
-    """Jason Web Token (JWT) with Azure Token Version (ver) claim."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_no_ver(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with no Azure token version (ver) claim."""
+    return fx_jwt.generate(ver=False)
 
 
 @pytest.fixture()
-def fx_jwt_bad_iss(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-) -> str:
-    """Jason Web Token (JWT) with invalid Issuer (iss) claim."""
-    return jwt_encode(
-        payload={
-            "iss": "-",
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_bad_iss(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with invalid Issuer (iss) claim."""
+    return fx_jwt.generate(iss="invalid")
 
 
 @pytest.fixture()
-def fx_jwt_bad_aud(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-) -> str:
-    """Jason Web Token (JWT) with invalid Audience (aud) claim."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": "-",
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_bad_aud(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with invalid Audience (aud) claim."""
+    return fx_jwt.generate(aud="invalid")
 
 
 @pytest.fixture()
-def fx_jwt_bad_exp(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-) -> str:
-    """Jason Web Token (JWT) with invalid Expiration (exp) claim."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": 0,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_bad_exp(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with invalid Expiration (exp) claim."""
+    return fx_jwt.generate(exp=1)
 
 
 @pytest.fixture()
-def fx_jwt_bad_nbf(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_azp: str,
-    fx_claim_ver: str,
-) -> str:
-    """Jason Web Token (JWT) with invalid Not Before (nbf) claim."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": 4070908800,
-            "azp": fx_claim_azp,
-            "ver": fx_claim_ver,
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_bad_nbf(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with invalid Not Before (nbf) claim."""
+    return fx_jwt.generate(nbf=4070908800)  # 2099-01-01T00:00:00Z
 
 
 @pytest.fixture()
-def fx_jwt_bad_ver(
-    fx_jwk_private: str,
-    fx_jwk_kid: str,
-    fx_claim_iss: str,
-    fx_claim_sub: str,
-    fx_claim_aud: str,
-    fx_claim_exp: int,
-    fx_claim_nbf: int,
-    fx_claim_azp: str,
-) -> str:
-    """Jason Web Token (JWT) with Azure Token Version (ver) claim."""
-    return jwt_encode(
-        payload={
-            "iss": fx_claim_iss,
-            "sub": fx_claim_sub,
-            "aud": fx_claim_aud,
-            "exp": fx_claim_exp,
-            "nbf": fx_claim_nbf,
-            "azp": fx_claim_azp,
-            "ver": "invalid",
-        },
-        key=fx_jwk_private,
-        algorithm="RS256",
-        headers={"kid": fx_jwk_kid},
-    )
+def fx_jwt_bad_ver(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with invalid Azure token version (ver) claim."""
+    return fx_jwt.generate(ver="invalid")
 
 
 @pytest.fixture()
-def fx_app(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str, fx_jwks: KeySet) -> Flask:
+def fx_jwt_bad_sub(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with invalid subject (sub) claim."""
+    return fx_jwt.generate(sub="invalid")
+
+
+@pytest.fixture()
+def fx_jwt_bad_azp(fx_jwt: MockJwtClient) -> str:
+    """JSON Web Token (JWT) with invalid Azure client app (azp) claim."""
+    return fx_jwt.generate(azp="invalid")
+
+
+@pytest.fixture()
+def fx_app(httpserver: HTTPServer, fx_jwks: KeySet, fx_client_id_self: str, fx_claims: MockClaims) -> Flask:
     """Application."""
-    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claim_iss}
+    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claims.iss}
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
-    httpserver.expect_request("/keys").respond_with_json(fx_jwks.as_dict(private=False))
+    httpserver.expect_request("/keys").respond_with_json(fx_jwks.as_dict())
 
     app_.config["TESTING"] = True
     app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
     app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
+    app_.config["ENTRA_AUTH_ALLOWED_SUBJECTS"] = [fx_claims.sub]
+    app_.config["ENTRA_AUTH_ALLOWED_APPS"] = [fx_claims.azp]
 
     return app_
 
@@ -763,65 +240,63 @@ def fx_app_client_no_oidc(httpserver: HTTPServer, fx_client_id_self: str) -> Fla
     app_.config["TESTING"] = True
     app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
     app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-
     return app_.test_client()
 
 
 @pytest.fixture()
-def fx_app_client_bad_oidc(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+def fx_app_client_bad_oidc(httpserver: HTTPServer, fx_client_id_self: str) -> FlaskClient:
     """App test client with invalid OIDC metadata."""
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_data(
         "Invalid", status=200, content_type="text/plain"
     )
+
     app_.config["TESTING"] = True
     app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
     app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-
     return app_.test_client()
 
 
 @pytest.fixture()
-def fx_app_client_empty_oidc(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+def fx_app_client_empty_oidc(httpserver: HTTPServer, fx_client_id_self: str) -> FlaskClient:
     """App test client with empty/invalid OIDC metadata."""
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json({})
+
     app_.config["TESTING"] = True
     app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
     app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-
     return app_.test_client()
 
 
 @pytest.fixture()
-def fx_app_client_no_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+def fx_app_client_no_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_claims: MockClaims) -> FlaskClient:
     """App test client with an inaccessible JWKS endpoint."""
-    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claim_iss}
+    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claims.iss}
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
     httpserver.expect_request("/keys").respond_with_data("Not found", status=404, content_type="text/plain")
 
     app_.config["TESTING"] = True
     app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
     app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-
     return app_.test_client()
 
 
 @pytest.fixture()
-def fx_app_client_bad_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+def fx_app_client_bad_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_claims: MockClaims) -> FlaskClient:
     """App test client with an invalid JWKS endpoint."""
-    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claim_iss}
+    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claims.iss}
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
     httpserver.expect_request("/keys").respond_with_data("Invalid", status=200, content_type="text/plain")
+
     app_.config["TESTING"] = True
     app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
     app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-
     return app_.test_client()
 
 
 @pytest.fixture()
-def fx_app_client_empty_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_claim_iss: str) -> FlaskClient:
+def fx_app_client_empty_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_claims: MockClaims) -> FlaskClient:
     """App test client with an JWKS endpoint that has no keys."""
-    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claim_iss}
+    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claims.iss}
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
     httpserver.expect_request("/keys").respond_with_json({"keys": []})
     app_.config["TESTING"] = True
@@ -829,19 +304,3 @@ def fx_app_client_empty_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_
     app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
 
     return app_.test_client()
-
-
-@pytest.fixture()
-def fx_app_client_bad_subs(fx_app: Flask) -> FlaskClient:
-    """App test clients with only intentionally invalid subjects allowed."""
-    fx_app.config.update(ENTRA_AUTH_ALLOWED_SUBJECTS=["Invalid"])
-
-    return fx_app.test_client()
-
-
-@pytest.fixture()
-def fx_app_client_bad_apps(fx_app: Flask) -> FlaskClient:
-    """App test clients with only intentionally invalid applications allowed."""
-    fx_app.config.update(ENTRA_AUTH_ALLOWED_APPS=["Invalid"])
-
-    return fx_app.test_client()
