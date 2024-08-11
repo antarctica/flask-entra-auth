@@ -39,7 +39,6 @@ $ poetry run pytest
 
 To run coverage:
 
-
 ```
 $ poetry run pytest --cov --cov-report=html
 ```
@@ -58,45 +57,61 @@ v0.1.0
 
 Then:
 
-- [ ] fake token auth for tests
-
-Then:
-
+- [x] fake token auth for tests
 - reimplement error handling as exceptions to be handled by the app
   - generic:
-    - [ ] missing authorisation header
-    - [ ] authentication scheme not bearer
-    - [ ] missing credentials
+    - [x] missing authorisation header
+    - [x] authentication scheme not bearer
+    - [x] missing credentials
+  - internal:
+    - [x] oidc metadata
+    - [x] jwks (missing, invalid and empty)
   - https://pyjwt.readthedocs.io/en/latest/api.html#exceptions:
+    - [x] missing required claim (iss)
     - [ ] (invalid token base)
-    - [ ] decode error
-    - [ ] invalid signature
-    - [ ] expired
-    - [ ] invalid audience
-    - [ ] invalid issuer
-    - [ ] invalid subject
-    - [ ] invalid issued-at
-    - [ ] not issued (nbf)
-    - [ ] missing required claim
-    - [ ] invalid key
-    - [ ] invalid alg
-- [ ] more tests
+    - [x] decode error
+    - [x] invalid signature
+    - [x] expired
+    - [x] invalid audience
+    - [x] invalid issuer
+    - [x] not issued (nbf)
+    - ~~invalid issued-at~~ easy not testable
+    - ~~invalid key~~ not easy testable and unlikely
+    - ~~invalid alg~~ not easy testable and unlikely
+  - additional:
+    - [x] no 'kid' header parameter
+    - [x] 'kid' header parameter value not in JWKS
+    - [x] sub
+    - [x] azp
+    - [x] ver
+    - [x] roles/scopes
+- [x] does `pyjwt` validate `nbf` claim? - Yes
+- [x] change tests for subjects/apps to change the value in the token, rather than the app config
+- [x] refactor how missing required tokens are tested
+- [x] additional scopes tests
+- [x] refactor app directly into tests, eliminating `__main__.py`
+- [x] expose allows subs/azp's as config options
+
+- Later:
+
+- [ ] change POST to GET in routes
+- [ ] note Token class implicitly validates for safety (currently)
+- [ ] warn that initialising an EntraToken will fetch OIDC metadata and the JWKS
+- [ ] doc blocks
+- [ ] contact in errors (url, mailto)
+- [ ] document config options
+- [ ] caching for `_get_oidc_metadata`
+  - `JWKSclient` already caches the fetching of the key
+- [ ] support invalid tokens?
+  - `jwt.decode(payload["token"], options={"verify_signature": False})`
 
 Later:
 
-- [ ] does `pyjwt` validate `nbf` claim? It lists it but doesn't mention it validates it specifically
-- [ ] caching for `_get_oidc_metadata`
-  - `JWKSclient` already caches the fetching of the key
-- [ ] handle all validation errors (including generic/catch-all error)
-  - https://pyjwt.readthedocs.io/en/latest/api.html#exceptions
-- [ ] support invalid tokens?
-  - `jwt.decode(payload["token"], options={"verify_signature": False})`
-- [ ] warn that initialising an EntraToken will fetch OIDC metadata and the JWKS
-- [ ] doc blocks
+- [ ] CI
+- [ ] Safety
+- [ ] publish under existing package name?
 
-Even later:
-
-- [ ] using MSAL cache written to user's home directory
+Other:
 
 ## Experiments
 

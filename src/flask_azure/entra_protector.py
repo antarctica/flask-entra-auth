@@ -61,6 +61,7 @@ class EntraResourceProtector(ResourceProtector):
 
         super().raise_error_response(error)  # pragma: no cover
 
+
 class FlaskEntraAuth:
     def __init__(self, app: Flask | None = None) -> None:
         if app is not None:  # pragma: no branch
