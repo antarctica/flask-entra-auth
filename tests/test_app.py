@@ -35,7 +35,7 @@ class TestMainUnrestricted:
 
     def test_ok(self, fx_app_client: FlaskClient):
         """Request is successful."""
-        response = fx_app_client.post("/unrestricted")
+        response = fx_app_client.get("/unrestricted")
         assert response.status_code == 200
         assert response.text == "Unrestricted route."
 
@@ -45,61 +45,61 @@ class TestMainRestricted:
 
     def test_ok(self, fx_app_client: FlaskClient, fx_jwt_no_scopes: str):
         """Request is successful."""
-        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_no_scopes}"})
+        response = fx_app_client.get("/restricted", headers={"Authorization": f"Bearer {fx_jwt_no_scopes}"})
         assert response.status_code == 200
         assert response.text == "Restricted route."
 
     def test_no_auth(self, fx_app_client: FlaskClient):
         """Returns no auth header error."""
-        response = fx_app_client.post("/restricted")
+        response = fx_app_client.get("/restricted")
         _assert_entra_error(EntraAuthRequestNoAuthHeaderError, response)
 
     # parameterise
     @pytest.mark.parametrize("auth_value", ["Bearer", "<token>", "Invalid <token>"])
     def test_bad_auth(self, fx_app_client: FlaskClient, auth_value: str):
         """Returns invalid auth header error."""
-        response = fx_app_client.post("/restricted", headers={"Authorization": auth_value})
+        response = fx_app_client.get("/restricted", headers={"Authorization": auth_value})
         _assert_entra_error(EntraAuthRequestInvalidAuthHeaderError, response)
 
     @pytest.mark.parametrize("client", ["fx_app_client_no_oidc", "fx_app_client_bad_oidc", "fx_app_client_empty_oidc"])
     def test_bad_oidc(self, request: FixtureRequest, fx_jwt_kid: str, client: str):
         """Returns invalid signing key error when OIDC metadata not available."""
         client_ = request.getfixturevalue(client)
-        response = client_.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
+        response = client_.get("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
         _assert_entra_error(EntraAuthOidcError, response)
 
     @pytest.mark.parametrize("client", ["fx_app_client_no_jwks", "fx_app_client_bad_jwks", "fx_app_client_empty_jwks"])
     def test_bad_jwks(self, request: FixtureRequest, fx_jwt_kid: str, client: str):
         """Returns invalid signing key error when JWKS not available."""
         client_ = request.getfixturevalue(client)
-        response = client_.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
+        response = client_.get("/restricted", headers={"Authorization": f"Bearer {fx_jwt_kid}"})
         _assert_entra_error(EntraAuthSigningKeyError, response)
 
     def test_bad_jwt_no_kid(self, fx_app_client: FlaskClient, fx_jwt_empty: str):
         """Returns invalid signing key error when JWT missing 'kid' header parameter."""
-        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_empty}"})
+        response = fx_app_client.get("/restricted", headers={"Authorization": f"Bearer {fx_jwt_empty}"})
         _assert_entra_error(EntraAuthSigningKeyError, response)
 
     def test_bad_jwt_decode(self, fx_app_client: FlaskClient):
         """Returns invalid token error when JWT can't be parsed."""
-        response = fx_app_client.post("/restricted", headers={"Authorization": "Bearer Invalid"})
+        response = fx_app_client.get("/restricted", headers={"Authorization": "Bearer Invalid"})
         _assert_entra_error(EntraAuthInvalidTokenError, response)
 
     def test_bad_jwt_kid(self, fx_app_client: FlaskClient, fx_jwt_bad_kid: str):
         """Returns invalid signing key error when JWT specifies a signing key not in JWKS."""
-        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_kid}"})
+        response = fx_app_client.get("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_kid}"})
         _assert_entra_error(EntraAuthSigningKeyError, response)
 
     def test_bad_jwt_sig(self, fx_app_client: FlaskClient, fx_jwt_bad_sig: str):
         """Returns invalid signature error."""
-        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_sig}"})
+        response = fx_app_client.get("/restricted", headers={"Authorization": f"Bearer {fx_jwt_bad_sig}"})
         _assert_entra_error(EntraAuthInvalidSignatureError, response)
 
     @pytest.mark.parametrize("claim", ["iss", "sub", "aud", "exp", "nbf", "azp", "ver"])
     def test_bad_jwt_no_claim(self, request: FixtureRequest, fx_app_client: FlaskClient, claim: str):
         """Returns missing required claim error."""
         token = request.getfixturevalue(f"fx_jwt_no_{claim}")
-        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {token}"})
+        response = fx_app_client.get("/restricted", headers={"Authorization": f"Bearer {token}"})
         _assert_entra_error(EntraAuthMissingClaimError, response, claim=claim)
 
     @pytest.mark.parametrize(
@@ -118,7 +118,7 @@ class TestMainRestricted:
         """Returns relevant invalid claim error."""
         token = request.getfixturevalue(f"fx_jwt_bad_{claim}")
 
-        response = fx_app_client.post("/restricted", headers={"Authorization": f"Bearer {token}"})
+        response = fx_app_client.get("/restricted", headers={"Authorization": f"Bearer {token}"})
         _assert_entra_error(exception, response)
 
 
@@ -131,7 +131,7 @@ class TestMainRestrictedScope:
         token = request.getfixturevalue(f"fx_jwt_{resource}_and")
         url = f"/restricted/scopes/{resource}-and"
 
-        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
+        response = fx_app_client.get(url, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
 
     @pytest.mark.parametrize(
@@ -143,7 +143,7 @@ class TestMainRestrictedScope:
         token = request.getfixturevalue(f"fx_jwt_{resource}_{op}")
         url = f"/restricted/scopes/{resource}-or"
 
-        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
+        response = fx_app_client.get(url, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
 
     @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
@@ -152,7 +152,7 @@ class TestMainRestrictedScope:
         token = request.getfixturevalue(f"fx_jwt_{resource}_and_or")
         url = f"/restricted/scopes/{resource}-and-or"
 
-        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
+        response = fx_app_client.get(url, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
 
     @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
@@ -164,7 +164,7 @@ class TestMainRestrictedScope:
         token = request.getfixturevalue(fixture)
         url = f"/restricted/scopes/{resource}-and"
 
-        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
+        response = fx_app_client.get(url, headers={"Authorization": f"Bearer {token}"})
         _assert_entra_error(EntraAuthInsufficentScopesError, response)
 
     @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
@@ -172,7 +172,7 @@ class TestMainRestrictedScope:
         """Request is unsuccessful (either in or)."""
         url = f"/restricted/scopes/{resource}-or"
 
-        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {fx_jwt_no_scopes}"})
+        response = fx_app_client.get(url, headers={"Authorization": f"Bearer {fx_jwt_no_scopes}"})
         _assert_entra_error(EntraAuthInsufficentScopesError, response)
 
     @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
@@ -181,7 +181,7 @@ class TestMainRestrictedScope:
         token = request.getfixturevalue(f"fx_jwt_{resource}_or")
         url = f"/restricted/scopes/{resource}-and-or"
 
-        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
+        response = fx_app_client.get(url, headers={"Authorization": f"Bearer {token}"})
         _assert_entra_error(EntraAuthInsufficentScopesError, response)
 
 
