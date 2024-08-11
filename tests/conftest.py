@@ -4,7 +4,7 @@ from flask.testing import FlaskClient
 from joserfc.jwk import KeySet
 from pytest_httpserver import HTTPServer
 
-from flask_azure.__main__ import app as app_
+from tests.app import create_app
 from tests.mock_jwks import MockJwks
 from tests.mock_jwt import MockClaims, MockJwtClient
 
@@ -215,13 +215,12 @@ def fx_app(httpserver: HTTPServer, fx_jwks: KeySet, fx_client_id_self: str, fx_c
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
     httpserver.expect_request("/keys").respond_with_json(fx_jwks.as_dict())
 
-    app_.config["TESTING"] = True
-    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
-    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-    app_.config["ENTRA_AUTH_ALLOWED_SUBJECTS"] = [fx_claims.sub]
-    app_.config["ENTRA_AUTH_ALLOWED_APPS"] = [fx_claims.azp]
-
-    return app_
+    return create_app(
+        client_id=fx_client_id_self,
+        oidc_endpoint=httpserver.url_for("/.well-known/openid-configuration"),
+        allowed_subjects=[fx_claims.sub],
+        allowed_apps=[fx_claims.azp],
+    )
 
 
 @pytest.fixture()
@@ -237,10 +236,9 @@ def fx_app_client_no_oidc(httpserver: HTTPServer, fx_client_id_self: str) -> Fla
         "Not found", status=404, content_type="text/plain"
     )
 
-    app_.config["TESTING"] = True
-    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
-    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-    return app_.test_client()
+    return create_app(
+        client_id=fx_client_id_self, oidc_endpoint=httpserver.url_for("/.well-known/openid-configuration")
+    ).test_client()
 
 
 @pytest.fixture()
@@ -250,10 +248,9 @@ def fx_app_client_bad_oidc(httpserver: HTTPServer, fx_client_id_self: str) -> Fl
         "Invalid", status=200, content_type="text/plain"
     )
 
-    app_.config["TESTING"] = True
-    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
-    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-    return app_.test_client()
+    return create_app(
+        client_id=fx_client_id_self, oidc_endpoint=httpserver.url_for("/.well-known/openid-configuration")
+    ).test_client()
 
 
 @pytest.fixture()
@@ -261,10 +258,9 @@ def fx_app_client_empty_oidc(httpserver: HTTPServer, fx_client_id_self: str) -> 
     """App test client with empty/invalid OIDC metadata."""
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json({})
 
-    app_.config["TESTING"] = True
-    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
-    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-    return app_.test_client()
+    return create_app(
+        client_id=fx_client_id_self, oidc_endpoint=httpserver.url_for("/.well-known/openid-configuration")
+    ).test_client()
 
 
 @pytest.fixture()
@@ -274,10 +270,9 @@ def fx_app_client_no_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_cla
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
     httpserver.expect_request("/keys").respond_with_data("Not found", status=404, content_type="text/plain")
 
-    app_.config["TESTING"] = True
-    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
-    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-    return app_.test_client()
+    return create_app(
+        client_id=fx_client_id_self, oidc_endpoint=httpserver.url_for("/.well-known/openid-configuration")
+    ).test_client()
 
 
 @pytest.fixture()
@@ -287,10 +282,9 @@ def fx_app_client_bad_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_cl
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
     httpserver.expect_request("/keys").respond_with_data("Invalid", status=200, content_type="text/plain")
 
-    app_.config["TESTING"] = True
-    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
-    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
-    return app_.test_client()
+    return create_app(
+        client_id=fx_client_id_self, oidc_endpoint=httpserver.url_for("/.well-known/openid-configuration")
+    ).test_client()
 
 
 @pytest.fixture()
@@ -299,8 +293,7 @@ def fx_app_client_empty_jwks(httpserver: HTTPServer, fx_client_id_self: str, fx_
     oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": fx_claims.iss}
     httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
     httpserver.expect_request("/keys").respond_with_json({"keys": []})
-    app_.config["TESTING"] = True
-    app_.config["ENTRA_AUTH_CLIENT_ID"] = fx_client_id_self
-    app_.config["ENTRA_AUTH_OIDC_ENDPOINT"] = httpserver.url_for("/.well-known/openid-configuration")
 
-    return app_.test_client()
+    return create_app(
+        client_id=fx_client_id_self, oidc_endpoint=httpserver.url_for("/.well-known/openid-configuration")
+    ).test_client()
