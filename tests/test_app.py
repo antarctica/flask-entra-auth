@@ -5,7 +5,7 @@ from _pytest.fixtures import FixtureRequest
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
-from flask_azure.entra_exceptions import (
+from flask_azure.exceptions import (
     EntraAuthInsufficentScopesError,
     EntraAuthInvalidAppError,
     EntraAuthInvalidAudienceError,

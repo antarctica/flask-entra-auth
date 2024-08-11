@@ -19,7 +19,7 @@ from jwt import (
 )
 from jwt import decode as jwt_decode
 
-from flask_azure.entra_exceptions import (
+from flask_azure.exceptions import (
     EntraAuthInvalidAppError,
     EntraAuthInvalidAudienceError,
     EntraAuthInvalidExpirationError,
