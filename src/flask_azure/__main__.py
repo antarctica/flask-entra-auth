@@ -118,9 +118,9 @@ def introspect_rfc7662() -> dict | tuple:
     try:
         token = EntraToken(
             token=request.form.get("token"),
-            oidc_endpoint=app.config['ENTRA_AUTH_OIDC_ENDPOINT'],
-            client_id=app.config['ENTRA_AUTH_CLIENT_ID'],
+            oidc_endpoint=app.config["ENTRA_AUTH_OIDC_ENDPOINT"],
+            client_id=app.config["ENTRA_AUTH_CLIENT_ID"],
         )
         return token.rfc7662_introspection  # noqa: TRY300
     except EntraAuthError as e:
-        return {"error": str(e)}, 400
+        return {"error": str(e)}, e.problem.status

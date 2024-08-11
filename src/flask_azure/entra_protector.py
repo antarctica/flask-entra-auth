@@ -54,23 +54,17 @@ class EntraResourceProtector(ResourceProtector):
         self.register_token_validator(EntraBearerTokenValidator())
 
     def raise_error_response(self, error: OAuth2Error) -> None:
-        error_ = EntraAuthError()
         if error.error == "missing_authorization":
-            error_ = EntraAuthRequestNoAuthHeaderError()
-        elif error.error == "unsupported_token_type":
-            error_ = EntraAuthRequestInvalidAuthHeaderError()
+            _raise_exception_response(EntraAuthRequestNoAuthHeaderError())
+        if error.error == "unsupported_token_type":
+            _raise_exception_response(EntraAuthRequestInvalidAuthHeaderError())
 
-        raise_http_exception(
-            status=error_.problem.status,
-            body=json.dumps(asdict(error_.problem)),
-            headers={"content-type": "application/json"},
-        )
-
+        super().raise_error_response(error)  # pragma: no cover
 
 class FlaskEntraAuth:
     def __init__(self, app: Flask | None = None) -> None:
-        if app is not None:
-            self.init_app(app)
+        if app is not None:  # pragma: no branch
+            self.init_app(app)  # pragma: no cover
 
     @staticmethod
     def init_app(app: Flask) -> None:

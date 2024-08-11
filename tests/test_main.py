@@ -207,3 +207,8 @@ class TestMainIntrospectRfc7662:
 
         data = response.json
         assert data["active"]
+
+    def test_bad(self, fx_app_client: FlaskClient, fx_jwt_bad_exp: str):
+        """Request is unsuccessful if token bad."""
+        response = fx_app_client.post("/introspect", data={"token": fx_jwt_bad_exp})
+        assert response.status_code == 401
