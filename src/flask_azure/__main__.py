@@ -32,11 +32,67 @@ def restricted() -> str:
     return "Restricted route."
 
 
-@app.route("/restricted/scope", methods=["POST"])
-@app.auth(["BAS.MAGIC.ADD.Access"])
-def restricted_scope() -> str:
-    """Closed route (authenticated and authorised with single required scope)."""
-    return "Restricted route with required scope."
+@app.route("/restricted/scopes/scps-and", methods=["POST"])
+@app.auth(["SCOPE_A SCOPE_B"])
+def restricted_scps_and() -> str:
+    """Closed route (authenticated and authorised with multiple required scps, logical AND)."""
+    return "Restricted route, you have (SCOPE_A && SCOPE_B)."
+
+
+@app.route("/restricted/scopes/scps-or", methods=["POST"])
+@app.auth(["SCOPE_A", "SCOPE_B"])
+def restricted_scps_or() -> str:
+    """Closed route (authenticated and authorised with multiple required scps, logical OR)."""
+    return "Restricted route, you have (SCOPE_A || SCOPE_B)."
+
+
+@app.route("/restricted/scopes/scps-and-or", methods=["POST"])
+@app.auth(["SCOPE_A SCOPE_C", "SCOPE_B SCOPE_C"])
+def restricted_scps_and_or() -> str:
+    """Closed route (authenticated and authorised with multiple required scps, logical OR & AND)."""
+    return "Restricted route, you have ((SCOPE_A && SCOPE_C) || (SCOPE_B && SCOPE_C))."
+
+
+@app.route("/restricted/scopes/roles-and", methods=["POST"])
+@app.auth(["ROLE_1 ROLE_2"])
+def restricted_routes_and() -> str:
+    """Closed route (authenticated and authorised with multiple required roles, logical AND)."""
+    return "Restricted route, you have (ROLE_1 && ROLE_2)."
+
+
+@app.route("/restricted/scopes/roles-or", methods=["POST"])
+@app.auth(["ROLE_1", "ROLE_2"])
+def restricted_routes_or() -> str:
+    """Closed route (authenticated and authorised with multiple required roles, logical OR)."""
+    return "Restricted route, you have (ROLE_1 || ROLE_2)."
+
+
+@app.route("/restricted/scopes/roles-and-or", methods=["POST"])
+@app.auth(["ROLE_1 ROLE_3", "ROLE_2 ROLE_3"])
+def restricted_routes_and_or() -> str:
+    """Closed route (authenticated and authorised with multiple required roles, logical OR & AND)."""
+    return "Restricted route, you have ((ROLE_1 && ROLE_3) || (ROLE_2 && ROLE_3))."
+
+
+@app.route("/restricted/scopes/scopes-and", methods=["POST"])
+@app.auth(["SCOPE_A ROLE_1"])
+def restricted_scopes_and() -> str:
+    """Closed route (authenticated and authorised with multiple required scopes, logical AND)."""
+    return "Restricted route, you have (SCOPE_A && ROLE_1)."
+
+
+@app.route("/restricted/scopes/scopes-or", methods=["POST"])
+@app.auth(["SCOPE_A", "ROLE_1"])
+def restricted_scopes_or() -> str:
+    """Closed route (authenticated and authorised with multiple required scopes, logical OR)."""
+    return "Restricted route, you have (SCOPE_A || ROLE_1)."
+
+
+@app.route("/restricted/scopes/scopes-and-or", methods=["POST"])
+@app.auth(["SCOPE_A SCOPE_C ROLE_1 ROLE_3", "SCOPE_B SCOPE_C ROLE_2 ROLE_3"])
+def restricted_scopes_and_or() -> str:
+    """Closed route (authenticated and authorised with multiple required scopes, logical OR & AND)."""
+    return "Restricted route, you have ((SCOPE_A && SCOPE_C && ROLE_1 && ROLE_3) || (SCOPE_B && SCOPE_C && ROLE_2 && ROLE_3))."
 
 
 @app.route("/restricted/current-token", methods=["GET"])

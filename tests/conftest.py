@@ -88,6 +88,18 @@ def fx_claim_ver() -> str:
 
 
 @pytest.fixture()
+def fx_claim_scopes() -> list[str]:
+    """Azure token scopes claim (apps)."""
+    return ["SCOPE_A", "SCOPE_B", "SCOPE_C"]
+
+
+@pytest.fixture()
+def fx_claim_roles() -> list[str]:
+    """Azure token roles claim (users)."""
+    return ["ROLE_1", "ROLE_2", "ROLE_3"]
+
+
+@pytest.fixture()
 def fx_jwt_empty(fx_jwk_private: str) -> str:
     """Jason Web Token (JWT) with no claims."""
     return jwt_encode(payload={}, key=fx_jwk_private, algorithm="RS256")
@@ -121,6 +133,324 @@ def fx_jwt(
             "nbf": fx_claim_nbf,
             "azp": fx_claim_azp,
             "ver": fx_claim_ver,
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_scps_and(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_scopes: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and all scopes."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": " ".join(fx_claim_scopes),
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_scps_or(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_scopes: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and one of a required choice of scopes."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": fx_claim_scopes[0],
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_scps_and_or(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_scopes: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and a valid subset of required scopes."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": " ".join([fx_claim_scopes[0], fx_claim_scopes[2]]),
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_roles_and(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_roles: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and all roles."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": " ".join(fx_claim_roles),
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_roles_or(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_roles: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and one of a required choice of roles."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": fx_claim_roles[0],
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_roles_and_or(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_roles: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and a valid subset of required roles."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": " ".join([fx_claim_roles[0], fx_claim_roles[2]]),
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_scopes_and(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_scopes: list[str],
+    fx_claim_roles: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and all scopes."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": " ".join(fx_claim_scopes),
+            "roles": " ".join(fx_claim_roles),
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_scopes_or(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_scopes: list[str],
+    fx_claim_roles: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and one of a required choice of scopes."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": fx_claim_scopes[0],
+            "roles": fx_claim_roles[0],
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_scopes_or_alt(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_scopes: list[str],
+    fx_claim_roles: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and one of a required choice of scopes."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": fx_claim_scopes[0],
+            "roles": fx_claim_roles[1],
+        },
+        key=fx_jwk_private,
+        algorithm="RS256",
+        headers={"kid": fx_jwk_kid},
+    )
+
+
+@pytest.fixture()
+def fx_jwt_scopes_and_or(
+    fx_jwk_private: str,
+    fx_jwk_kid: str,
+    fx_claim_iss: str,
+    fx_claim_sub: str,
+    fx_claim_aud: str,
+    fx_claim_exp: int,
+    fx_claim_nbf: int,
+    fx_claim_azp: str,
+    fx_claim_ver: str,
+    fx_claim_scopes: list[str],
+    fx_claim_roles: list[str],
+) -> str:
+    """Jason Web Token (JWT) with all required claims and a valid subset of required scopes."""
+    return jwt_encode(
+        payload={
+            "iss": fx_claim_iss,
+            "sub": fx_claim_sub,
+            "aud": fx_claim_aud,
+            "exp": fx_claim_exp,
+            "nbf": fx_claim_nbf,
+            "azp": fx_claim_azp,
+            "ver": fx_claim_ver,
+            "scps": " ".join([fx_claim_scopes[0], fx_claim_scopes[2]]),
+            "roles": " ".join([fx_claim_roles[0], fx_claim_roles[2]]),
         },
         key=fx_jwk_private,
         algorithm="RS256",

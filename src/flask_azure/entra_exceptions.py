@@ -256,3 +256,18 @@ class EntraAuthInvalidTokenVersionError(EntraAuthError):
             detail="The auth token internal version (as defined by Entra) is not supported. Tokens must use version"
             "'2.0'. This is an uncommon error, https://jwt.ms can be used to check the token version.",
         )
+
+
+class EntraAuthInsufficentScopesError(EntraAuthError):
+    """Raised when not all required scopes for an action are in JWT (scps & roles)."""
+
+    def __init__(self):
+        super().__init__(
+            status=HTTPStatus.UNAUTHORIZED,
+            type_="auth_token_insufficient_scopes",
+            title="Auth token scopes insufficient",
+            detail="The auth token lacks the required scopes for this action. Scopes are a combination of the 'roles' "
+            "claim (assigned to the user) and the 'scp' claim (assigned to the application). This is a common "
+            "error, and can usually only be resolved by reporting this error. https://jwt.ms can be used to "
+            "check these claims.",
+        )

@@ -6,15 +6,24 @@ from dataclasses import asdict
 from authlib.integrations.flask_oauth2 import ResourceProtector, current_token
 from authlib.integrations.flask_oauth2.errors import raise_http_exception
 from authlib.oauth2 import OAuth2Error
-from authlib.oauth2.rfc6750 import BearerTokenValidator, InsufficientScopeError
+from authlib.oauth2.rfc6750 import BearerTokenValidator
 from flask import Flask, Request, current_app
 
 from flask_azure.entra_exceptions import (
     EntraAuthError,
+    EntraAuthInsufficentScopesError,
     EntraAuthRequestInvalidAuthHeaderError,
     EntraAuthRequestNoAuthHeaderError,
 )
 from flask_azure.entra_token import EntraToken
+
+
+def _raise_exception_response(error: EntraAuthError) -> None:
+    raise_http_exception(
+        status=error.problem.status,
+        body=json.dumps(asdict(error.problem)),
+        headers={"content-type": "application/json"},
+    )
 
 
 class EntraBearerTokenValidator(BearerTokenValidator):
@@ -29,16 +38,12 @@ class EntraBearerTokenValidator(BearerTokenValidator):
                 allowed_apps=current_app.config.get("ENTRA_AUTH_ALLOWED_APPS", []),
             )
         except EntraAuthError as e:
-            raise_http_exception(
-                status=e.problem.status,
-                body=json.dumps(asdict(e.problem)),
-                headers={"content-type": "application/json"},
-            )
+            _raise_exception_response(e)
 
     def validate_token(self, token: EntraToken, required_scopes: list[str], request: Request) -> None:
         # token authenticated so only need to check authorisation via scopes
         if self.scope_insufficient(token_scopes=token.scopes, required_scopes=required_scopes):
-            raise InsufficientScopeError()
+            _raise_exception_response(EntraAuthInsufficentScopesError())
 
 
 class EntraResourceProtector(ResourceProtector):

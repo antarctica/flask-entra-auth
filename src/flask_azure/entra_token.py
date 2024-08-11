@@ -187,13 +187,13 @@ class EntraToken:
 
         scopes = set()
 
-        roles = self.claims.get("roles")
+        roles = self.claims.get("roles", [])
         if isinstance(roles, str):
             scopes.update(set(str(roles).split(" ")))
         elif isinstance(roles, list):
             scopes.update(roles)
 
-        scps = self.claims.get("scp")
+        scps = self.claims.get("scps", [])
         if isinstance(scps, str):
             scopes.update(set(str(scps).split(" ")))
         elif isinstance(scps, list):

@@ -1,10 +1,12 @@
 from dataclasses import asdict
 
 import pytest
+from _pytest.fixtures import FixtureRequest
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
 from flask_azure.entra_exceptions import (
+    EntraAuthInsufficentScopesError,
     EntraAuthInvalidAppError,
     EntraAuthInvalidAudienceError,
     EntraAuthInvalidExpirationError,
@@ -181,13 +183,66 @@ class TestMainRestricted:
 
 
 class TestMainRestrictedScope:
-    """Test restricted route with required scope."""
+    """Test restricted route with required scopes."""
 
-    def test_ok(self, fx_app_client: FlaskClient, fx_jwt: str):
+    @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
+    def test_and(self, request: FixtureRequest, fx_app_client: FlaskClient, resource: str):
         """Request is successful."""
-        response = fx_app_client.post("/restricted/scope", headers={"Authorization": f"Bearer {fx_jwt}"})
+        token = request.getfixturevalue(f"fx_jwt_{resource}_and")
+        url = f"/restricted/scopes/{resource}-and"
+
+        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
-        assert response.text == "Restricted route with required scope."
+
+    @pytest.mark.parametrize(
+        ("resource", "op"),
+        [("scps", "or"), ("roles", "or"), ("scopes", "or"), ("scps", "and"), ("roles", "and"), ("scopes", "and")],
+    )
+    def test_or(self, request: FixtureRequest, fx_app_client: FlaskClient, resource: str, op: str):
+        """Request is successful (and should also pass)."""
+        token = request.getfixturevalue(f"fx_jwt_{resource}_{op}")
+        url = f"/restricted/scopes/{resource}-or"
+
+        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+    @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
+    def test_and_or(self, request: FixtureRequest, fx_app_client: FlaskClient, resource: str):
+        """Request is successful."""
+        token = request.getfixturevalue(f"fx_jwt_{resource}_and_or")
+        url = f"/restricted/scopes/{resource}-and-or"
+
+        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+    @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
+    def test_bad_and(self, request: FixtureRequest, fx_app_client: FlaskClient, resource: str):
+        """Request is unsuccessful (or is not and, special fixture for scopes to be disjoint)."""
+        fixture = f"fx_jwt_{resource}_or"
+        if resource == "scopes":
+            fixture = f"{fixture}_alt"
+        token = request.getfixturevalue(fixture)
+        url = f"/restricted/scopes/{resource}-and"
+
+        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
+        _assert_entra_error(EntraAuthInsufficentScopesError, response)
+
+    @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
+    def test_bad_or(self, fx_app_client: FlaskClient, fx_jwt: str, resource: str):
+        """Request is unsuccessful (either in or)."""
+        url = f"/restricted/scopes/{resource}-or"
+
+        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {fx_jwt}"})
+        _assert_entra_error(EntraAuthInsufficentScopesError, response)
+
+    @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
+    def test_bad_and_or(self, request: FixtureRequest, fx_app_client: FlaskClient, resource: str):
+        """Request is unsuccessful (or is a subset)."""
+        token = request.getfixturevalue(f"fx_jwt_{resource}_or")
+        url = f"/restricted/scopes/{resource}-and-or"
+
+        response = fx_app_client.post(url, headers={"Authorization": f"Bearer {token}"})
+        _assert_entra_error(EntraAuthInsufficentScopesError, response)
 
 
 class TestMainRestrictedCurrentToken:
