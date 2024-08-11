@@ -2,46 +2,9 @@
 
 Experiment to update how access to a Flask app can be controlled using Azure/Entra ID.
 
-## Purpose
-
-To find a replacement for the now outdated
-[Flask Azure OAuth](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth) package.
-
 See https://gitlab.data.bas.ac.uk/MAGIC/add-metadata-toolbox/-/issues/384 for background.
 
-## Usage
-
-Start server:
-
-```
-$ poetry run flask --app=flask_azure.__main__:app run --debug --port 5005
-```
-
-Get auth token:
-
-- from [`flask_azure.http`](flask_azure.http) using PyCharm run:
-  - the `login.microsoftonline.com/.../devicecode` request, following the prompt to sign in with the device code
-  - then the `login.microsoftonline.com/.../token` request, to set an access token for use in app requests
-
-To view details about the current token:
-
-- from [`flask_azure.http`](flask_azure.http) using PyCharm run either:
-  - the `/introspect` request, where data is returned according to RFC7662
-  - the `/restricted/current-token` request, where all token claims are returned as a JSON object
-
-## Tests
-
-To run tests:
-
-```
-$ poetry run pytest
-```
-
-To run coverage:
-
-```
-$ poetry run pytest --cov --cov-report=html
-```
+**Note:** This README is in the process of being re-written to become a proper package.
 
 ## Roadmap
 
@@ -94,10 +57,11 @@ Then:
 
 - Later:
 
-- [ ] change POST to GET in routes
+- [x] change POST to GET in routes
 - [ ] note Token class implicitly validates for safety (currently)
 - [ ] warn that initialising an EntraToken will fetch OIDC metadata and the JWKS
 - [ ] doc blocks
+- [ ] test for current token?
 - [ ] contact in errors (url, mailto)
 - [ ] document config options
 - [ ] caching for `_get_oidc_metadata`
@@ -115,9 +79,130 @@ Other:
 
 - [ ] using MSAL cache written to user's home directory
 
+# Flask Entra Auth
+
+Flask extension for authenticating and authorising requests using Entra identity platform.
+
+## Purpose
+
+Allows routes in a [Flask](https://flask.palletsprojects.com) application to be restricted using the 
+[Microsoft Entra](https://learn.microsoft.com/en-us/entra/) identity platform.
+
+...
+
+## Install
+
+```
+$ pip install flask-entra-auth
+```
+
+## Usage
+
+After creating an [App Registration](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app) 
+in Entra, [Configure](#configuration) your Flask app:
+
+```python
+from flask import Flask
+from flask_entra_auth.resource_protector import FlaskEntraAuth
+
+auth = FlaskEntraAuth()
+
+def create_app() -> Flask:
+    """Create Flask app."""
+    app = Flask(__name__)
+    app.config["ENTRA_AUTH_CLIENT_ID"] = 'xxx'
+    app.config["ENTRA_AUTH_OIDC_ENDPOINT"] = 'xxx'
+    app.config["ENTRA_AUTH_ALLOWED_SUBJECTS"] = ['xxx']  # optional, allows all subjects if empty or not set
+    app.config["ENTRA_AUTH_ALLOWED_APPS"] = ['xxx']  # optional, allows all applications if empty or not set
+    auth.init_app(app)
+
+    @app.route("/restricted/foo")
+    @app.auth()
+    def authenticated() -> str:
+        """Closed route (requires authentication)."""
+        return "Authenticated route."
+
+    @app.route("/restricted/bar")
+    @app.auth(['APP_SCOPE'])
+    def authorised() -> str:
+        """Closed route (requires authentication and authorisation)."""
+        return "Authorised route."
+```
+
+(add route example for using current token)
+
+...
+
+## Configuration
+
+Config options are read from the [Flask config](https://flask.palletsprojects.com/en/3.0.x/config/) object.
+
+| Option                        | Required | Description                            |
+|-------------------------------|----------|----------------------------------------|
+| `ENTRA_AUTH_CLIENT_ID`        | Yes      | Entra Application (Client) ID          |
+| `ENTRA_AUTH_OIDC_ENDPOINT`    | Yes      | OpenID configuration document URI      |
+| `ENTRA_AUTH_ALLOWED_SUBJECTS` | No       | An allowed list of end-users           |
+| `ENTRA_AUTH_ALLOWED_APPS`     | No       | An allowed list of client applications |
+
+See the Entra documentation for how to get the 
+[Client ID](https://learn.microsoft.com/en-us/azure/healthcare-apis/register-application#application-id-client-id)
+and [OIDC Endpoint](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc#find-your-apps-openid-configuration-document-uri)
+for your application.
+
+## Implementation
+
+### Resource protector
+
+This library uses the [AuthLib Flask](https://docs.authlib.org/en/latest/flask/2/resource-server.html) resource 
+protector to secure access to routes within an application. This requires a valid user (authentication) and optionally
+ensures the user has one or more required [Scopes](#scopes) (authorisation).
+
+The resource protector uses validators for a given token type. In this case a
+[BearerTokenValidator](https://github.com/lepture/authlib/blob/master/authlib/oauth2/rfc6750/validator.py#L15) is used
+to [Validate](#token-validation) a bearer JSON Web Token (JWT) specified in the `Authorization` request header. 
+If validation fails, an [Error](#error-handling) is returned as the request response.
+
+The AuthLib resource protector assumes the application is running its own OAuth server, and so has a record of tokens 
+it has issued and can determine their validity (not revoked, expired or having insufficient scopes). This assumption
+doesn't hold for Entra tokens and instead we validate the token using `pyjwt` and some additional checks statelessly.
+
+## Entra Tokens
+
+...
+
+...creating an `EntraToken` class automatically and implicitly [Validates](#token-validation) it...
+
+...
+
 ## Token validation
 
-Sources:
+### Validation sequence
+
+Summary:
+
+- get signing keys (JWKS) from Entra Open ID Connect (OIDC) endpoint to avoid hard-coding keys that Entra may rotate
+- validate standard claims using `pyjwt.decode()`
+- additionally validate the (Entra) `ver` claim is '2.0' so we know which claims we should expect
+- the `sub` and/or (Entra) `azp` claim values are validated against an allow list if set (otherwise all allowed)
+
+Detail:
+
+1. load OIDC metadata to get expected issuer and location to JWKS
+1. load JWKS
+1. parse token (base64 decode, JSON parse into header, payload and signature parts)
+1. match `kid` token header parameter to key in JWKS
+1. validate token signature using signing key
+1. validate issuer
+1. validate audience
+1. validate expiration
+1. validate not before
+1. validate issued at (omitted)
+1. validatetoken schema version
+1. validate subject (if configured)
+1. validate client (if configured)
+1. validate scopes (if configured)
+
+### Sources
 
 - initially https://pyjwt.readthedocs.io/en/latest/usage.html#encoding-decoding-tokens-with-rs256-rsa
   - which checks signing key and audience (`aud`) claim
@@ -130,42 +215,6 @@ Sources:
   - which also exposed a leeway value with a default of 0
   - it also checked the `iat` claim but given we didn't do anything with its value, I don't think this adds anything
 
-Summary:
-
-- we check all standard claims (not sure about `nbf` and we ignore `iat` as we don't have a use for it)
-- we additionally check the `ver` Entra specific claim is '2.0'
-- we optionally additionally check the `sub` and/or `azp` claim values are allowed as per a list
-
-### Validation sequence
-
-1. load OIDC metadata to get expected issuer and location to JWKS
-1. load JWKS
-1. parse token (base64 decode, JSON parse into header, payload and signature parts)
-1. get `kid` claim from token header and match to key in JWKS
-1. verify token signature using signing key
-1. verify issuer
-1. verify audience
-1. verify expiration
-1. verify not before
-1. verify issued at (omitted)
-1. verify token schema version
-1. verify subject (if configured)
-1. verify client (if configured)
-1. verify scopes (if configured)
-
-### Resource protector 1
-
-There are various implementations of a similar concept (decorator for routes). As we know the AuthLib version works I've
-stuck with that.
-
-At a minimum this needs a bearer token validator, a class that requires an `authenticate()` (not validate) method for a 
-token (taken from the `Authorization` request header). This assumes we're running our own OAuth server, and so have a 
-record of tokens we've issued. We don't and instead use this method to validate the token.
-
-This validator class then calls its own `validate()` method which checks the token is specified, not revoked/expired 
-and has the required set of scopes present.
-
-The resource protector class itself then registers this validator. We don't need to make any changes to it.
 
 ### Resource protector 2
 
@@ -176,6 +225,14 @@ As an evolved version of the resource protector:
 - means we can remove the derived `EntraTokenAuthlib` class
 - means we essentially have an authenticate and authorise method (but with the latter called 'validate')
 - refactors into a Flask extension
+
+## Token introspection
+
+...
+
+## Scopes
+
+...
 
 ## Error handling
 
@@ -207,6 +264,20 @@ therefore disabled.
 #### `jit` claim
 
 The optional `jit` claim is not validated as this isn't included in Entra tokens.
+
+## Tests
+
+To run tests:
+
+```
+$ poetry run pytest
+```
+
+To run coverage:
+
+```
+$ poetry run pytest --cov --cov-report=html
+```
 
 ## Licence
 
