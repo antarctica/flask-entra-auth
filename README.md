@@ -113,9 +113,9 @@ Later:
 
 Other:
 
-## Experiments
+- [ ] using MSAL cache written to user's home directory
 
-### Token validation
+## Token validation
 
 Sources:
 
@@ -135,6 +135,23 @@ Summary:
 - we check all standard claims (not sure about `nbf` and we ignore `iat` as we don't have a use for it)
 - we additionally check the `ver` Entra specific claim is '2.0'
 - we optionally additionally check the `sub` and/or `azp` claim values are allowed as per a list
+
+### Validation sequence
+
+1. load OIDC metadata to get expected issuer and location to JWKS
+1. load JWKS
+1. parse token (base64 decode, JSON parse into header, payload and signature parts)
+1. get `kid` claim from token header and match to key in JWKS
+1. verify token signature using signing key
+1. verify issuer
+1. verify audience
+1. verify expiration
+1. verify not before
+1. verify issued at (omitted)
+1. verify token schema version
+1. verify subject (if configured)
+1. verify client (if configured)
+1. verify scopes (if configured)
 
 ### Resource protector 1
 
@@ -159,6 +176,37 @@ As an evolved version of the resource protector:
 - means we can remove the derived `EntraTokenAuthlib` class
 - means we essentially have an authenticate and authorise method (but with the latter called 'validate')
 - refactors into a Flask extension
+
+## Error handling
+
+Errors encountered when accessing or validating the access token are raised as exceptions inheriting from a base
+`EntraAuthError` exception. Exceptions are based on [RFC7807](https://datatracker.ietf.org/doc/html/rfc7807), returned
+as a JSON response.
+
+### Limitations
+
+#### Authentication header
+
+The resource protector checks for a missing authorisation header but doesn't raise a specific error for a missing
+auth scheme, or auth credential (i.e. either parts of the authorisation header). Instead, both errors are interpreted
+as requesting an unknown token type (meaning scheme (basic/digest/bearer/etc.) not OAuth type (access/refresh/etc.)) by
+`authlib.oauth2.rfc6749.resource_protector.ResourceProtector.parse_request_authorization()`.
+
+This is technically true but not as granular as we'd ideally like. We could work around that by overloading that parse
+request method, but I don't think it's worth it. We can add detail to our exception to explain it may be invalid for 
+one of three reasons instead (no scheme, no credential or unsupported scheme).
+
+#### `iat` claim
+
+The optional `iat` claim is included in Entra tokens but is not validated because it can't be tested.
+
+Currently, there is no combination of `exp`, `nbf` and `iat` claim values that mean only the `iat` claim is invalid,
+which is necessary to write an isolated test for it. Without a test we can't ensure this works correctly and is 
+therefore disabled.
+
+#### `jit` claim
+
+The optional `jit` claim is not validated as this isn't included in Entra tokens.
 
 ## Licence
 
