@@ -22,6 +22,7 @@ from flask_entra_auth.exceptions import (
     EntraAuthRequestNoAuthHeaderError,
     EntraAuthSigningKeyError,
 )
+from tests.mock_jwt import MockClaims
 
 
 def _assert_entra_error(error: callable, response: TestResponse, **kwargs: str) -> None:
@@ -188,13 +189,14 @@ class TestMainRestrictedScope:
 class TestMainRestrictedCurrentToken:
     """Test restricted route to get back current token."""
 
-    def test_ok(self, fx_app_client: FlaskClient, fx_jwt_no_scopes: str):
+    def test_ok(self, fx_app_client: FlaskClient, fx_jwt_no_scopes: str, fx_claims: MockClaims):
         """Request is successful."""
         response = fx_app_client.get(
             "/restricted/current-token", headers={"Authorization": f"Bearer {fx_jwt_no_scopes}"}
         )
         assert response.status_code == 200
         assert "claims" in response.json
+        assert response.json["claims"]["sub"] == fx_claims.sub
 
 
 class TestMainIntrospectRfc7662:
