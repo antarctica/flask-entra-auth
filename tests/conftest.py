@@ -10,6 +10,12 @@ from tests.app import create_app
 
 
 @pytest.fixture()
+def fx_support_contact() -> str:
+    """Support contact URI."""
+    return "mailto:support@example.com"
+
+
+@pytest.fixture()
 def fx_client_id_self() -> str:
     """Client ID for app containing protected resources."""
     return "test_app_1"
@@ -227,6 +233,13 @@ def fx_app(httpserver: HTTPServer, fx_jwks: KeySet, fx_client_id_self: str, fx_c
 def fx_app_client(fx_app: Flask) -> FlaskClient:
     """App test client testing routes."""
     return fx_app.test_client()
+
+
+@pytest.fixture()
+def fx_app_client_with_contact(fx_app_client: FlaskClient, fx_support_contact: str) -> FlaskClient:
+    """App test client with a support contact."""
+    fx_app_client.application.config["ENTRA_AUTH_CONTACT"] = fx_support_contact
+    return fx_app_client
 
 
 @pytest.fixture()

@@ -23,10 +23,15 @@ def _raise_exception_response(error: EntraAuthError) -> None:
     Override of the AuthLib exception response handler to work with EntraAuthError exceptions.
 
     These exceptions use the problem details response format (RFC 7807) encoded as JSON.
+    A contact URL, if set, is included as an additional custom problem detail property.
     """
+    body = asdict(error.problem)
+    if "ENTRA_AUTH_CONTACT" in current_app.config:
+        body["contact"] = current_app.config["ENTRA_AUTH_CONTACT"]
+
     raise_http_exception(
         status=error.problem.status,
-        body=json.dumps(asdict(error.problem)),
+        body=json.dumps(body),
         headers={"content-type": "application/json"},
     )
 

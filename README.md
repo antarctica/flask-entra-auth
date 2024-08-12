@@ -74,7 +74,7 @@ v0.3.0:
 Then:
 
 - [x] testing support (move mock JWKS and JWT into main package?)
-- [ ] contact in errors (url, mailto)
+- [x] contact in errors (url, mailto)
 - [ ] caching for `_get_oidc_metadata` (`JWKSclient` already caches the fetching of the key)
 
 Later:
@@ -197,12 +197,13 @@ See the [Testing Support](#testing-support) section for how to generate fake tok
 
 Config options are read from the [Flask config](https://flask.palletsprojects.com/en/3.0.x/config/) object.
 
-| Option                        | Required | Description                            |
-|-------------------------------|----------|----------------------------------------|
-| `ENTRA_AUTH_CLIENT_ID`        | Yes      | Entra Application (Client) ID          |
-| `ENTRA_AUTH_OIDC_ENDPOINT`    | Yes      | OpenID configuration document URI      |
-| `ENTRA_AUTH_ALLOWED_SUBJECTS` | No       | An allowed list of end-users           |
-| `ENTRA_AUTH_ALLOWED_APPS`     | No       | An allowed list of client applications |
+| Option                        | Required | Description                                  |
+|-------------------------------|----------|----------------------------------------------|
+| `ENTRA_AUTH_CLIENT_ID`        | Yes      | Entra Application (Client) ID                |
+| `ENTRA_AUTH_OIDC_ENDPOINT`    | Yes      | OpenID configuration document URI            |
+| `ENTRA_AUTH_ALLOWED_SUBJECTS` | No       | An allowed list of end-users                 |
+| `ENTRA_AUTH_ALLOWED_APPS`     | No       | An allowed list of client applications       |
+| `ENTRA_AUTH_CONTACT`          | No       | A URI to a contact website or mailto address |
 
 The `CLIENT_ID` represents the Flask application being secured (and a client of Entra ID).
 
@@ -212,6 +213,8 @@ See the Entra documentation for how to get the
 [Client ID](https://learn.microsoft.com/en-us/azure/healthcare-apis/register-application#application-id-client-id)
 and [OIDC Endpoint](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc#find-your-apps-openid-configuration-document-uri)
 for your application.
+
+See the [Error Handling](#error-handling) section for more information on the `ENTRA_AUTH_CONTACT` option.
 
 ## Resource protector
 
@@ -407,6 +410,18 @@ Example response:
 
 ```json
 {
+  "detail": "Ensure your request includes an 'Authorization' header and try again.", 
+  "status": 401, 
+  "title": "Missing authorization header", 
+  "type": "auth_header_missing"
+}
+```
+
+Optionally, a contact URI can be included by setting the `ENTRA_AUTH_CONTACT` [Config](#configuration) option. E.g.:
+
+```json
+{
+  "contact": "mailto:support@example.com",
   "detail": "Ensure your request includes an 'Authorization' header and try again.", 
   "status": 401, 
   "title": "Missing authorization header", 
