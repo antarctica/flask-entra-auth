@@ -60,15 +60,18 @@ Then:
 - [x] change POST to GET in routes
 - [x] doc blocks
 - [x] document config options
-- [ ] note Token class implicitly validates for safety (currently)
-- [ ] warn that initialising an EntraToken will fetch OIDC metadata and the JWKS
+- [x] note Token class implicitly validates for safety (currently)
+- [x] warn that initialising an EntraToken will fetch OIDC metadata and the JWKS
+- [x] test for current token?
 - [ ] explain custom scopes and how these can be used for authz
 - [ ] explain that other Entra features can control access to applications (user placement)
-- [ ] test for current token?
-- [ ] contact in errors (url, mailto)
-- [ ] link to https://jwt.ms as useful resource
+- [ ] link to https://jwt.ms as useful resource (introspection section)
 - [ ] link to MSAL for generating access tokens
 - [ ] review existing README
+
+Then:
+
+- [ ] contact in errors (url, mailto)
 - [ ] caching for `_get_oidc_metadata`
   - `JWKSclient` already caches the fetching of the key
 - [ ] support invalid tokens?
@@ -150,6 +153,10 @@ Config options are read from the [Flask config](https://flask.palletsprojects.co
 | `ENTRA_AUTH_ALLOWED_SUBJECTS` | No       | An allowed list of end-users           |
 | `ENTRA_AUTH_ALLOWED_APPS`     | No       | An allowed list of client applications |
 
+The `CLIENT_ID` represents the Flask application being secured (and a client of Entra ID).
+
+The `ALLOWED_APPS` list of clients represents clients of the Flask application (but which are also Entra ID clients).
+
 See the Entra documentation for how to get the 
 [Client ID](https://learn.microsoft.com/en-us/azure/healthcare-apis/register-application#application-id-client-id)
 and [OIDC Endpoint](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc#find-your-apps-openid-configuration-document-uri)
@@ -160,30 +167,64 @@ for your application.
 ### Resource protector
 
 This library uses the [AuthLib Flask](https://docs.authlib.org/en/latest/flask/2/resource-server.html) resource 
-protector to secure access to routes within an application. This requires a valid user (authentication) and optionally
-ensures the user has one or more required [Scopes](#scopes) (authorisation).
+protector, [`EntraResourceProtector`](src/flask_entra_auth/resource_protector.py), to secure access to routes within an 
+application. This requires a valid user (authentication) and optionally ensures the user has one or more required 
+[Scopes](#scopes) (authorisation).
 
 The resource protector uses validators for a given token type. In this case a
-[BearerTokenValidator](https://github.com/lepture/authlib/blob/master/authlib/oauth2/rfc6750/validator.py#L15) is used
-to [Validate](#token-validation) a bearer JSON Web Token (JWT) specified in the `Authorization` request header. 
-If validation fails, an [Error](#error-handling) is returned as the request response.
+[BearerTokenValidator](https://github.com/lepture/authlib/blob/master/authlib/oauth2/rfc6750/validator.py#L15), 
+[`EntraBearerTokenValidator`](src/flask_entra_auth/resource_protector.py), is used to [Validate](#token-validation) a 
+bearer JSON Web Token (JWT) specified in the `Authorization` request header. If validation fails, an 
+[Error](#error-handling) is returned as the request response.
 
 The AuthLib resource protector assumes the application is running its own OAuth server, and so has a record of tokens 
 it has issued and can determine their validity (not revoked, expired or having insufficient scopes). This assumption
-doesn't hold for Entra tokens and instead we validate the token using `pyjwt` and some additional checks statelessly.
+doesn't hold for Entra tokens, so instead we validate the token using PyJWT and some additional checks statelessly.
 
 ## Entra Tokens
 
-...
+This library uses a custom [`EntraToken`](src/flask_entra_auth/token.py) class to represent Entra 
+[Access Tokens](https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens).
 
-...creating an `EntraToken` instance will automatically and implicitly [Validate](#token-validation) the token...
+This class provides token [Validation](#token-validation), [Introspection](#token-introspection) and access methods of 
+and to tokens and their claims.
 
-...validating an `EntraToken` instance will automatically fetch the OIDC metadata and the JSON Web Key Set (JWKS) from
-their respective URIs...
+**Note:** Creating an `EntraToken` instance will automatically and implicitly [Validate](#token-validation) the token.
+
+**Note:** Validating an `EntraToken` instance will automatically fetch the OIDC metadata and the JSON Web Key Set 
+(JWKS) from their respective URIs.
+
+If desired this class can be used outside the [Resource Protector](#resource-protector) by passing a token string,
+OIDC metadata endpoint, client ID (audience) and optionally an allowed list of subjects and client applications:
+
+```python
+from flask_entra_auth.token import EntraToken
+
+# allowing all subjects and client applications
+token = EntraToken(
+  token='eyJhbGciOiJSUzI1NiIsImtpZCI6IjBYZ0ZndE5iLXVHazU1LUdSX1BMQ3JzN29aREtLWlRRNE5YUVM2NnhyLWsiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5hdXRoLmV4YW1wbGUuY29tIiwic3ViIjoidGVzdF9zdWJqZWN0IiwiYXVkIjoidGVzdF9hcHBfMSIsImV4cCI6MTcyMzQ1NzAwOCwibmJmIjoxNzIzNDUzNDA4LCJhenAiOiJ0ZXN0X2FwcF8yIiwidmVyIjoiMi4wIiwic2NwcyI6WyJTQ09QRV9BIiwiU0NPUEVfQiIsIlNDT1BFX0MiXSwicm9sZXMiOlsiUk9MRV8xIiwiUk9MRV8yIiwiUk9MRV8zIl19.jOoVhWLku34OUY4XBfUddeW39R0W2PxMmf_dKiSPr87pzg0m3d5_HqVOOVyB_qKvODPT8LHT3lrKIn1D9_67ERoa5clCn23DJAOZnux-hMXd19CCPWdBMu2yC1_kBzMdIkZbTgiuTjTleLYLl5JV3livdE0JVXaSHsj7Qt5c6yypfOBbk5uM4hYqpAnMpl6XToZgnBaI1SuRF2bj2bddLNzVxvg4yOYnX25Ruz5eMkKZonBI9FyumysD7CNOEnyANdaT4z4Z5siGI046hjt10if-Iz8EmDR7Srx_wX_KLng8qS0VE3qzxhEAycoBS6RKlZ2NRfPqkwkizUi0TlDLsA',
+  oidc_endpoint='https://login.microsoftonline.com/{tenancy}/v2.0/.well-known/openid-configuration',
+  client_id='test_app_1'
+)
+
+# get validated claim
+print(token.claims['exp'])  # 1723457008
+
+# get scopes
+print(token.scopes)  # ['SCOPE_A', 'SCOPE_B', 'SCOPE_C', 'ROLE_1', 'ROLE_2', 'ROLE_3']
+```
+
+## Token scopes
 
 ...
 
 ## Token validation
+
+Microsoft does not provide an official library or implementation for validating [Entra Tokens](#entra-tokens) in Python.
+
+This library opts to validate tokens using a combination of [PyJWT](https://pyjwt.readthedocs.io/) and some additional 
+custom validation methods. This is in line with how others have solved the same 
+[problem](https://github.com/AzureAD/microsoft-authentication-library-for-python/issues/147).
 
 ### Validation sequence
 
@@ -211,34 +252,7 @@ Detail:
 1. validate client (if configured)
 1. validate scopes (if configured)
 
-### Sources
-
-- initially https://pyjwt.readthedocs.io/en/latest/usage.html#encoding-decoding-tokens-with-rs256-rsa
-  - which checks signing key and audience (`aud`) claim
-- then https://github.com/Intility/fastapi-azure-auth/blob/main/fastapi_azure_auth/auth.py#L189
-  - which additionally checks `iss` claim
-- then from various parts of https://github.com/AzureAD/microsoft-authentication-library-for-python/issues/147:
-  - which includes clock skew (not been a problem for us inclined to omit for now)
-- then from https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/blob/main/src/flask_azure_oauth/tokens.py:
-  - which additionally required the `sub` and `azp` claim for optionally filtering the security principle and application
-  - which also exposed a leeway value with a default of 0
-  - it also checked the `iat` claim but given we didn't do anything with its value, I don't think this adds anything
-
-## Token introspection
-
-...
-
-## Scopes
-
-...
-
-## Error handling
-
-Errors encountered when accessing or validating the access token are raised as exceptions inheriting from a base
-`EntraAuthError` exception. Exceptions are based on [RFC7807](https://datatracker.ietf.org/doc/html/rfc7807), returned
-as a JSON response.
-
-### Limitations
+### Validation limitations
 
 #### Authentication header
 
@@ -262,6 +276,29 @@ therefore disabled.
 #### `jit` claim
 
 The optional `jit` claim is not validated as this isn't included in Entra tokens.
+
+## Token introspection
+
+...
+
+## Error handling
+
+Errors encountered when accessing or validating the access token are raised as exceptions inheriting from a base
+`EntraAuthError` exception. Exceptions are based on [RFC7807](https://datatracker.ietf.org/doc/html/rfc7807), returned
+as a JSON response.
+
+...
+
+Example response:
+
+```json
+{
+  "detail": "Ensure your request includes an 'Authorization' header and try again.", 
+  "status": 401, 
+  "title": "Missing authorization header", 
+  "type": "auth_header_missing"
+}
+```
 
 ## Tests
 
