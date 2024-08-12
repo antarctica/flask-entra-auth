@@ -1,9 +1,6 @@
-from dataclasses import asdict
-
 import pytest
 from _pytest.fixtures import FixtureRequest
 from flask.testing import FlaskClient
-from werkzeug.test import TestResponse
 
 from flask_entra_auth.exceptions import (
     EntraAuthInsufficientScopesError,
@@ -23,15 +20,10 @@ from flask_entra_auth.exceptions import (
     EntraAuthSigningKeyError,
 )
 from flask_entra_auth.mocks.jwt import MockClaims
+from tests.utils import _assert_entra_error
 
 
-def _assert_entra_error(error: callable, response: TestResponse, **kwargs: str) -> None:
-    error_ = error(**kwargs)
-    assert response.json == asdict(error_.problem)
-    assert response.status_code == error_.problem.status
-
-
-class TestMainUnrestricted:
+class TestAppUnrestricted:
     """Test unrestricted route."""
 
     def test_ok(self, fx_app_client: FlaskClient):
@@ -41,7 +33,7 @@ class TestMainUnrestricted:
         assert response.text == "Unrestricted route."
 
 
-class TestMainRestricted:
+class TestAppRestricted:
     """Test basic restricted route."""
 
     def test_ok(self, fx_app_client: FlaskClient, fx_jwt_no_scopes: str):
@@ -123,7 +115,7 @@ class TestMainRestricted:
         _assert_entra_error(exception, response)
 
 
-class TestMainRestrictedScope:
+class TestAppRestrictedScope:
     """Test restricted route with required scopes."""
 
     @pytest.mark.parametrize("resource", ["scps", "roles", "scopes"])
@@ -186,7 +178,7 @@ class TestMainRestrictedScope:
         _assert_entra_error(EntraAuthInsufficientScopesError, response)
 
 
-class TestMainRestrictedCurrentToken:
+class TestAppRestrictedCurrentToken:
     """Test restricted route to get back current token."""
 
     def test_ok(self, fx_app_client: FlaskClient, fx_jwt_no_scopes: str, fx_claims: MockClaims):
@@ -199,7 +191,7 @@ class TestMainRestrictedCurrentToken:
         assert response.json["claims"]["sub"] == fx_claims.sub
 
 
-class TestMainIntrospectRfc7662:
+class TestAppIntrospectRfc7662:
     """Test token introspection as per RFC7662."""
 
     def test_ok(self, fx_app_client: FlaskClient, fx_jwt_no_scopes: str):
@@ -214,3 +206,14 @@ class TestMainIntrospectRfc7662:
         """Request is unsuccessful if token bad."""
         response = fx_app_client.post("/introspect", data={"token": fx_jwt_bad_exp})
         assert response.status_code == 401
+
+
+class TestExceptionContact:
+    """Test exception contact URL."""
+
+    def test_contact(self, fx_app_client_with_contact: FlaskClient, fx_support_contact: str, fx_jwt_empty: str):
+        """Error includes contact."""
+        client = fx_app_client_with_contact
+        response = client.get("/restricted", headers={"Authorization": f"Bearer {fx_jwt_empty}"})
+        assert response.status_code == 401
+        assert response.json["contact"] == fx_support_contact

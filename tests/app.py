@@ -15,6 +15,7 @@ def create_app(  # noqa: C901
     """Create Flask app."""
     app = Flask(__name__)
     app.config["TESTING"] = True
+
     app.config["ENTRA_AUTH_CLIENT_ID"] = client_id
     app.config["ENTRA_AUTH_OIDC_ENDPOINT"] = oidc_endpoint
     app.config["ENTRA_AUTH_ALLOWED_SUBJECTS"] = allowed_subjects or []

@@ -47,7 +47,7 @@ class MockJwks:
     @property
     def jwk(self) -> MockJwk:
         """JSON Web Key."""
-        return MockJwk(self._jwks.keys[0])
+        return MockJwk(self.keys[0])
 
     def as_dict(self, private: bool = False) -> dict:
         """Key set as dict for use in JWKS endpoints."""

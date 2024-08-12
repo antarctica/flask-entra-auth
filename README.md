@@ -75,8 +75,7 @@ Then:
 
 - [x] testing support (move mock JWKS and JWT into main package?)
 - [ ] contact in errors (url, mailto)
-- [ ] caching for `_get_oidc_metadata`
-  - `JWKSclient` already caches the fetching of the key
+- [ ] caching for `_get_oidc_metadata` (`JWKSclient` already caches the fetching of the key)
 
 Later:
 
