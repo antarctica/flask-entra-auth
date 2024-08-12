@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import Flask, request
+from flask import Flask, current_app, request
 
 from flask_entra_auth.exceptions import EntraAuthError
 from flask_entra_auth.resource_protector import FlaskEntraAuth
@@ -89,11 +89,11 @@ def create_app(  # noqa: C901
             "((SCOPE_A && SCOPE_C && ROLE_1 && ROLE_3) || (SCOPE_B && SCOPE_C && ROLE_2 && ROLE_3))."
         )
 
-    @app.route("/restricted/current-token", methods=["GET"])
+    @app.route("/restricted/current-token")
     @app.auth()
     def restricted_current_token() -> dict:
         """Closed route (authenticated)."""
-        token: EntraToken = app.auth.current_token
+        token: EntraToken = current_app.auth.current_token
         return {"claims": token.claims}
 
     @app.route("/introspect", methods=["POST"])
