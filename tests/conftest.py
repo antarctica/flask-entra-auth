@@ -4,9 +4,9 @@ from flask.testing import FlaskClient
 from joserfc.jwk import KeySet
 from pytest_httpserver import HTTPServer
 
+from flask_entra_auth.mocks.jwks import MockJwks
+from flask_entra_auth.mocks.jwt import MockClaims, MockJwtClient
 from tests.app import create_app
-from tests.mock_jwks import MockJwks
-from tests.mock_jwt import MockClaims, MockJwtClient
 
 
 @pytest.fixture()
@@ -18,7 +18,7 @@ def fx_client_id_self() -> str:
 @pytest.fixture()
 def fx_claims(fx_client_id_self: str) -> MockClaims:
     """MockClaims."""
-    return MockClaims(fx_client_id_self)
+    return MockClaims(self_app_id=fx_client_id_self)
 
 
 @pytest.fixture()

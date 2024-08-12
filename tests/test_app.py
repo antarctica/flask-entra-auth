@@ -22,7 +22,7 @@ from flask_entra_auth.exceptions import (
     EntraAuthRequestNoAuthHeaderError,
     EntraAuthSigningKeyError,
 )
-from tests.mock_jwt import MockClaims
+from flask_entra_auth.mocks.jwt import MockClaims
 
 
 def _assert_entra_error(error: callable, response: TestResponse, **kwargs: str) -> None:

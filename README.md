@@ -73,7 +73,7 @@ v0.3.0:
 
 Then:
 
-- [ ] testing support (move mock JWKS and JWT into main package?)
+- [x] testing support (move mock JWKS and JWT into main package?)
 - [ ] contact in errors (url, mailto)
 - [ ] caching for `_get_oidc_metadata`
   - `JWKSclient` already caches the fetching of the key
@@ -189,6 +189,10 @@ for claims it contains.
 ### Using scopes to control access
 
 See the [Token Scopes](#token-scopes) section.
+
+### Generating fake tokens
+
+See the [Testing Support](#testing-support) section for how to generate fake tokens to aid application testing.
 
 ## Configuration
 
@@ -409,6 +413,83 @@ Example response:
   "title": "Missing authorization header", 
   "type": "auth_header_missing"
 }
+```
+
+## Testing support
+
+If needed for application testing, this package includes mock classes to generate fake tokens and signing keys. These
+can be used to simulate different scopes and/or error conditions for example. This requires:
+
+- configuring the [Resource Protector](#resource-protector) to load a fake OIDC endpoint:
+  - by setting the `ENTRA_AUTH_OIDC_ENDPOINT` [Config](#configuration) option to this fake endpoint
+  - this endpoint returning metadata referencing a fake JWKS endpoint
+  - this endpoint in turn containing a fake JWK (signing key)
+- making requests with local/fake access tokens (i.e. not issued by Entra) configured with relevant claims
+
+The [Resource Protector](#resource-protector) as normal, authenticating and configured, authorising the request based 
+on the claims in the fake token.
+
+If using `pytest`, it is recommended to use the 
+[`pytest-httpserver`](https://pytest-httpserver.readthedocs.io) plugin to serve this fake OIDC endpoint.
+
+For example, these fixtures:
+
+- return a Flask test client with a fake OIDC endpoint, JWKS endpoint and signing key
+- return a JWT client that can generate tokens with overridden or omitted claims
+
+```python
+import pytest
+from pytest_httpserver import HTTPServer
+from flask.testing import FlaskClient
+from flask_entra_auth.mocks.jwks import MockJwks
+from flask_entra_auth.mocks.jwt import MockClaims, MockJwtClient
+
+# replace with reference to your Flask app or app factory
+from your_app import app
+
+mock_jwks = MockJwks()
+mock_iss = 'fake-issuer'
+
+@pytest.fixture()
+def app_client(httpserver: HTTPServer) -> FlaskClient:
+    """Flask test client configured with fake signing key."""
+    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": mock_iss}
+    httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
+    httpserver.expect_request("/keys").respond_with_json(mock_jwks.as_dict())
+
+    app.config['ENTRA_AUTH_OIDC_ENDPOINT'] = httpserver.url_for("/.well-known/openid-configuration")
+    return app.test_client()
+
+@pytest.fixture()
+def jwt_client() -> MockJwtClient:
+    claims = MockClaims(self_app_id=app.config['ENTRA_AUTH_CLIENT_ID'])  # so tokens have the expected audience
+    return MockJwtClient(key=mock_jwks.jwk, claims=claims)
+```
+
+Then in a test:
+
+```python
+from flask.testing import FlaskClient
+from flask_entra_auth.mocks.jwt import MockJwtClient
+
+def test_ok(self, app_client: FlaskClient, jwt_client: MockJwtClient):
+    """Request to authenticated route is successful."""
+    token = jwt_client.generate()  # default claims and values
+    
+    response = app_client.get("/restricted", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+```
+
+To tweak the claims in the token you can override their value, or omit them by setting to `False`. E.g:
+
+```python
+from flask_entra_auth.mocks.jwt import MockJwtClient
+
+def test_tokens(self, jwt_client: MockJwtClient):
+    t = jwt_client.generate()  # default claims and values
+    t = jwt_client.generate(roles=False, scps=False)  # no scopes
+    t = jwt_client.generate(roles=['MY_APP.FOO.READ', 'MY_APP.BAR.READ'], scps=['MY_APP.SOMETHING'])  # custom scopes
+    t = jwt_client.generate(exp=1)  # expired token (don't use `0` as this equates to None and won't be overridden)
 ```
 
 ## Developing

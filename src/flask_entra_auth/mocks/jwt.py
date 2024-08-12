@@ -4,7 +4,7 @@ from datetime import datetime
 
 from jwt import encode as jwt_encode
 
-from tests.mock_jwks import MockJwk
+from flask_entra_auth.mocks.jwks import MockJwk
 
 
 class MockClaims:
@@ -70,6 +70,8 @@ class MockClaims:
 
 
 class MockJwtClient:
+    """Mock JWT client for generating tokens for testing."""
+
     def __init__(self, key: MockJwk, claims: MockClaims):
         self._key = key
         self._claims = claims
@@ -99,6 +101,11 @@ class MockJwtClient:
         scps: list[str] | bool | None = None,
         roles: list[str] | bool | None = None,
     ) -> str:
+        """
+        Create token with specified claims and headers.
+
+        Default values are used for claims unless overridden. If overridden with `False`, the claim is omitted.
+        """
         headers = {"kid": kid} if kid else {}
 
         payload = {
