@@ -31,7 +31,6 @@ v0.2.0:
     - [x] jwks (missing, invalid and empty)
   - https://pyjwt.readthedocs.io/en/latest/api.html#exceptions:
     - [x] missing required claim (iss)
-    - [ ] (invalid token base)
     - [x] decode error
     - [x] invalid signature
     - [x] expired
@@ -96,6 +95,7 @@ For change log:
 
 - session support
 - version 1.0 tokens
+- [x] editor config
 
 # Flask Entra Auth
 
@@ -122,7 +122,7 @@ The extension can be installed using Pip from [PyPi](https://pypi.org/project/fl
 $ pip install flask-entra-auth
 ```
 
-**Note:** Since version 0.6.0, this package requires Flask 2.0 or greater.
+**Note:** Since version 0.6.0, this extension requires Flask 2.0 or greater.
 
 ## Usage
 
@@ -216,7 +216,9 @@ for your application.
 
 See the [Error Handling](#error-handling) section for more information on the `ENTRA_AUTH_CONTACT` option.
 
-## Resource protector
+## Implementation
+
+### Resource protector
 
 This library uses the [AuthLib Flask](https://docs.authlib.org/en/latest/flask/2/resource-server.html) resource
 protector, [`EntraResourceProtector`](src/flask_entra_auth/resource_protector.py), to secure access to routes within an
@@ -236,7 +238,7 @@ doesn't hold for Entra tokens, so instead we validate the token using PyJWT and 
 For convenience the resource protector is exposed as a Flask extension, including a `current_token` property that gives
 access to the access token taken from the request as an [EntraToken](#entra-tokens) instance.
 
-## Entra Tokens
+### Entra Tokens
 
 This library uses a custom [`EntraToken`](src/flask_entra_auth/token.py) class to represent Entra
 [Access Tokens](https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens) (not ID tokens which can be
@@ -281,13 +283,13 @@ print(token.claims['exp'])  # 1723457008
 print(token.scopes)  # ['SCOPE_A', 'SCOPE_B', 'SCOPE_C', 'ROLE_1', 'ROLE_2', 'ROLE_3']
 ```
 
-## Token scopes
 #### OIDC and JWKS caching
 
 Data from the OIDC metadata and JWKS endpoints are cached in memory for 60 seconds within (but not between) `EntraToken`
 instances. This speeds up access to OIDC metadata properties, such as the JWKS and issuer, which otherwise would
 trigger multiple requests to information that is very unlikely to change within the lifetime of a token.
 
+### Token scopes
 
 Typically, applications wish to limit which users or clients can perform particular actions (e.g. read vs. read-write)
 using custom permissions. These can be defined within the application registration in Entra ID and then checked for
@@ -312,7 +314,7 @@ The [Resource Protector](#resource-protector) decorator supports both logic _AND
 the [AuthLib](https://docs.authlib.org/en/latest/flask/2/resource-server.html#multiple-scopes) documentation for more
 information.
 
-## Token validation
+### Token validation
 
 Microsoft does not provide an official library or implementation for validating [Entra Tokens](#entra-tokens) in Python.
 
@@ -320,7 +322,7 @@ This library opts to validate tokens using a combination of [PyJWT](https://pyjw
 custom validation methods. This is in line with how others have solved the same
 [problem](https://github.com/AzureAD/microsoft-authentication-library-for-python/issues/147).
 
-### Validation sequence
+#### Validation sequence
 
 Summary:
 
@@ -346,9 +348,9 @@ Detail:
 1. validate client (if configured)
 1. validate scopes (if configured)
 
-### Validation limitations
+#### Validation limitations
 
-#### Authentication header
+##### Authentication header
 
 The resource protector checks for a missing authorisation header but doesn't raise a specific error for a missing
 auth scheme, or auth credential (i.e. either parts of the authorisation header). Instead, both errors are interpreted
@@ -359,7 +361,7 @@ This is technically true but not as granular as we'd ideally like. We could work
 request method, but I don't think it's worth it. We can add detail to our exception to explain it may be invalid for
 one of three reasons instead (no scheme, no credential or unsupported scheme).
 
-#### `iat` claim
+##### `iat` claim
 
 The optional `iat` claim is included in Entra tokens but is not validated because it can't be tested.
 
@@ -367,11 +369,11 @@ Currently, there is no combination of `exp`, `nbf` and `iat` claim values that m
 which is necessary to write an isolated test for it. Without a test we can't ensure this works correctly and is
 therefore disabled.
 
-#### `jit` claim
+##### `jit` claim
 
 The optional `jit` claim is not validated as this isn't included in Entra tokens.
 
-## Token introspection
+### Token introspection
 
 The [`EntraToken`](#entra-tokens) class provides a `rfc7662_introspection()` method that returns standard/common claims
 within a token according to [RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662) (OAuth Token Introspection).
@@ -409,7 +411,7 @@ def introspect_rfc7662():
         return {"error": str(e)}, e.problem.status
 ```
 
-## Error handling
+### Error handling
 
 Errors encountered when accessing or validating the access token are raised as exceptions inheriting from a base
 `EntraAuthError` exception. Exceptions are based on [RFC7807](https://datatracker.ietf.org/doc/html/rfc7807), returned
@@ -426,7 +428,10 @@ Example response:
 }
 ```
 
-Optionally, a contact URI can be included by setting the `ENTRA_AUTH_CONTACT` [Config](#configuration) option. E.g.:
+#### Error point of contact URI
+
+Optionally, a contact URI can be included in errors by setting the `ENTRA_AUTH_CONTACT` [Config](#configuration)
+option. E.g.:
 
 ```json
 {
@@ -438,9 +443,9 @@ Optionally, a contact URI can be included by setting the `ENTRA_AUTH_CONTACT` [C
 }
 ```
 
-## Testing support
+### Testing support
 
-If needed for application testing, this package includes mock classes to generate fake tokens and signing keys. These
+If needed for application testing, this extension includes mock classes to generate fake tokens and signing keys. These
 can be used to simulate different scopes and/or error conditions for example. This requires:
 
 - configuring the [Resource Protector](#resource-protector) to load a fake OIDC endpoint:
