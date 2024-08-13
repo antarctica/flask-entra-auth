@@ -71,11 +71,11 @@ v0.3.0:
 - [x] review existing README
 - [x] rename package to `flask_entra_auth` (`flask-entra-auth`)
 
-Then:
+v0.4.0:
 
 - [x] testing support (move mock JWKS and JWT into main package?)
 - [x] contact in errors (url, mailto)
-- [ ] caching for `_get_oidc_metadata` (`JWKSclient` already caches the fetching of the key)
+- [x] caching for `_get_oidc_metadata` (`JWKSclient` already caches the fetching of the key)
 
 Later:
 
@@ -248,7 +248,10 @@ and to tokens and their claims.
 **Note:** Creating an `EntraToken` instance will automatically and implicitly [Validate](#token-validation) the token.
 
 **Note:** Validating an `EntraToken` instance will automatically fetch the OIDC metadata and the JSON Web Key Set 
-(JWKS) from their respective URIs.
+(JWKS) from their respective URIs, which are then [Cached](#oidc-and-jwks-caching).
+
+**WARNING:** `EntraTokens` do not re-validate themselves automatically once created. It is assumed tokens will be tied 
+to a request, and that these will be processed well before they become invalid (i.e. within ~60 seconds).
 
 If desired this class can be used outside the [Resource Protector](#resource-protector) by passing a token string,
 OIDC metadata endpoint, client ID (audience) and optionally an allowed list of subjects and client applications:
@@ -279,6 +282,12 @@ print(token.scopes)  # ['SCOPE_A', 'SCOPE_B', 'SCOPE_C', 'ROLE_1', 'ROLE_2', 'RO
 ```
 
 ## Token scopes
+#### OIDC and JWKS caching
+
+Data from the OIDC metadata and JWKS endpoints are cached in memory for 60 seconds within (but not between) `EntraToken` 
+instances. This speeds up access to OIDC metadata properties, such as the JWKS and issuer, which otherwise would 
+trigger multiple requests to information that is very unlikely to change within the lifetime of a token.
+
 
 Typically, applications wish to limit which users or clients can perform particular actions (e.g. read vs. read-write)
 using custom permissions. These can be defined within the application registration in Entra ID and then checked for 

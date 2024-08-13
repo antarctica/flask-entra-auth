@@ -1,6 +1,7 @@
 import pytest
 from _pytest.fixtures import FixtureRequest
 from flask.testing import FlaskClient
+from pytest_httpserver import HTTPServer, RequestMatcher
 
 from flask_entra_auth.exceptions import (
     EntraAuthInsufficientScopesError,
@@ -217,3 +218,14 @@ class TestExceptionContact:
         response = client.get("/restricted", headers={"Authorization": f"Bearer {fx_jwt_empty}"})
         assert response.status_code == 401
         assert response.json["contact"] == fx_support_contact
+
+
+class TestTokenCaching:
+    """Test OIDC / JWKS caching."""
+
+    @pytest.mark.parametrize("url", ["/.well-known/openid-configuration", "/keys"])
+    def test_cache(self, httpserver: HTTPServer, fx_app_client: FlaskClient, fx_jwt_no_scopes: str, url: str):
+        """Request is successful."""
+        response = fx_app_client.get("/restricted", headers={"Authorization": f"Bearer {fx_jwt_no_scopes}"})
+        assert response.status_code == 200
+        assert httpserver.get_matching_requests_count(RequestMatcher(url)) == 1

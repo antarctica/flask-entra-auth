@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from json import JSONDecodeError
 from typing import TypedDict
 
@@ -99,7 +100,10 @@ class EntraToken:
 
     Provides validation, introspection and access methods of and to tokens and their claims.
 
-    Tokens are implicitly validated on init, and will raise an exception if invalid.
+    Tokens are implicitly validated on init, which will trigger requests to the OIDC and JWKS endpoints. These are then
+    cached for upto 60 seconds to speed up subsequent lookups and prevent unnecessary requests.
+
+    If the token is invalid, a relevant EntraAuth exception is raised.
 
     See https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens for more information.
     """
@@ -123,12 +127,17 @@ class EntraToken:
         client_id: str,
         allowed_subjects: list | None = None,
         allowed_apps: list | None = None,
+        cache_ttl: int = 60,
     ) -> None:
         self._token = token
         self._oidc_endpoint = oidc_endpoint
         self._client_id = client_id
         self._allowed_subjects: list | None = allowed_subjects
         self._allowed_apps: list | None = allowed_apps
+        self._cache_ttl = cache_ttl
+
+        self._cached_oidc_metadata: dict | None = None
+        self._cached_oidc_metadata_expiry: int = -1
 
         self.claims = self.validate()
         self.valid = True
@@ -140,9 +149,11 @@ class EntraToken:
 
         The OIDC metadata includes the URI to a JSON Web Key Set (JWKS), which should contain a JWK that can be used to
         verify the token. Keys are matched by the `kid` token header parameter.
+
+        The fetched JWKS is cached to speed up subsequent lookups and prevent unnecessary requests to the JWKS endpoint.
         """
         oidc_config = self._get_oidc_metadata()
-        jwks_client = PyJWKClient(oidc_config["jwks_uri"])
+        jwks_client = PyJWKClient(oidc_config["jwks_uri"], lifespan=self._cache_ttl)
         try:
             return jwks_client.get_signing_key_from_jwt(self._token)
         except PyJWKClientError as e:
@@ -166,9 +177,15 @@ class EntraToken:
         """
         Retrieve OIDC metadata from the OIDC endpoint.
 
+        The fetched metadata is cached to speed up subsequent lookups and prevent unnecessary requests to the OIDC
+        endpoint.
+
         See https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc#fetch-the-openid-configuration-document
         for more information.
         """
+        if self._cached_oidc_metadata and time.monotonic() < self._cached_oidc_metadata_expiry:
+            return self._cached_oidc_metadata
+
         try:
             oidc_req = requests.get(self._oidc_endpoint, timeout=10)
             oidc_req.raise_for_status()
@@ -178,6 +195,8 @@ class EntraToken:
         except requests.RequestException as e:
             raise EntraAuthOidcError from e
         else:
+            self._cached_oidc_metadata = oidc_data
+            self._cached_oidc_metadata_expiry = time.monotonic() + self._cache_ttl
             return oidc_data
 
     def _validate_sub(self, sub: str) -> None:
