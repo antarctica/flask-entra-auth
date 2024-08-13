@@ -16,6 +16,7 @@ requests = "^2.32.3"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.6"
+safety = "^3.2.5"
 
 [tool.poetry.group.test.dependencies]
 joserfc = "^1.0.0"

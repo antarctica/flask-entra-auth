@@ -77,10 +77,10 @@ v0.4.0:
 - [x] contact in errors (url, mailto)
 - [x] caching for `_get_oidc_metadata` (`JWKSclient` already caches the fetching of the key)
 
-Later:
+Then:
 
+- [x] Safety
 - [ ] CI
-- [ ] Safety
 - [ ] publish under existing package name?
 - [ ] support invalid tokens?
   - `jwt.decode(payload["token"], options={"verify_signature": False})`
