@@ -1,0 +1,188 @@
+#file: noinspection YAMLSchemaValidation
+---
+
+include:
+  - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
+
+stages:
+  - 🧪 test
+  - 📋 lint
+  - 🏗 build
+  - 📦 publish
+  - 📣 release
+
+variables:
+  # CI config
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+  # Secrets (set in GitLab CI/CD settings)
+  # - SAFETY_API_KEY
+  #   - https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=swbuhnii4ego6qycyqknvtk7gi&h=magic.1password.eu
+
+cache:
+  paths:
+    - .cache/pip  # for pipx/pip
+    - .venv/      # for project dependencies
+
+image: python:3.9-slim
+
+.before_script_python: &before_script_python
+  # setup python
+  - python --version
+  - python -m pip install --upgrade pip
+
+  # setup poetry
+  - python -m pip install pipx
+  - python -m pipx install poetry==1.8.2
+  - python -m pipx ensurepath
+  - export PATH=/root/.local/bin:$PATH
+  - poetry --version
+  - poetry config virtualenvs.in-project true
+  - poetry check
+
+.before_script_python_app_deps: &before_script_python_app_deps
+  - *before_script_python
+
+  # setup app deps
+  - poetry install --no-interaction --no-ansi
+
+.before_script_release: &before_script_release
+  - apk add --no-cache curl jq
+
+# Jobs
+
+pytest:
+  stage: 🧪 test
+  needs: []
+  before_script:
+    - *before_script_python_app_deps
+  script:
+    - poetry run pytest -o junit_family=xunit2 --junitxml=test-results.xml --cov --cov-report=html --continue-on-collection-errors
+    # --continue-on-collection-errors counteracts `-x` flag set in pyproject.toml
+  coverage: '/Total coverage: \d+\.\d+/'
+  artifacts:
+    when: always
+    reports:
+      junit: test-results.xml
+    paths:
+      - htmlcov
+    expire_in: 1 month
+  rules:
+    -
+      changes:
+        - '**/*.py'
+        - 'pyproject.toml'
+        - 'poetry.lock'
+      if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
+
+ruff:
+  stage: 📋 lint
+  needs: []
+  before_script:
+    - *before_script_python_app_deps
+  script:
+    - poetry run ruff check src/ tests/
+    - poetry run ruff format --check src/ tests/
+  rules:
+    -
+      changes:
+        - '**/*.py'
+      if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
+
+safety:
+  stage: 📋 lint
+  needs: []
+  before_script:
+    - *before_script_python_app_deps
+  script:
+    - poetry run safety --stage cicd scan --detailed-output
+  rules:
+    -
+      changes:
+        - '.safety-policy.yml'
+        - 'poetry.lock'
+      if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
+
+build:
+  stage: 🏗 build
+  needs: []
+  before_script:
+    - *before_script_python
+  script:
+    - poetry build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 month
+  rules:
+    -
+      changes:
+        - '**/*.py'
+        - 'pyproject.toml'
+        - 'poetry.lock'
+      if: '$CI_COMMIT_BRANCH != "main" || $CI_COMMIT_TAG != null'
+
+publish:
+  stage: 📦 publish
+  needs:
+    - job: build
+      artifacts: true
+  before_script:
+    - *before_script_python
+    - poetry config pypi-token.pypi $PYPI_TOKEN --local
+    - poetry check
+  script:
+    - poetry publish --no-interaction --repository pypi
+  rules:
+    - if: $CI_COMMIT_TAG
+
+release:
+  stage: 📣 release
+  needs:
+    - job: publish
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  before_script:
+    - *before_script_release
+
+    - export TAG_NO_PREFIX=$(echo $CI_COMMIT_TAG | cut -c 2-)
+    # for a string v0.8.13, replace last digit to always be 0
+    - export TAG_NO_PATCH=$(echo $CI_COMMIT_TAG | sed 's/[0-9]$/0/')
+
+    - 'curl -s -H "Authorization: Bearer $PROJECT_ACCESS_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/milestones?title=$CI_COMMIT_TAG" > milestone_exact.json'
+    - 'curl -s -H "Authorization: Bearer $PROJECT_ACCESS_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/milestones?title=$TAG_NO_PATCH" > milestone-minor.json'
+    - export MILESTONE_TITLE_EXACT=$(cat milestone_exact.json | jq -r ".[0] | .title") && rm milestone_exact.json
+    - export MILESTONE_TITLE_MINOR=$(cat milestone-minor.json | jq -r ".[0] | .title") && rm milestone-minor.json
+    - >
+      if [ "$MILESTONE_TITLE_EXACT" != "null" ]; then
+          export MILESTONE_TITLE=$MILESTONE_TITLE_EXACT
+      elif [ "$MILESTONE_TITLE_MINOR" != "null" ]; then
+          export MILESTONE_TITLE=$MILESTONE_TITLE_MINOR
+      else
+          export MILESTONE_TITLE=""
+      fi
+
+    - curl -s -L -O https://github.com/taiki-e/parse-changelog/releases/download/v0.6.8/parse-changelog-x86_64-unknown-linux-musl.tar.gz
+    - tar -xzf parse-changelog-x86_64-unknown-linux-musl.tar.gz -C /usr/local/bin/
+    - parse-changelog CHANGELOG.md "$TAG_NO_PREFIX" > changelog.txt
+
+    # the release section cannot access variables defined in a script but can read from a file :|
+    - echo "$TAG_NO_PREFIX" > tag_no_prefix.txt
+    - echo "$MILESTONE_TITLE" > milestone_title.txt
+  script:
+    - echo 'releasing'
+  release:
+    name: $(cat tag_no_prefix.txt)
+    tag_name: $CI_COMMIT_TAG
+    milestones:
+      - $(cat milestone_title.txt)
+    description: $(cat changelog.txt)
+    assets:
+      links:
+        - name: README
+          url: '$CI_PROJECT_URL/-/blob/$CI_COMMIT_TAG/README.md'
+          link_type: runbook
+        - name: Python Package
+          url: 'https://pypi.org/project/flask-azure-oauth/$(cat tag_no_prefix.txt)/'
+          link_type: package
+  rules:
+    - if: $CI_COMMIT_TAG
