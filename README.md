@@ -109,7 +109,7 @@ project members respectively. Contact the [Project Maintainer](#project-maintain
 
 ## Purpose
 
-Allows routes in a [Flask](https://flask.palletsprojects.com) application to be restricted using the 
+Allows routes in a [Flask](https://flask.palletsprojects.com) application to be restricted using the
 [Microsoft Entra](https://learn.microsoft.com/en-us/entra/) identity platform.
 
 Use this if you use Entra ID and want to authenticate and optionally authorise users or clients of your Flask app.
@@ -126,7 +126,7 @@ $ pip install flask-entra-auth
 
 ## Usage
 
-After creating an [App Registration](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app) 
+After creating an [App Registration](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app)
 in Entra, [Configure](#configuration) your Flask app:
 
 ```python
@@ -177,12 +177,12 @@ def current_token():
 
 ### Generating access tokens
 
-Generating access tokens is out of scope for this project as there is an official Microsoft library 
+Generating access tokens is out of scope for this project as there is an official Microsoft library
 [MSAL](http://msal-python.readthedocs.io/en/latest/) to do that. This library can also be used to validate ID tokens.
 
 ### Inspecting access tokens
 
-The [jwt.ms](https://jwt.ms) tool from Microsoft provides an easy way to debug an access token, including descriptions 
+The [jwt.ms](https://jwt.ms) tool from Microsoft provides an easy way to debug an access token, including descriptions
 for claims it contains.
 
 ### Using scopes to control access
@@ -209,7 +209,7 @@ The `CLIENT_ID` represents the Flask application being secured (and a client of 
 
 The `ALLOWED_APPS` list of clients represents clients of the Flask application (but which are also Entra ID clients).
 
-See the Entra documentation for how to get the 
+See the Entra documentation for how to get the
 [Client ID](https://learn.microsoft.com/en-us/azure/healthcare-apis/register-application#application-id-client-id)
 and [OIDC Endpoint](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc#find-your-apps-openid-configuration-document-uri)
 for your application.
@@ -218,18 +218,18 @@ See the [Error Handling](#error-handling) section for more information on the `E
 
 ## Resource protector
 
-This library uses the [AuthLib Flask](https://docs.authlib.org/en/latest/flask/2/resource-server.html) resource 
-protector, [`EntraResourceProtector`](src/flask_entra_auth/resource_protector.py), to secure access to routes within an 
-application. This requires a valid user (authentication) and optionally ensures the user has one or more required 
+This library uses the [AuthLib Flask](https://docs.authlib.org/en/latest/flask/2/resource-server.html) resource
+protector, [`EntraResourceProtector`](src/flask_entra_auth/resource_protector.py), to secure access to routes within an
+application. This requires a valid user (authentication) and optionally ensures the user has one or more required
 [Scopes](#token-scopes) (authorisation).
 
 The resource protector uses validators for a given token type. In this case a
-[BearerTokenValidator](https://github.com/lepture/authlib/blob/master/authlib/oauth2/rfc6750/validator.py#L15), 
-[`EntraBearerTokenValidator`](src/flask_entra_auth/resource_protector.py), is used to [Validate](#token-validation) a 
-bearer JSON Web Token (JWT) specified in the `Authorization` request header. If validation fails, an 
+[BearerTokenValidator](https://github.com/lepture/authlib/blob/master/authlib/oauth2/rfc6750/validator.py#L15),
+[`EntraBearerTokenValidator`](src/flask_entra_auth/resource_protector.py), is used to [Validate](#token-validation) a
+bearer JSON Web Token (JWT) specified in the `Authorization` request header. If validation fails, an
 [Error](#error-handling) is returned as the request response.
 
-The AuthLib resource protector assumes the application is running its own OAuth server, and so has a record of tokens 
+The AuthLib resource protector assumes the application is running its own OAuth server, and so has a record of tokens
 it has issued and can determine their validity (not revoked, expired or having insufficient scopes). This assumption
 doesn't hold for Entra tokens, so instead we validate the token using PyJWT and some additional checks statelessly.
 
@@ -238,19 +238,19 @@ access to the access token taken from the request as an [EntraToken](#entra-toke
 
 ## Entra Tokens
 
-This library uses a custom [`EntraToken`](src/flask_entra_auth/token.py) class to represent Entra 
-[Access Tokens](https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens) (not ID tokens which can be 
+This library uses a custom [`EntraToken`](src/flask_entra_auth/token.py) class to represent Entra
+[Access Tokens](https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens) (not ID tokens which can be
 validated with the official [MSAL](http://msal-python.readthedocs.io) library).
 
-This class provides token [Validation](#token-validation), [Introspection](#token-introspection) and access methods of 
+This class provides token [Validation](#token-validation), [Introspection](#token-introspection) and access methods of
 and to tokens and their claims.
 
 **Note:** Creating an `EntraToken` instance will automatically and implicitly [Validate](#token-validation) the token.
 
-**Note:** Validating an `EntraToken` instance will automatically fetch the OIDC metadata and the JSON Web Key Set 
+**Note:** Validating an `EntraToken` instance will automatically fetch the OIDC metadata and the JSON Web Key Set
 (JWKS) from their respective URIs, which are then [Cached](#oidc-and-jwks-caching).
 
-**WARNING:** `EntraTokens` do not re-validate themselves automatically once created. It is assumed tokens will be tied 
+**WARNING:** `EntraTokens` do not re-validate themselves automatically once created. It is assumed tokens will be tied
 to a request, and that these will be processed well before they become invalid (i.e. within ~60 seconds).
 
 If desired this class can be used outside the [Resource Protector](#resource-protector) by passing a token string,
@@ -284,13 +284,13 @@ print(token.scopes)  # ['SCOPE_A', 'SCOPE_B', 'SCOPE_C', 'ROLE_1', 'ROLE_2', 'RO
 ## Token scopes
 #### OIDC and JWKS caching
 
-Data from the OIDC metadata and JWKS endpoints are cached in memory for 60 seconds within (but not between) `EntraToken` 
-instances. This speeds up access to OIDC metadata properties, such as the JWKS and issuer, which otherwise would 
+Data from the OIDC metadata and JWKS endpoints are cached in memory for 60 seconds within (but not between) `EntraToken`
+instances. This speeds up access to OIDC metadata properties, such as the JWKS and issuer, which otherwise would
 trigger multiple requests to information that is very unlikely to change within the lifetime of a token.
 
 
 Typically, applications wish to limit which users or clients can perform particular actions (e.g. read vs. read-write)
-using custom permissions. These can be defined within the application registration in Entra ID and then checked for 
+using custom permissions. These can be defined within the application registration in Entra ID and then checked for
 using the [Resource Protector](#resource-protector).
 
 Entra distinguishes between permissions:
@@ -298,26 +298,26 @@ Entra distinguishes between permissions:
 - that apply to client applications directly, termed `scps` (scopes)
 - that apply users (or other principles such as service accounts) delegated to client applications, termed `roles`
 
-This library combines any `scps` and `roles` into a generic list of _scopes_, returned by the `EntraToken.scopes` 
+This library combines any `scps` and `roles` into a generic list of _scopes_, returned by the `EntraToken.scopes`
 property to make it easier to combine different levels of access.
 
-See the Entra Documentation for how to 
+See the Entra Documentation for how to
 [Register custom client scopes](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-expose-web-apis)
 or to [Register custom user roles](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps).
 
-In addition to using scopes and checking these within Flask, Entra also offers features such as 
+In addition to using scopes and checking these within Flask, Entra also offers features such as
 [User Assignment](https://learn.microsoft.com/en-us/entra/identity-platform/howto-restrict-your-app-to-a-set-of-users).
 
-The [Resource Protector](#resource-protector) decorator supports both logic _AND_ and _OR_ combinations of scopes. See 
-the [AuthLib](https://docs.authlib.org/en/latest/flask/2/resource-server.html#multiple-scopes) documentation for more 
+The [Resource Protector](#resource-protector) decorator supports both logic _AND_ and _OR_ combinations of scopes. See
+the [AuthLib](https://docs.authlib.org/en/latest/flask/2/resource-server.html#multiple-scopes) documentation for more
 information.
 
 ## Token validation
 
 Microsoft does not provide an official library or implementation for validating [Entra Tokens](#entra-tokens) in Python.
 
-This library opts to validate tokens using a combination of [PyJWT](https://pyjwt.readthedocs.io/) and some additional 
-custom validation methods. This is in line with how others have solved the same 
+This library opts to validate tokens using a combination of [PyJWT](https://pyjwt.readthedocs.io/) and some additional
+custom validation methods. This is in line with how others have solved the same
 [problem](https://github.com/AzureAD/microsoft-authentication-library-for-python/issues/147).
 
 ### Validation sequence
@@ -356,7 +356,7 @@ as requesting an unknown token type (meaning scheme (basic/digest/bearer/etc.) n
 `authlib.oauth2.rfc6749.resource_protector.ResourceProtector.parse_request_authorization()`.
 
 This is technically true but not as granular as we'd ideally like. We could work around that by overloading that parse
-request method, but I don't think it's worth it. We can add detail to our exception to explain it may be invalid for 
+request method, but I don't think it's worth it. We can add detail to our exception to explain it may be invalid for
 one of three reasons instead (no scheme, no credential or unsupported scheme).
 
 #### `iat` claim
@@ -364,7 +364,7 @@ one of three reasons instead (no scheme, no credential or unsupported scheme).
 The optional `iat` claim is included in Entra tokens but is not validated because it can't be tested.
 
 Currently, there is no combination of `exp`, `nbf` and `iat` claim values that mean only the `iat` claim is invalid,
-which is necessary to write an isolated test for it. Without a test we can't ensure this works correctly and is 
+which is necessary to write an isolated test for it. Without a test we can't ensure this works correctly and is
 therefore disabled.
 
 #### `jit` claim
@@ -419,9 +419,9 @@ Example response:
 
 ```json
 {
-  "detail": "Ensure your request includes an 'Authorization' header and try again.", 
-  "status": 401, 
-  "title": "Missing authorization header", 
+  "detail": "Ensure your request includes an 'Authorization' header and try again.",
+  "status": 401,
+  "title": "Missing authorization header",
   "type": "auth_header_missing"
 }
 ```
@@ -431,9 +431,9 @@ Optionally, a contact URI can be included by setting the `ENTRA_AUTH_CONTACT` [C
 ```json
 {
   "contact": "mailto:support@example.com",
-  "detail": "Ensure your request includes an 'Authorization' header and try again.", 
-  "status": 401, 
-  "title": "Missing authorization header", 
+  "detail": "Ensure your request includes an 'Authorization' header and try again.",
+  "status": 401,
+  "title": "Missing authorization header",
   "type": "auth_header_missing"
 }
 ```
@@ -449,10 +449,10 @@ can be used to simulate different scopes and/or error conditions for example. Th
   - this endpoint in turn containing a fake JWK (signing key)
 - making requests with local/fake access tokens (i.e. not issued by Entra) configured with relevant claims
 
-The [Resource Protector](#resource-protector) as normal, authenticating and configured, authorising the request based 
+The [Resource Protector](#resource-protector) as normal, authenticating and configured, authorising the request based
 on the claims in the fake token.
 
-If using `pytest`, it is recommended to use the 
+If using `pytest`, it is recommended to use the
 [`pytest-httpserver`](https://pytest-httpserver.readthedocs.io) plugin to serve this fake OIDC endpoint.
 
 For example, these fixtures:
@@ -498,7 +498,7 @@ from flask_entra_auth.mocks.jwt import MockJwtClient
 def test_ok(self, app_client: FlaskClient, jwt_client: MockJwtClient):
     """Request to authenticated route is successful."""
     token = jwt_client.generate()  # default claims and values
-    
+
     response = app_client.get("/restricted", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
 ```
