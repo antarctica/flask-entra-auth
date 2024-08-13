@@ -79,7 +79,6 @@ v0.4.0:
 Then:
 
 - [x] Safety
-- [ ] CI
 - [ ] publish under existing package name?
 - [ ] support invalid tokens?
   - `jwt.decode(payload["token"], options={"verify_signature": False})`
@@ -95,7 +94,9 @@ For change log:
 
 - session support
 - version 1.0 tokens
+- [x] CI
 - [x] editor config
+- [x] change log
 
 # Flask Entra Auth
 
@@ -106,6 +107,8 @@ Flask extension for authenticating and authorising requests using Entra identity
 **Note:** This project is focused on needs within the British Antarctic Survey. It has been open-sourced in case it is
 of interest to others. Some resources, indicated with a '🛡' or '🔒' symbol, can only be accessed by BAS staff or
 project members respectively. Contact the [Project Maintainer](#project-maintainer) to request access.
+
+**Note:** This extension was rewritten in version 0.8.0 with a new name and non-backwards compatible design.
 
 ## Purpose
 
