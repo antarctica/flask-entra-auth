@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.8.1] - 2024-08-14
+
+### Fixed
+
+* CD publish step, incorrect Poetry repository flag
+  [#42](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/issues/42)
+
 ## [0.8.0] - 2024-08-14  [BREAKING!]
 
 ### Removed [BREAKING!]
