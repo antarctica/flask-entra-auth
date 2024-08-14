@@ -83,11 +83,9 @@ Then:
 - [x] Pre-commit hook (ruff format/check, whitespace, etc.)
 - [x] editor config
 - [x] change log
-- [ ] move project
-- [ ] search for all '...' (e.g. GitLab references, v0.8.0 rewrite)
-- [ ] release job GitHub release
-- [ ] logo
-- [ ] test release with test-pypi
+- [x] push branch to real repo
+- [x] move project
+- [x] search for all '...' (e.g. GitLab references, v0.8.0 rewrite)
 
 # Flask Entra Auth
 
@@ -520,10 +518,9 @@ See [Developing](DEVELOPING.md) documentation.
 
 ## Releases
 
-- [latest release 🛡️](https://gitlab.data.bas.ac.uk/.../-/releases/permalink/latest)
-- [all releases 🛡️](https://gitlab.data.bas.ac.uk/.../-/releases)
-- GitHub
-- PyPi
+- [latest release 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/releases/permalink/latest)
+- [all releases 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/releases)
+- [PyPi](https://pypi.org/project/flask-entra-auth/)
 
 ## Project maintainer
 

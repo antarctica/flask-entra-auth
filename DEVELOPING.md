@@ -12,7 +12,7 @@ Requirements:
 Clone project:
 
 ```
-$ git clone https://gitlab.data.bas.ac.uk/.../.git
+$ git clone https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth.git
 $ cd flask-entra-auth
 ```
 
@@ -144,7 +144,7 @@ See [README](./README.md#releases).
 
 ### Release workflow
 
-Create a [release issue](https://gitlab.data.bas.ac.uk/.../-/issues/new?issue[title]=x.x.x%20release&issuable_template=release)
+Create a [release issue](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/issues/new?issue[title]=x.x.x%20release&issuable_template=release)
 and follow the instructions.
 
 GitLab CI/CD will automatically create a GitLab Release based on the tag, including:

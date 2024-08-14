@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.8.0] - 2024-08-13  [BREAKING!]
+## [0.8.0] - 2024-08-14  [BREAKING!]
 
 ### Removed [BREAKING!]
 
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed [BREAKING!]
 
 * Project rewrite to use `pyjwt` and AuthLib 1.x and adopting 'Entra' branding
-  [#35 🛡️](https://gitlab.data.bas.ac.uk/.../-/issues/35)
+  [#35 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/issues/35)
 
 ## [0.7.0] - 2022-06-06
 
