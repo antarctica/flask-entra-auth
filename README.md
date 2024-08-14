@@ -79,28 +79,19 @@ v0.4.0:
 Then:
 
 - [x] Safety
-- [ ] publish under existing package name?
-- [ ] support invalid tokens?
-  - `jwt.decode(payload["token"], options={"verify_signature": False})`
-- [ ] re-support sessions
-
-Other:
-
-- [ ] using MSAL cache written to user's home directory
-
-## Dropped features
-
-For change log:
-
-- session support
-- version 1.0 tokens
 - [x] CI
+- [x] Pre-commit hook (ruff format/check, whitespace, etc.)
 - [x] editor config
 - [x] change log
+- [ ] move project
+- [ ] search for all '...' (e.g. GitLab references, v0.8.0 rewrite)
+- [ ] release job GitHub release
+- [ ] logo
+- [ ] test release with test-pypi
 
 # Flask Entra Auth
 
-Flask extension for authenticating and authorising requests using Entra identity platform.
+Flask extension for authenticating and authorising requests using the Entra identity platform.
 
 ## Overview
 
@@ -562,4 +553,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-

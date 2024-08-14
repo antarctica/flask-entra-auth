@@ -48,7 +48,7 @@ $ poetry run safety scan
 ### Ruff
 
 [Ruff](https://docs.astral.sh/ruff/) is used to lint and format Python files. Specific checks and config options are
-set in [`pyproject.toml`](../pyproject.toml). Linting checks are run automatically in
+set in [`pyproject.toml`](./pyproject.toml). Linting checks are run automatically in
 [Continuous Integration](#continuous-integration).
 
 To check linting locally:
@@ -74,7 +74,7 @@ In particular this tool can't check for issues that are only be detectable when 
 ### Editorconfig
 
 For consistency, it's strongly recommended to configure your IDE or other editor to use the
-[EditorConfig](https://editorconfig.org/) settings defined in [`.editorconfig`](../.editorconfig).
+[EditorConfig](https://editorconfig.org/) settings defined in [`.editorconfig`](./.editorconfig).
 
 ### Pre-commit hook
 
@@ -86,7 +86,7 @@ A set of [Pre-Commit](https://pre-commit.com) hooks are configured in
 ### Pytest
 
 [pytest](https://docs.pytest.org) with a number of plugins is used to test the application. Config options are set in
-[`pyproject.toml`](../pyproject.toml). Tests checks are run automatically in
+[`pyproject.toml`](./pyproject.toml). Tests checks are run automatically in
 [Continuous Integration](#continuous-integration).
 
 To run tests locally:
