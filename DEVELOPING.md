@@ -85,9 +85,8 @@ A set of [Pre-Commit](https://pre-commit.com) hooks are configured in
 
 ### Pytest
 
-[pytest](https://docs.pytest.org) with a number of plugins is used to test the application. Config options are set in
-[`pyproject.toml`](./pyproject.toml). Tests checks are run automatically in
-[Continuous Integration](#continuous-integration).
+[pytest](https://docs.pytest.org) with a number of plugins is used to test the extension. Config options are set in
+[`pyproject.toml`](./pyproject.toml). Tests are run automatically in [Continuous Integration](#continuous-integration).
 
 To run tests locally:
 
@@ -113,10 +112,11 @@ def fx_test_foo() -> str:
 
 ### Pytest-cov test coverage
 
-[`pytest-cov`](https://pypi.org/project/pytest-cov/) checks test coverage. We aim for 100% coverage but exemptions are fine with good justification:
+[`pytest-cov`](https://pypi.org/project/pytest-cov/) checks test coverage. We aim for 100% coverage but exemptions are
+ok with good justification:
 
 - `# pragma: no cover` - for general exemptions
-- `# pragma: no branch` - where a conditional branch can never be called
+- `# pragma: no branch` - for branching exemptions (branches that can never be called but are still needed)
 
 To run tests with coverage locally:
 
@@ -138,7 +138,7 @@ def test_foo():
 
 All commits will trigger Continuous Integration using GitLab's CI/CD platform, configured in `.gitlab-ci.yml`.
 
-## Releases
+## Available releases
 
 See [README](./README.md#releases).
 
