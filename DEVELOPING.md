@@ -7,6 +7,7 @@ Requirements:
 * Python 3.9 ([pyenv](https://github.com/pyenv/pyenv) recommended)
 * [Poetry](https://python-poetry.org/docs/#installation)
 * Git (`brew install git`)
+* Pre-commit (`pipx install pre-commit`)
 
 Clone project:
 
@@ -19,6 +20,12 @@ Install project:
 
 ```
 $ poetry install
+```
+
+Install pre-commit hooks:
+
+```
+$ pre-commit install
 ```
 
 ## Dependencies
@@ -71,7 +78,8 @@ For consistency, it's strongly recommended to configure your IDE or other editor
 
 ### Pre-commit hook
 
-...
+A set of [Pre-Commit](https://pre-commit.com) hooks are configured in
+[`.pre-commit-config.yaml`](./.pre-commit-config.yaml). These checks must pass to make a commit.
 
 ## Tests
 
