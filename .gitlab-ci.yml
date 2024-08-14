@@ -182,7 +182,7 @@ release:
           url: '$CI_PROJECT_URL/-/blob/$CI_COMMIT_TAG/README.md'
           link_type: runbook
         - name: Python Package
-          url: 'https://pypi.org/project/flask-azure-oauth/$(cat tag_no_prefix.txt)/'
+          url: 'https://pypi.org/project/flask-entra-auth/$(cat tag_no_prefix.txt)/'
           link_type: package
   rules:
     - if: $CI_COMMIT_TAG
