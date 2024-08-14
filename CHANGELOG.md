@@ -1,4 +1,4 @@
-# Flask Azure AD OAuth Provider - Change log
+# Flask Entra Auth - Change log
 
 All notable changes to this project will be documented in this file.
 
@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.8.0] - 2024-08-14  [BREAKING!]
+
+### Removed [BREAKING!]
+
+* Session support
+* Support for version 1.0 access tokens
+
+### Changed [BREAKING!]
+
+* Project rewrite to use `pyjwt` and AuthLib 1.x and adopting 'Entra' branding
+  [#35 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/issues/35)
 
 ## [0.7.0] - 2022-06-06
 
@@ -20,26 +32,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Flask 2.x required (due to changes to Flask's HTTP Exception signature)
   [#29](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/29)
 * Relicensing project under the MIT licence (from the UK Open Government Licence)
-  [#31](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/31)
+  [#31 🛡️](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/31)
 
 ### Added
 
 * Examples of using the `current_token` proxy provided by AuthLib
 * Flake8 linters
-  [#34](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/34)
+  [#34 🛡️](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/34)
 * Upgrading dependencies, including Flask and Authlib (but only to latest 0.14.x release)
-  [#29](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/29)
+  [#29 🛡️](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/29)
 
 ### Changed
 
 * Updated example application to use updated `msal` methods
-  [#36](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/36)
+  [#36 🛡️](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/36)
 * Switched to Poetry for local development environments
-  [#30](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/30)
+  [#30 🛡️](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/30)
 * Switched to `src/` package directory layout
-  [#32](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/32)
+  [#32 🛡️](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/32)
 * Updating CI/CD configuration
-  [#33](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/33)
+  [#33 🛡️](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/-/issues/33)
 
 ## [0.5.0] - 2020-09-14
 

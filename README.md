@@ -1,558 +1,458 @@
-# Flask Azure AD OAuth Provider
+# Flask Entra Auth
 
-Python Flask extension for securing apps with Azure Active Directory OAuth
+Flask extension for authenticating and authorising requests using the Entra identity platform.
+
+## Overview
+
+**Note:** This project is focused on needs within the British Antarctic Survey. It has been open-sourced in case it is
+of interest to others. Some resources, indicated with a '🛡' or '🔒' symbol, can only be accessed by BAS staff or
+project members respectively. Contact the [Project Maintainer](#project-maintainer) to request access.
+
+**Note:** This extension was rewritten in version 0.8.0 with a new name and non-backwards compatible design.
 
 ## Purpose
 
-Provide an [AuthLib](https://authlib.org)
-[Resource Protector/Server](https://docs.authlib.org/en/latest/flask/2/resource-server.html) to authenticate and
-authorise users and applications using a Flask application with OAuth functionality offered by
-[Azure Active Directory](https://azure.microsoft.com/en-us/services/active-directory/), as part of the
-[Microsoft identity platform](https://docs.microsoft.com/en-us/azure/active-directory/develop/about-microsoft-identity-platform).
+Allows routes in a [Flask](https://flask.palletsprojects.com) application to be restricted using the
+[Microsoft Entra](https://learn.microsoft.com/en-us/entra/) identity platform.
 
-Azure Active Directory, acting as an identity provider, issues
-[OAuth access tokens](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens), the claims of
-which are validated by this provider. These claims include the identity of the user and client application (used for
-authentication), and any permissions/scopes assigned or delegated to the user or application (used for authorisation).
+Use this if you use Entra ID and want to authenticate and optionally authorise users or clients of your Flask app.
 
-This provider supports these scenarios:
+## Install
 
-1. *application to application*
-   * supports authentication and authorisation
-   * used to allow a client application access to some functionality or resources provided by another application
-   * can be used for non-interactive, machine-to-machine, processes (using the OAuth Client Credentials Grant)
-   * optionally, uses the identity of the client application for authentication
-   * optionally, uses permissions assigned directly to the client application for authorisation
-2. *user to application*
-   * supports authentication and authorisation
-   * used to allow users access to some functionality or resources provided by another application
-   * can be used for interactive console (using the Device Authorization Grant) or web application (using the OAuth
-     Authorization Code Grant) processes
-   * uses the identity of the user, and optionally, the client application they are using, for authentication
-   * optionally, uses permissions assigned to the user, permissions delegated by the user to the client application,
-     and/or permissions assigned directly to the client application for authorisation
-
-Other scenarios may work but are not officially supported, this may change in the future.
-
-**Note:** This provider does not support client applications requesting tokens from Azure. See the
-[Microsoft Authentication Library (MSAL) for Python](https://github.com/AzureAD/microsoft-authentication-library-for-python)
-package if you need to do this.
-
-**Note:** This provider has been written to solve an internal need within applications used by the British Antarctic
-Survey. It is offered to others in the hope that's useful for your needs as well, however it does not (and cannot)
-cover every option available.
-
-## Installation
-
-This package can be installed using Pip from [PyPi](https://pypi.org/project/flask-azure-oauth):
+The extension can be installed using Pip from [PyPi](https://pypi.org/project/flask-entra-auth):
 
 ```
-$ pip install flask-azure-oauth
+$ pip install flask-entra-auth
 ```
 
-**Note:** Since version 0.6.0, this package requires Flask 2.0 or greater.
+**Note:** Since version 0.6.0, this extension requires Flask 2.0 or greater.
 
 ## Usage
 
-This provider provides an [AuthLib](https://authlib.org)
-[Resource Protector](https://docs.authlib.org/en/latest/flask/2/resource-server.html) which can be used as a decorator
-on Flask routes.
+After creating an [App Registration](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app)
+in Entra, initialise and [Configure](#configuration) the extension in your Flask app:
 
-A minimal application would look like this:
+```python
+from flask import Flask, current_app
+from flask_entra_auth.resource_protector import FlaskEntraAuth
+from flask_entra_auth.token import EntraToken
+
+app = Flask(__name__)
+app.config["ENTRA_AUTH_CLIENT_ID"] = 'xxx'
+app.config["ENTRA_AUTH_OIDC_ENDPOINT"] = 'xxx'
+app.config["ENTRA_AUTH_ALLOWED_SUBJECTS"] = ['xxx']  # optional, allows all subjects if empty or not set
+app.config["ENTRA_AUTH_ALLOWED_APPS"] = ['xxx']  # optional, allows all applications if empty or not set
+
+auth = FlaskEntraAuth()
+auth.init_app(app)
+
+# Example routes
+
+@app.route("/restricted/red")
+@app.auth()
+def authenticated():
+    """Route requires authenticated user."""
+    return "Authenticated route."
+
+@app.route("/restricted/blue")
+@app.auth(['APP_SCOPE_1'])
+def authorised():
+    """Route requires authenticated and authorised user, specifically having the 'APP_SCOPE_1' scope."""
+    return "Authorised route."
+
+@app.route("/restricted/green")
+@app.auth(['APP_SCOPE_1 APP_SCOPE_2'])
+def authorised_and():
+    """Route requires authenticated and authorised user, specifically having both the 'APP_SCOPE_1' and 'APP_SCOPE_2' scopes."""
+    return "Authorised route."
+
+@app.route("/restricted/yellow")
+@app.auth(['APP_SCOPE_1', 'APP_SCOPE_2'])
+def authorised_either():
+    """Route requires authenticated and authorised user, specifically having either the 'APP_SCOPE_1' or 'APP_SCOPE_2' scopes."""
+    return "Authorised route."
+
+@app.route("/restricted/purple")
+@app.auth()
+def current_token():
+    """Get a claim from the current token"""
+    token: EntraToken = current_app.auth.current_token
+    return f"Hello {token.claims['name']}"
+```
+
+### Generating access tokens
+
+See the official Microsoft [MSAL](http://msal-python.readthedocs.io/en/latest/) library, which can also validate ID
+tokens.
+
+### Inspecting access tokens
+
+See the official Microsoft [jwt.ms](https://jwt.ms) tool for introspecting and debugging access tokens.
+
+### Using scopes to control access
+
+See the [Token Scopes](#token-scopes) section for more information.
+
+### Generating fake tokens
+
+See the [Testing Support](#testing-support) section for more information on how to generate fake tokens for application
+testing.
+
+## Configuration
+
+These config options are read from the [Flask config](https://flask.palletsprojects.com/en/3.0.x/config/) object:
+
+| Option                        | Required | Description                                  |
+|-------------------------------|----------|----------------------------------------------|
+| `ENTRA_AUTH_CLIENT_ID`        | Yes      | Entra Application (Client) ID                |
+| `ENTRA_AUTH_OIDC_ENDPOINT`    | Yes      | OpenID configuration document URI            |
+| `ENTRA_AUTH_ALLOWED_SUBJECTS` | No       | An allowed list of end-users                 |
+| `ENTRA_AUTH_ALLOWED_APPS`     | No       | An allowed list of client applications       |
+| `ENTRA_AUTH_CONTACT`          | No       | A URI to a contact website or mailto address |
+
+The `CLIENT_ID` represents the Flask application being secured (i.e. a client of Entra ID).
+
+The `ALLOWED_APPS` list of clients represents clients of the Flask application (as well as Entra ID).
+
+See the Entra ID documentation for how to get the
+[Client ID](https://learn.microsoft.com/en-us/azure/healthcare-apis/register-application#application-id-client-id)
+and [OIDC Endpoint](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc#find-your-apps-openid-configuration-document-uri)
+for your application.
+
+See the [Error Handling](#error-handling) section for more information on the `ENTRA_AUTH_CONTACT` option.
+
+## Implementation
+
+### Resource protector
+
+This extension provides a [AuthLib Flask](https://docs.authlib.org/en/latest/flask/2/resource-server.html) resource
+protector, [`EntraResourceProtector`](./src/flask_entra_auth/resource_protector.py), to secure access to routes within an
+application by requiring a valid user (authentication) and optionally one or more required
+[Scopes](#token-scopes) (authorisation).
+
+The AuthLib resource protector uses different validators for different token types. In this case a
+[BearerTokenValidator](https://github.com/lepture/authlib/blob/master/authlib/oauth2/rfc6750/validator.py#L15),
+[`EntraBearerTokenValidator`](./src/flask_entra_auth/resource_protector.py), is used to [Validate](#token-validation) a
+bearer JSON Web Token (JWT) specified in the `Authorization` request header. If validation fails, an
+[Error](#error-handling) is returned as the request response.
+
+The AuthLib resource protector assumes the application is running its own OAuth server, and so has a record of tokens
+it has issued and can determine their validity (not revoked, expired or having insufficient scopes). This assumption
+doesn't hold for Entra tokens, so instead we validate the token using PyJWT and some additional checks statelessly.
+
+For convenience, the resource protector is exposed as a Flask extension, including a `current_token` property that
+gives access to the access token taken from the request as an [EntraToken](#entra-tokens) instance.
+
+### Entra Tokens
+
+This extension uses a custom [`EntraToken`](./src/flask_entra_auth/token.py) class to represent Entra
+[Access Tokens](https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens) (not ID tokens which can be
+validated with the official [MSAL](http://msal-python.readthedocs.io) library).
+
+This class provides token [Validation](#token-validation), [Introspection](#token-introspection) and access methods of
+and to tokens and their claims.
+
+**Note:** Creating an `EntraToken` instance will automatically and implicitly [Validate](#token-validation) a token.
+
+**Note:** Validating an `EntraToken` instance will automatically fetch the OIDC metadata and the JSON Web Key Set
+(JWKS) this specifies from their respective URIs, which are then [Cached](#oidc-and-jwks-caching).
+
+**WARNING:** `EntraTokens` do not re-validate themselves automatically once created. It is assumed tokens will be tied
+to a request, and that these will be processed before they become invalid (i.e. within ~60 seconds).
+
+If desired, this class can be used outside the [Resource Protector](#resource-protector) by passing a token string,
+OIDC metadata endpoint, client ID (audience) and optionally an allowed list of subjects and client applications:
 
 ```python
 from flask import Flask
-
-from flask_azure_oauth import FlaskAzureOauth
+from flask_entra_auth.token import EntraToken
 
 app = Flask(__name__)
+app.config["ENTRA_AUTH_CLIENT_ID"] = 'xxx'
+app.config["ENTRA_AUTH_OIDC_ENDPOINT"] = 'xxx'
+app.config["ENTRA_AUTH_ALLOWED_SUBJECTS"] = ['xxx']  # optional, allows all subjects if empty or not set
+app.config["ENTRA_AUTH_ALLOWED_APPS"] = ['xxx']  # optional, allows all applications if empty or not set
 
-app.config['AZURE_OAUTH_TENANCY'] = 'xxx'
-app.config['AZURE_OAUTH_APPLICATION_ID'] = 'xxx'
+# allowing all subjects but a restricted list of client applications
+token = EntraToken(
+  token='eyJhbGciOiJSUzI1NiIsImtpZCI6IjBYZ0ZndE5iLXVHazU1LUdSX1BMQ3JzN29aREtLWlRRNE5YUVM2NnhyLWsiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5hdXRoLmV4YW1wbGUuY29tIiwic3ViIjoidGVzdF9zdWJqZWN0IiwiYXVkIjoidGVzdF9hcHBfMSIsImV4cCI6MTcyMzQ1NzAwOCwibmJmIjoxNzIzNDUzNDA4LCJhenAiOiJ0ZXN0X2FwcF8yIiwidmVyIjoiMi4wIiwic2NwcyI6WyJTQ09QRV9BIiwiU0NPUEVfQiIsIlNDT1BFX0MiXSwicm9sZXMiOlsiUk9MRV8xIiwiUk9MRV8yIiwiUk9MRV8zIl19.jOoVhWLku34OUY4XBfUddeW39R0W2PxMmf_dKiSPr87pzg0m3d5_HqVOOVyB_qKvODPT8LHT3lrKIn1D9_67ERoa5clCn23DJAOZnux-hMXd19CCPWdBMu2yC1_kBzMdIkZbTgiuTjTleLYLl5JV3livdE0JVXaSHsj7Qt5c6yypfOBbk5uM4hYqpAnMpl6XToZgnBaI1SuRF2bj2bddLNzVxvg4yOYnX25Ruz5eMkKZonBI9FyumysD7CNOEnyANdaT4z4Z5siGI046hjt10if-Iz8EmDR7Srx_wX_KLng8qS0VE3qzxhEAycoBS6RKlZ2NRfPqkwkizUi0TlDLsA',
+  oidc_endpoint='https://login.microsoftonline.com/{tenancy}/v2.0/.well-known/openid-configuration',
+  client_id='test_app_1',
+  allowed_apps=['deb4356e-1570-4d5a-bdaa-86cf545a8045']
+)
 
-auth = FlaskAzureOauth()
-auth.init_app(app)
+# get a validated claim
+print(token.claims['exp'])  # 1723457008
 
-@app.route('/unprotected')
-def unprotected():
-    return 'hello world'
-
-@app.route('/protected')
-@auth()
-def protected():
-    return 'hello authenticated entity'
-
-@app.route('/protected-with-single-scope')
-@auth('required-scope')
-def protected_with_scope():
-    return 'hello authenticated and authorised entity'
-
-@app.route('/protected-with-multiple-scopes')
-@auth('required-scope1 required-scope2')
-def protected_with_multiple_scopes():
-    return 'hello authenticated and authorised entity'
+# get list of scopes
+print(token.scopes)  # ['SCOPE_A', 'SCOPE_B', 'SCOPE_C', 'ROLE_1', 'ROLE_2', 'ROLE_3']
 ```
 
-To restrict a route to any valid user or client application (authentication):
+If validation fails (which is checked implicitly on init), an [`EntraAuthError`](#error-handling) exception will be raised.
 
-* add the resource protector as a decorator (`auth` in this example) - for example the `/protected` route
+#### OIDC and JWKS caching
 
-To restrict a route to specific users (authorisation):
+Data from the OIDC metadata and JWKS endpoints are cached in memory for 60 seconds within (but not between) `EntraToken`
+instances. This speeds up access to OIDC metadata properties, such as the JWKS and issuer, which otherwise would
+trigger multiple requests to information that is very unlikely to change within the lifetime of a token.
 
-* add any required [Scopes](#permissions-roles-and-scopes) to the decorator - for example the `/projected-with-*` routes
+### Token scopes
 
-Independently of these options, it's possible to require specific, trusted, client applications, regardless of the user
-using them. This is useful in circumstances where a user may be authorised but the client can't be trusted:
+Typically, applications wish to limit which users or clients can perform particular actions (e.g. read vs. read-write)
+using custom permissions. These can be defined within the Entra ID application registration and then checked by the
+[Resource Protector](#resource-protector).
 
-* set the `AZURE_OAUTH_CLIENT_APPLICATION_IDS` config option to a list of Azure application identifiers
+Entra distinguishes between permissions:
 
-For example:
+- that apply to client applications directly, termed _scps_ (scopes)
+- that apply to users (or other principles such as service accounts) and delegated to client applications, termed _roles_
 
+This extension combines any _scps_ and _roles_ into a generic list of _scopes_, returned by the `EntraToken.scopes`
+property to make it easier to combine different combinations of permissions.
+
+See the Entra Documentation for how to
+[Register custom client scopes](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-expose-web-apis)
+or to [Register custom user roles](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps).
+
+In addition to using scopes and checking these within Flask, Entra also offers features such as
+[User Assignment](https://learn.microsoft.com/en-us/entra/identity-platform/howto-restrict-your-app-to-a-set-of-users)
+which apply 'upstream' as part of [Generating Access Tokens](#generating-access-tokens).
+
+The [Resource Protector](#resource-protector) decorator supports both _AND_ and _OR_ local operators for specifying
+scopes. See the [AuthLib](https://docs.authlib.org/en/latest/flask/2/resource-server.html#multiple-scopes)
+documentation for more information.
+
+### Token validation
+
+Microsoft does not provide an official library for validating [Entra Tokens](#entra-tokens) in Python.
+
+This extension has opted to validate tokens using a combination of [PyJWT](https://pyjwt.readthedocs.io/) and
+additional custom validation methods. This is in line with how others have solved the same
+[problem](https://github.com/AzureAD/microsoft-authentication-library-for-python/issues/147).
+
+#### Validation sequence
+
+In summary:
+
+- get signing keys (JWKS) from Entra Open ID Connect (OIDC) endpoint (to avoid hard-coding keys that Entra may rotate)
+- validate standard claims using `pyjwt.decode()`
+- additionally validate the (Entra) `ver` claim is '2.0' so we know which claims we should expect
+- the `sub` and/or (Entra) `azp` claim values are validated against an allow list if set (otherwise all allowed)
+
+In more detail:
+
+1. load OIDC metadata to get expected issuer and location to JWKS
+1. load JWKS
+1. parse token (base64 decode, JSON parse into header, payload and signature parts)
+1. match `kid` token header parameter to key in JWKS
+1. validate token signature using signing key
+1. validate issuer
+1. validate audience
+1. validate expiration
+1. validate not before
+1. validate issued at (omitted)
+1. validate token schema version
+1. validate subject (if configured)
+1. validate client (if configured)
+1. validate scopes (if configured)
+
+#### Validation limitations
+
+##### Authentication header
+
+The [Resource Protector](#resource-protector) checks for a missing authorisation header but doesn't raise a specific
+error for a missing auth scheme, or auth credential (i.e. either parts of the authorisation header). Instead, both
+errors are interpreted as requesting an unknown token type (meaning HTTP auth scheme (basic/digest/bearer/etc.) not
+OAuth type (access/refresh/etc.)) by the
+[`parse_request_authorization()`](https://github.com/lepture/authlib/blob/master/authlib/oauth2/rfc6749/resource_protector.py#L108).
+method.
+
+Whilst this is technically true, it isn't as granular as we'd ideally like. Whilst it would be possible to overload the
+`parse_request_authorization` method, it's currently not deemed necessary and instead extra detail is included in the
+[Error](#error-handling) returned for a bad authorization header (i.e. no scheme, no credential or unsupported scheme).
+
+##### `iat` claim
+
+The optional `iat` claim is included in Entra tokens but is not validated because it can't be tested.
+
+Currently, there is no combination of `exp`, `nbf` and `iat` claim values that mean only the `iat` claim is invalid,
+which is necessary to write an isolated test for it. Without a test we can't ensure this works correctly and is
+therefore disabled.
+
+##### `jit` claim
+
+The optional `jit` claim is not validated as this isn't included in Entra tokens.
+
+### Token introspection
+
+The [`EntraToken`](#entra-tokens) class provides a `rfc7662_introspection()` method that returns standard/common claims
+from a token according to [RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662) (OAuth Token Introspection).
+
+This returns a dict that can returned as a response. As per the RFC, the token to be introspected MUST be specified as
+form data. It MUST also be authenticated via a separate mechanism to the token. This latter feature is not provided by
+this library and would need implementing separately.
+
+**Note:** The optional `jti` claim is not included as this isn't included in Entra tokens.
+
+Example route (without separate authentication mechanism):
+
+```python
+from flask import Flask, request
+from flask_entra_auth.exceptions import EntraAuthError
+from flask_entra_auth.token import EntraToken
+
+app = Flask(__name__)
+app.config["ENTRA_AUTH_CLIENT_ID"] = 'xxx'
+app.config["ENTRA_AUTH_OIDC_ENDPOINT"] = 'xxx'
+
+@app.route("/introspect", methods=["POST"])
+def introspect_rfc7662():
+    """
+    Token introspection as per RFC7662.
+    """
+    try:
+        token = EntraToken(
+            token=request.form.get("token"),
+            oidc_endpoint=app.config["ENTRA_AUTH_OIDC_ENDPOINT"],
+            client_id=app.config["ENTRA_AUTH_CLIENT_ID"],
+        )
+        return token.rfc7662_introspection  # noqa: TRY300
+    except EntraAuthError as e:
+        return {"error": str(e)}, e.problem.status
 ```
-app.config['AZURE_OAUTH_CLIENT_APPLICATION_IDS'] = ['xxx']`
-```
 
-### Configuration options
+### Error handling
 
-The resource protector requires two configuration options to validate tokens correctly. These are read from the Flask
-[config object](http://flask.pocoo.org/docs/1.0/config/) through the `init_app()` method.
+Errors encountered when accessing or validating the access token are raised as exceptions. These inherit from a base
+`EntraAuthError` exception and are based on [RFC7807](https://datatracker.ietf.org/doc/html/rfc7807), encoded as JSON.
 
-| Configuration Option                 | Data Type | Required | Description                                                                                                                |
-| ------------------------------------ | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `AZURE_OAUTH_TENANCY`                | Str       | Yes      | ID of the Azure AD tenancy all applications and users are registered within                                                |
-| `AZURE_OAUTH_APPLICATION_ID`         | Str       | Yes      | ID of the Azure AD application registration for the application being protected                                            |
-| `AZURE_OAUTH_CLIENT_APPLICATION_IDS` | List[Str] | No       | ID(s) of the Azure AD application registration(s) for the application(s) granted access to the application being protected |
+Where an exception is raised within the [Resource Protector](#resource-protector) (including the
+[`EntraToken`](#entra-tokens)  instance it creates), the exception is handled by returning as a Flask (error) response.
 
-**Note:** If the `AZURE_OAUTH_CLIENT_APPLICATION_IDS` option is not set, all client applications will be trusted and the
-`azp` claim, if present, is ignored.
-
-Before these options can be set you will need to:
-
-1. [register the application to be protected](#registering-an-application-in-azure)
-2. [define the permissions and roles this application supports](#defining-permissions-and-roles-within-an-application)
-3. [register the application(s) that will use the protected application](#registering-an-application-in-azure)
-4. [assign permissions to users and/or client application(s)](#assigning-permissions-and-roles-to-users-and-applications)
-
-### Flask session support
-
-This provider extends the AuthLib ResourceProtector to support detecting access tokens stored in the Flask session.
-
-This is intended for browser based applications where the `Authorization` header cannot be easily set to include the
-access token. This support will be enabled automatically if an `access_token` session key is set.
-
-### Access token versions
-
-Since version 0.5.0, this provider is compatible with Azure access token versions 1.0 and 2.0. Prior to version 0.5.0
-only version 2.0 tokens could be used. See
-[Microsoft's documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens) for the
-differences between token versions.
-
-**Note:** If you use version 1.0 tokens, this provider expects at least one of the `identifierUris` property values to
-be `api://{protected_application_id}`, where `{protected_application_id}` is the application ID of the app registration
-representing the application being protected by this provider. Without this, you will receive errors for an invalid
-audience.
-
-### Applications, users, groups and tenancies
-
-Azure Active Directory has a number of different concepts for agents that represent things being protected and things
-that want to interact with protected things:
-
-* [applications](https://docs.microsoft.com/en-us/azure/active-directory/develop/authentication-scenarios#application-model) -
-  represent services that offer, or wish to use, functionality that should be restricted:
-    * services offering functionality are *protected applications*, e.g. an API
-    * services wishing to use functionality interactively or non-interactively, are *client applications*:
-        * interactive client applications include self-service portals for example
-         * non-interactive client applications include nightly synchronisation tasks for example
-* [users](https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/directory-overview-user-model) -
-  represent individuals that wish to use functionality offered by protected applications, through one or more
-  client applications (e.g. a user may use a self-service portal to access information)
-* [groups](https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/directory-overview-user-model) -
-  represent multiple users, for ease of managing permissions to similar users (e.g. administrative users)
-
-For management purposes, all agents are scoped to an Azure tenancy (with the exception of users that can be used across
-tenancies).
-
-In the Azure management portal:
-
-* applications are represented by *Application registrations*
-* users are represented by *users*, or optionally *groups* of users
-
-### Permissions, roles and scopes
-
-Azure Active Directory has a number of mechanisms for controlling how agents can interact with each other:
-
-* [roles](https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles) - functions, designations
-  or labels conferred on users and/or groups (e.g. `admins`, `staff`)
-* [direct permissions](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent) -
-  capabilities of a protected application client applications can use themselves or without the consent of the current
-  user (e.g. machine-to-machine access to, or modification of, data from all users)
-* [delegated permissions](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent) -
-  capabilities of a protected application the current user allows a client application to use (e.g. interactive access
-  to, or modification of, their data)
-
-Generally, and in terms of the OAuth ecosystem, all of these can be considered as
-[scopes](https://tools.ietf.org/html/rfc6749#section-3.3). As discussed in the [Usage](#usage) section, scopes can be
-used to control who and/or what can use features within protected applications.
-
-Scopes are included the access token generated by a client application (possibly interactively by a user) and presented
-to the projected application as a bearer token. Azure encodes different mechanisms in different claims:
-
-* `roles` - for roles assigned to users and permissions directly assigned to client applications
-* `scp` - for permissions delegated by the user to a client application
-
-For ease of use, this extension abstracts these two claims into a single set of `scopes` that can be required for a
-given route. Multiple scopes can be required (as a logical AND) to allow scopes to be used more flexibly.
-
-#### Defining permissions and roles within an application
-
-Permissions and roles are defined in the
-[application manifest](https://docs.microsoft.com/en-us/azure/active-directory/develop/reference-app-manifest) of each
-application being protected. They can then be [assigned](#assigning-permissions-and-roles-to-users-and-applications) to
-users, groups and client applications.
-
-1. [register](#registering-an-application-in-azure) the application to be protected
-2. [add permissions to application manifest](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps)
-
-For example:
+Example response:
 
 ```json
-"appRoles": [
-  {
-    "allowedMemberTypes": [
-      "Application"
-    ],
-    "displayName": "List all Foo resources",
-    "id": "112b3a76-2dd0-4d09-9976-9f94b2ed965d",
-    "isEnabled": true,
-    "description": "Allows access to basic information for all Foo resources",
-    "value": "Foo.List.All"
-  }
-],
+{
+  "detail": "Ensure your request includes an 'Authorization' header and try again.",
+  "status": 401,
+  "title": "Missing authorization header",
+  "type": "auth_header_missing"
+}
 ```
 
-#### Assigning permissions and roles to users and applications
+#### Error point of contact URI
 
-Permissions and roles (collectively, application roles) are assigned through the Azure portal:
+Optionally, a contact URI can be included in errors by setting the `ENTRA_AUTH_CONTACT` [Config](#configuration)
+option to be included in errors returned by the [Resource Protector](#resource-protector) (standalone uses of the
+[`EntraToken`](#entra-tokens) class do not support this feature).
 
-1. [define roles and permissions in the protected application](#defining-permissions-and-roles-within-an-application)
-2. [register](#registering-an-application-in-azure) the client application(s)
-3. assign:
-    * [roles to users/groups](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps)
-    * [permissions to client applications](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow#request-the-permissions-in-the-app-registration-portal)
+Example response (where `app.config.["ENTRA_AUTH_CONTACT"]="mailto:support@example.com"`):
 
-For assigning permissions:
-
-* permissions can be delegated to client applications, with the agreement of the current user
-* permissions can be directly assigned to client applications, with the agreement of a tenancy administrator
-
-**Note:** Direct assignment is needed for non-interactive applications, such as daemons.
-
-#### Registering an application in Azure
-
-[Follow these instructions](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app).
-
-**Note:** These instructions apply both to applications that protected by this provider (protected applications), and
-those that will be granted access to use such applications, possibly by a user (client applications).
+```json
+{
+  "contact": "mailto:support@example.com",
+  "detail": "Ensure your request includes an 'Authorization' header and try again.",
+  "status": 401,
+  "title": "Missing authorization header",
+  "type": "auth_header_missing"
+}
+```
 
 ### Testing support
 
-For testing applications, a local/test JSON Web Key Set (JWKS) can be used to sign local/test JSON Web Tokens (JWTs)
-without relying on Azure. Local tokens can include, or not include, arbitrary scopes/roles, which can ensure
-requirements for specific scopes are properly enforced by this provider.
+If needed for application testing, this extension includes mock classes to generate fake tokens and signing keys. These
+can be used to simulate different scopes and/or error conditions. This requires changes in two areas:
 
-This requires using local tokens signed by the test keys, and patching the `FlaskAzureOauth._get_jwks` method to
-validate tokens using the same test keys.
+- configuring the [Resource Protector](#resource-protector) to load a fake OIDC endpoint:
+  - by setting the `ENTRA_AUTH_OIDC_ENDPOINT` [Config](#configuration) option to this fake endpoint
+  - this endpoint returning metadata referencing a fake JWKS endpoint
+  - this JWKS endpoint in turn containing a fake JWK (signing key)
+- making requests with local/fake access tokens (i.e. not issued by Entra) configured with relevant claims
 
-For example:
+The [Resource Protector](#resource-protector) can be used as normal for authentication and authorisation using the
+claims set in the fake token.
+
+If using `pytest`, the [`pytest-httpserver`](https://pytest-httpserver.readthedocs.io) plugin is recommended to serve
+this fake OIDC endpoint. For example, these fixtures:
+
+- return a Flask test client with a fake OIDC endpoint, JWKS endpoint and signing key
+- return a JWT client that can generate tokens with overridden or omitted claims
 
 ```python
-import unittest
+import pytest
+from pytest_httpserver import HTTPServer
+from flask.testing import FlaskClient
+from flask_entra_auth.mocks.jwks import MockJwks
+from flask_entra_auth.mocks.jwt import MockClaims, MockJwtClient
 
-from http import HTTPStatus
-from unittest.mock import patch
+# replace with reference to your Flask app or app factory
+from your_app import app
 
-from flask_azure_oauth import FlaskAzureOauth
-from flask_azure_oauth.mocks.keys import TestJwk
-from flask_azure_oauth.mocks.tokens import TestJwt
+mock_jwks = MockJwks()
+mock_iss = 'fake-issuer'
 
-from examples import create_app
+@pytest.fixture()
+def app_client(httpserver: HTTPServer) -> FlaskClient:
+    """Flask test client configured with fake signing key."""
+    oidc_metadata = {"jwks_uri": httpserver.url_for("/keys"), "issuer": mock_iss}
+    httpserver.expect_request("/.well-known/openid-configuration").respond_with_json(oidc_metadata)
+    httpserver.expect_request("/keys").respond_with_json(mock_jwks.as_dict())
 
+    app.config['ENTRA_AUTH_OIDC_ENDPOINT'] = httpserver.url_for("/.well-known/openid-configuration")
+    return app.test_client()
 
-class AppTestCase(unittest.TestCase):
-    def setUp(self):
-        self.test_jwks = TestJwk()
+@pytest.fixture()
+def jwt_client() -> MockJwtClient:
+    claims = MockClaims(self_app_id=app.config['ENTRA_AUTH_CLIENT_ID'])  # so tokens have the expected audience
+    return MockJwtClient(key=mock_jwks.jwk, claims=claims)
+```
 
-        with patch.object(FlaskAzureOauth, "_get_jwks") as mocked_get_jwks:
-            mocked_get_jwks.return_value = self.test_jwks.jwks()
+Then in a test:
 
-            # `self.app` should be set to a Flask application, either by direct import, or by calling an app factory
-            self.app = create_app()
+```python
+from flask.testing import FlaskClient
+from flask_entra_auth.mocks.jwt import MockJwtClient
 
-            self.app.config["TEST_JWKS"] = self.test_jwks
-            self.app_context = self.app.app_context()
-            self.app_context.push()
-            self.client = self.app.test_client()
+def test_ok(self, app_client: FlaskClient, jwt_client: MockJwtClient):
+    """Request to authenticated route is successful."""
+    token = jwt_client.generate()  # default claims and values
 
-    def test_protected_route_with_multiple_scopes_authorised(self):
-        # Generate token with required roles
-        token = TestJwt(
-            app=self.app, roles=["BAS.MAGIC.ADD.Records.Publish.All", "BAS.MAGIC.ADD.Records.ReadWrite.All"]
-        )
+    response = app_client.get("/restricted", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+```
 
-        # Make request to protected route with token
-        response = self.client.get(
-            "/protected-with-multiple-scopes", headers={"authorization": f"bearer { token.dumps() }"}
-        )
-        self.assertEqual(HTTPStatus.OK, response.status_code)
-        self.app_context.pop()
+To tweak the claims in the token you can override their value, or omit them by setting to `False`. E.g:
 
-    def test_protected_route_with_multiple_scopes_unauthorised(self):
-        # Generate token with no scopes
-        token = TestJwt(app=self.app)
+```python
+from flask_entra_auth.mocks.jwt import MockJwtClient
 
-        # Make request to protected route with token
-        response = self.client.get(
-            "/protected-with-multiple-scopes", headers={"authorization": f"bearer { token.dumps() }"}
-        )
-        self.assertEqual(HTTPStatus.FORBIDDEN, response.status_code)
-        self.app_context.pop()
+def test_tokens(self, jwt_client: MockJwtClient):
+    t = jwt_client.generate()  # default claims and values
+    t = jwt_client.generate(roles=False, scps=False)  # no scopes
+    t = jwt_client.generate(roles=['MY_APP.FOO.READ', 'MY_APP.BAR.READ'], scps=['MY_APP.SOMETHING'])  # custom scopes
+    t = jwt_client.generate(exp=1)  # expired token (don't use `0` as this equates to None and won't be overridden)
 ```
 
 ## Developing
 
-This provider is developed as a Python library. A bundled Flask application is used to simulate its usage and act as
-framework for running tests etc.
+See [Developing](DEVELOPING.md) documentation.
 
-### Development environment
+## Releases
 
-Git and [Poetry](https://python-poetry.org) are required to set up a local development environment of this project.
+- [latest release 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/releases/permalink/latest)
+- [all releases 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/releases)
+- [PyPi](https://pypi.org/project/flask-entra-auth/)
 
-**Note:** If you use [Pyenv](https://github.com/pyenv/pyenv), this project sets a local Python version for consistency.
+## Project maintainer
 
-```shell
-# clone from the BAS GitLab instance if possible
-$ git clone https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth.git
+British Antarctic Survey ([BAS](https://www.bas.ac.uk)) Mapping and Geographic Information Centre
+([MAGIC](https://www.bas.ac.uk/teams/magic)). Contact [magic@bas.ac.uk](mailto:magic@bas.ac.uk).
 
-# alternatively, clone from the GitHub mirror
-$ git clone https://github.com/antarctica/flask-azure-oauth.git
+The project lead is [@felnne](https://www.bas.ac.uk/profile/felnne).
 
-# setup virtual environment
-$ cd flask-azure-oauth
-$ poetry install
-```
+## Licence
 
-### Code Style
-
-PEP-8 style and formatting guidelines must be used for this project, except the 80 character line limit.
-[Black](https://github.com/psf/black) is used for formatting, configured in `pyproject.toml` and enforced as part of
-[Python code linting](#code-linting).
-
-Black can be integrated with a range of editors, such as
-[PyCharm](https://black.readthedocs.io/en/stable/integrations/editors.html#pycharm-intellij-idea), to apply formatting
-automatically when saving files.
-
-To apply formatting manually:
-
-```shell
-$ poetry run black src/ tests/
-```
-
-### Code Linting
-
-[Flake8](https://flake8.pycqa.org) and various extensions are used to lint Python files. Specific checks, and any
-configuration options, are documented in the `./.flake8` config file.
-
-To check files manually:
-
-```shell
-$ poetry run flake8 src/ examples/
-```
-
-Checks are run automatically in [Continuous Integration](#continuous-integration).
-
-### Dependencies
-
-Python dependencies for this project are managed with [Poetry](https://python-poetry.org) in `pyproject.toml`.
-
-Non-code files, such as static files, can also be included in the [Python package](#python-package) using the
-`include` key in `pyproject.toml`.
-
-#### Adding new dependencies
-
-To add a new (development) dependency:
-
-```shell
-$ poetry add [dependency] (--dev)
-```
-
-Then update the Docker image used for CI/CD builds and push to the BAS Docker Registry (which is provided by GitLab):
-
-```shell
-$ docker build -f gitlab-ci.Dockerfile -t docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:latest .
-$ docker push docker-registry.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth:latest
-```
-
-#### Updating dependencies
-
-```shell
-$ poetry update
-```
-
-See the instructions above to update the Docker image used in CI/CD.
-
-#### Dependency vulnerability checks
-
-The [Safety](https://pypi.org/project/safety/) package is used to check dependencies against known vulnerabilities.
-
-**IMPORTANT!** As with all security tools, Safety is an aid for spotting common mistakes, not a guarantee of secure
-code. In particular this is using the free vulnerability database, which is updated less frequently than paid options.
-
-This is a good tool for spotting low-hanging fruit in terms of vulnerabilities. It isn't a substitute for proper
-vetting of dependencies, or a proper audit of potential issues by security professionals. If in any doubt you MUST seek
-proper advice.
-
-Checks are run automatically in [Continuous Integration](#continuous-integration).
-
-To check locally:
-
-```shell
-$ poetry export --without-hashes -f requirements.txt | poetry run safety check --full-report --stdin
-```
-
-#### `authlib` package
-
-The `authlib` dependency is locked to version `0.14.3` as the `0.15.x` release series contains a bug that prevents the
-`kid` claim from being accessed from Jason Web Key (JWK) instances. This is a known issue and will be resolved in the
-`1.x` release. See https://github.com/lepture/authlib/issues/314 for more information.
-
-### Static security scanning
-
-To ensure the security of this API, source code is checked against [Bandit](https://github.com/PyCQA/bandit)
-and enforced as part of [Python code linting](#code-linting-python).
-
-**Warning:** Bandit is a static analysis tool and can't check for issues that are only be detectable when running the
-application. As with all security tools, Bandit is an aid for spotting common mistakes, not a guarantee of secure code.
-
-To check manually:
-
-```shell
-$ poetry run bandit -r src/ examples/
-```
-
-**Note:** This package contains a number of testing methods that deliberately do insecure or nonsensical things. These
-are necessary to test failure modes and error handling, they are not a risk when using this package as intended. These
-workarounds have been exempted from these security checks where they apply.
-
-Checks are run automatically in [Continuous Integration](#continuous-integration).
-
-## Testing
-
-### Integration tests
-
-This project uses integration tests to ensure features work as expected and to guard against regressions and
-vulnerabilities.
-
-The Python [UnitTest](https://docs.python.org/3/library/unittest.html) library is used for running tests using Flask's
-test framework. Test cases are defined in files within `tests/` and are automatically loaded when using the `test`
-Flask CLI command included in the local Flask application in the development environment.
-
-To run tests manually using PyCharm, use the included *App (tests)* run/debug configuration.
-
-To run tests manually:
-
-```shell
-$ FLASK_APP=examples FLASK_ENV=testing poetry run python -m unittest discover
-```
-
-Tests are ran automatically in [Continuous Integration](#continuous-integration).
-
-### Continuous Integration
-
-All commits will trigger a Continuous Integration process using GitLab's CI/CD platform, configured in `.gitlab-ci.yml`.
-
-### Test/Example applications
-
-For verifying this provider works for real-world use-cases, a test Flask application is included in
-`examples/__init__.py`. This test application acts as both an application providing access to, and accessing, protected
-resources. It can use a number of application registrations registered in the BAS Web & Applications Test Azure AD.
-
-These applications allow testing different versions of access tokens for example. These applications are intended for
-testing only. They do not represent real applications, or contain any sensitive or protected information.
-
-To test requesting resources from protected resources as an API, set the appropriate config options and run the
-application container:
-
-```shell
-$ FLASK_APP=examples poetry run flask
-```
-
-To test requesting resources from protected resources as a browser application, set the appropriate config options and
-start the application container:
-
-```shell
-$ FLASK_APP=examples poetry run flask run
-```
-
-Terraform is used to provision the application registrations used:
-
-```
-$ cd provisioning/terraform
-$ docker-compose run terraform
-$ az login --allow-no-subscriptions
-$ terraform init
-$ terraform validate
-$ terraform apply
-```
-
-**Note:** Several properties in the application registration resources require setting once the registration has been
-initially made (identifiers for example). These will need commenting out before use.
-
-Some properties, such as client secrets, can only be set once applications have been registered in the Azure Portal.
-
-Terraform state information is held in the BAS Terraform Remote State project (internal).
-
-## Deployment
-
-### Python package
-
-This project is distributed as a Python package, hosted in [PyPi](https://pypi.org/project/flask-azure-oauth).
-
-Source and binary packages are built and published automatically using
-[Poetry](https://python-poetry.org) in [Continuous Deployment](#continuous-deployment).
-
-**Note:** Except for tagged releases, Python packages built in CD will use `0.0.0` as a version to indicate they are
-not formal releases.
-
-### Continuous Deployment
-
-A Continuous Deployment process using GitLab's CI/CD platform is configured in `.gitlab-ci.yml`.
-
-## Release procedure
-
-For all releases:
-
-1. create a `release` branch
-2. bump the version as appropriate in `pyproject.toml`
-3. close release in `CHANGELOG.md`
-4. push changes, merge the `release` branch into `main`, and tag with version
-
-The project will be built and published to PyPi automatically through [Continuous Deployment](#continuous-deployment).
-
-## Feedback
-
-The maintainer of this project is the BAS Web & Applications Team, they can be contacted at:
-[servicedesk@bas.ac.uk](mailto:servicedesk@bas.ac.uk).
-
-## Issue tracking
-
-This project uses issue tracking, see the
-[Issue tracker](https://gitlab.data.bas.ac.uk/web-apps/flask-extensions/flask-azure-oauth/issues) for more information.
-
-**Note:** Read & write access to this issue tracker is restricted. Contact the project maintainer to request access.
-
-## License
-
-Copyright (c) 2019-2022 UK Research and Innovation (UKRI), British Antarctic Survey.
+Copyright (c) 2019 - 2024 UK Research and Innovation (UKRI), British Antarctic Survey (BAS).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

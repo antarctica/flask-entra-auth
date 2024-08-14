@@ -1,3 +1,5 @@
+.idea/
+.venv/
+.python-version
 __pycache__
-provisioning/terraform/.terraform
-.venv
+/.coverage

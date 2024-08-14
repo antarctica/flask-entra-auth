@@ -1,6 +1,6 @@
-# MIT License
+## MIT License
 
-Copyright (c) 2019-2022 UK Research and Innovation (UKRI), British Antarctic Survey.
+Copyright (c) 2019 - 2024 UK Research and Innovation (UKRI), British Antarctic Survey (BAS).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

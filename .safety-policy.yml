@@ -1,0 +1,39 @@
+version: '3.0'
+
+scanning-settings:
+  max-depth: 6
+  exclude: []
+  include-files: []
+  system:
+    targets: []
+
+report:
+  dependency-vulnerabilities:
+    enabled: true
+    auto-ignore-in-report:
+      python:
+        environment-results: true
+        unpinned-requirements: true
+      cvss-severity: []
+      vulnerabilities:
+        70612: # https://github.com/advisories/GHSA-f6pv-j8mr-w6rr [Jinja2]
+          reason: invalid, disputed by maintainer, and only a dependency of Safety
+          expires: '2100-01-01'
+
+fail-scan-with-exit-code:
+  dependency-vulnerabilities:
+    enabled: true
+    fail-on-any-of:
+      cvss-severity:
+        - high
+        - medium
+        - critical
+      exploitability:
+        - high
+        - medium
+        - critical
+
+security-updates:
+  dependency-vulnerabilities:
+    auto-security-updates-limit:
+      - patch
