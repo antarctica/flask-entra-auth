@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.8.3] - 2024-08-16
+
+### Fixed
+
+* Required Flask version being too low (2.x and not allowing 3.x)
+  [#43](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/issues/44)
+
 ## [0.8.2] - 2024-08-14
 
 ### Fixed
