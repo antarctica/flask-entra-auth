@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flask-entra-auth"
-version = "0.8.2"
+version = "0.8.3"
 description = "Flask extension for authenticating and authorising requests using Entra identity platform."
 authors = ["Felix Fennell <felnne@bas.ac.uk>"]
 readme = "README.md"
@@ -10,7 +10,7 @@ packages = [{include = "flask_entra_auth", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 authlib = "^1.3.1"
-flask = "^2.3"
+flask = ">=2.3,<4.0"
 pyjwt = {extras = ["crypto"], version = "^2.9.0"}
 requests = "^2.32.3"
 
