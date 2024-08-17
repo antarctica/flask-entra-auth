@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+* `joserfc` dependency being a test rather than main dependency
+  [#46](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/issues/46)
+
 ## [0.8.3] - 2024-08-16
 
 ### Fixed
