@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flask-entra-auth"
-version = "0.8.3"
+version = "0.9.0"
 description = "Flask extension for authenticating and authorising requests using Entra identity platform."
 authors = ["Felix Fennell <felnne@bas.ac.uk>"]
 readme = "README.md"

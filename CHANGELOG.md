@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.9.0] - 2024-08-17
+
 ### Added
 
 * support for including arbitrary claims in fake/mock tokens
@@ -15,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 * `joserfc` dependency being a test rather than main dependency
-  [#46](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/issues/46)
+  [#45](https://gitlab.data.bas.ac.uk/MAGIC/flask-entra-auth/-/issues/45)
 
 ## [0.8.3] - 2024-08-16
 
