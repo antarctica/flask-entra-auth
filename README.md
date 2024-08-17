@@ -361,22 +361,24 @@ Example response (where `app.config.["ENTRA_AUTH_CONTACT"]="mailto:support@examp
 ### Testing support
 
 If needed for application testing, this extension includes mock classes to generate fake tokens and signing keys. These
-can be used to simulate different scopes and/or error conditions. This requires changes in two areas:
+can be used to simulate different scopes and/or error conditions. This requires changing the app under test to:
 
-- configuring the [Resource Protector](#resource-protector) to load a fake OIDC endpoint:
+- configure the [Resource Protector](#resource-protector) to load a fake OIDC endpoint:
   - by setting the `ENTRA_AUTH_OIDC_ENDPOINT` [Config](#configuration) option to this fake endpoint
   - this endpoint returning metadata referencing a fake JWKS endpoint
   - this JWKS endpoint in turn containing a fake JWK (signing key)
-- making requests with local/fake access tokens (i.e. not issued by Entra) configured with relevant claims
+- make requests to the app with local/fake access tokens (i.e. not issued by Entra) configured with relevant claims
 
 The [Resource Protector](#resource-protector) can be used as normal for authentication and authorisation using the
-claims set in the fake token.
+claims set in the fake token. Additional claims for `name`, `upn`, etc. can be included in these tokens as needed.
 
 If using `pytest`, the [`pytest-httpserver`](https://pytest-httpserver.readthedocs.io) plugin is recommended to serve
-this fake OIDC endpoint. For example, these fixtures:
+this fake OIDC endpoint.
+
+For example, these fixtures:
 
 - return a Flask test client with a fake OIDC endpoint, JWKS endpoint and signing key
-- return a JWT client that can generate tokens with overridden or omitted claims
+- return a JWT client that can generate tokens with overridden, omitted and additional claims
 
 ```python
 import pytest
@@ -421,7 +423,7 @@ def test_ok(self, app_client: FlaskClient, jwt_client: MockJwtClient):
     assert response.status_code == 200
 ```
 
-To tweak the claims in the token you can override their value, or omit them by setting to `False`. E.g:
+To tweak the claims in the token you can override their value, omit them by setting to `False` or add other claims. E.g:
 
 ```python
 from flask_entra_auth.mocks.jwt import MockJwtClient
@@ -431,6 +433,7 @@ def test_tokens(self, jwt_client: MockJwtClient):
     t = jwt_client.generate(roles=False, scps=False)  # no scopes
     t = jwt_client.generate(roles=['MY_APP.FOO.READ', 'MY_APP.BAR.READ'], scps=['MY_APP.SOMETHING'])  # custom scopes
     t = jwt_client.generate(exp=1)  # expired token (don't use `0` as this equates to None and won't be overridden)
+    t = jwt_client.generate(additional_claims={'name': 'Connie Watson', 'upn': 'conwat@bas.ac.uk'})  # additional claims
 ```
 
 ## Developing
