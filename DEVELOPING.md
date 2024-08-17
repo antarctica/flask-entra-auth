@@ -129,7 +129,7 @@ Where tests are added to ensure coverage, use the `cov` [mark](https://docs.pyte
 ```python
 import pytest
 
-@pytest.mark.cov
+@pytest.mark.cov()
 def test_foo():
     assert 'foo' == 'foo'
 ```
