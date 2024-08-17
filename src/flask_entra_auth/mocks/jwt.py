@@ -100,11 +100,14 @@ class MockJwtClient:
         ver: str | bool | None = None,
         scps: list[str] | bool | None = None,
         roles: list[str] | bool | None = None,
+        additional_claims: dict[str, str] | None = None,
     ) -> str:
         """
         Create token with specified claims and headers.
 
-        Default values are used for claims unless overridden. If overridden with `False`, the claim is omitted.
+        Default values are used for standard claims unless overridden. If overridden with `False`, the claim is omitted.
+
+        Additional claims can be added as needed.
         """
         headers = {"kid": kid} if kid else {}
 
@@ -119,6 +122,10 @@ class MockJwtClient:
             "scps": scps or self._claims.scps if not isinstance(scps, bool) else None,
             "roles": roles or self._claims.roles if not isinstance(roles, bool) else None,
         }
+
+        if additional_claims:
+            payload.update(additional_claims)
+
         # remove any keys that have None as values
         payload = {k: v for k, v in payload.items() if v is not None}
 
