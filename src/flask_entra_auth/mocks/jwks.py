@@ -1,6 +1,5 @@
 from cryptography.hazmat.primitives import serialization
-from joserfc.jwk import KeySet
-from joserfc.rfc7518.rsa_key import RSAKey
+from joserfc.jwk import KeySet, RSAKey
 
 
 class MockJwk:
