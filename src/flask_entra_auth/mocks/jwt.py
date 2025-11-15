@@ -20,7 +20,7 @@ class MockClaims:
         self._nbf = int(self._t.timestamp())
         self._azp = "test_app_2"
         self._ver = "2.0"
-        self._scps = ["SCOPE_A", "SCOPE_B", "SCOPE_C"]
+        self._scp = "SCOPE_A SCOPE_B SCOPE_C"
         self._roles = ["ROLE_1", "ROLE_2", "ROLE_3"]
 
     @property
@@ -59,9 +59,9 @@ class MockClaims:
         return self._ver
 
     @property
-    def scps(self) -> list[str]:
+    def scp(self) -> str:
         """Scopes (apps)."""
-        return self._scps
+        return self._scp
 
     @property
     def roles(self) -> list[str]:
@@ -98,7 +98,7 @@ class MockJwtClient:
         nbf: int | bool | None = None,
         azp: str | bool | None = None,
         ver: str | bool | None = None,
-        scps: list[str] | bool | None = None,
+        scp: str | bool | None = None,
         roles: list[str] | bool | None = None,
         additional_claims: dict[str, str] | None = None,
     ) -> str:
@@ -119,7 +119,7 @@ class MockJwtClient:
             "nbf": nbf or self._claims.nbf if not isinstance(nbf, bool) else None,
             "azp": azp or self._claims.azp if not isinstance(azp, bool) else None,
             "ver": ver or self._claims.ver if not isinstance(ver, bool) else None,
-            "scps": scps or self._claims.scps if not isinstance(scps, bool) else None,
+            "scp": scp or self._claims.scp if not isinstance(scp, bool) else None,
             "roles": roles or self._claims.roles if not isinstance(roles, bool) else None,
         }
 

@@ -33,22 +33,22 @@ def create_app(  # noqa: C901
         """Closed route (authenticated)."""
         return "Restricted route."
 
-    @app.route("/restricted/scopes/scps-and")
+    @app.route("/restricted/scopes/scp-and")
     @app.auth(["SCOPE_A SCOPE_B"])
-    def restricted_scps_and() -> str:
-        """Closed route (authenticated and authorised with multiple required scps, logical AND)."""
+    def restricted_scp_and() -> str:
+        """Closed route (authenticated and authorised with multiple required scp, logical AND)."""
         return "Restricted route, you have (SCOPE_A && SCOPE_B)."
 
-    @app.route("/restricted/scopes/scps-or")
+    @app.route("/restricted/scopes/scp-or")
     @app.auth(["SCOPE_A", "SCOPE_B"])
-    def restricted_scps_or() -> str:
-        """Closed route (authenticated and authorised with multiple required scps, logical OR)."""
+    def restricted_scp_or() -> str:
+        """Closed route (authenticated and authorised with multiple required scp, logical OR)."""
         return "Restricted route, you have (SCOPE_A || SCOPE_B)."
 
-    @app.route("/restricted/scopes/scps-and-or")
+    @app.route("/restricted/scopes/scp-and-or")
     @app.auth(["SCOPE_A SCOPE_C", "SCOPE_B SCOPE_C"])
-    def restricted_scps_and_or() -> str:
-        """Closed route (authenticated and authorised with multiple required scps, logical OR & AND)."""
+    def restricted_scp_and_or() -> str:
+        """Closed route (authenticated and authorised with multiple required scp, logical OR & AND)."""
         return "Restricted route, you have ((SCOPE_A && SCOPE_C) || (SCOPE_B && SCOPE_C))."
 
     @app.route("/restricted/scopes/roles-and")

@@ -260,7 +260,7 @@ class EntraAuthInvalidTokenVersionError(EntraAuthError):
 
 
 class EntraAuthInsufficientScopesError(EntraAuthError):
-    """Raised when not all required scopes for an action are in JWT (scps & roles)."""
+    """Raised when not all required scopes for an action are in JWT (scp & roles)."""
 
     def __init__(self):
         super().__init__(
