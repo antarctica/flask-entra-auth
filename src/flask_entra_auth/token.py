@@ -66,8 +66,7 @@ class EntraTokenClaims(TypedDict):
     preferred_username: str
     rh: str
     roles: list[str]
-    scp: str
-    scps: list[str]
+    scp: str  # space-separated string
     tid: str
     uti: str
     ver: str  # always present
@@ -285,8 +284,8 @@ class EntraToken:
         """
         Get any scopes included in the token.
 
-        Combines scopes from the `roles` and `scps` claims, which are assigned to users and client apps respectively.
-        Roles are assigned to users, and delegated to client apps. 'Scps' are assigned to client apps directly.
+        Combines scopes from the `roles` and `scp` claims, which are assigned to users and client apps respectively.
+        Roles are assigned to users, and delegated to client apps. 'Scp' are assigned to client apps directly.
 
         To simplify authorisation checks, these are combined into a generic list of scopes.
         """
@@ -295,8 +294,8 @@ class EntraToken:
         roles = self.claims.get("roles", [])
         scopes.update(roles)
 
-        scps = self.claims.get("scps", [])
-        scopes.update(scps)
+        scp = self.claims.get("scp", "").split(" ")
+        scopes.update(scp)
 
         return list(scopes)
 

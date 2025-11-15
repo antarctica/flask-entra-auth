@@ -204,10 +204,10 @@ using custom permissions. These can be defined within the Entra ID application r
 
 Entra distinguishes between permissions:
 
-- that apply to client applications directly, termed _scps_ (scopes)
+- that apply to client applications directly, termed _scp_ (scopes)
 - that apply to users (or other principles such as service accounts) and delegated to client applications, termed _roles_
 
-This extension combines any _scps_ and _roles_ into a generic list of _scopes_, returned by the `EntraToken.scopes`
+This extension combines any _scp_ and _roles_ into a generic list of _scopes_, returned by the `EntraToken.scopes`
 property to make it easier to combine different combinations of permissions.
 
 See the Entra Documentation for how to
@@ -430,8 +430,8 @@ from flask_entra_auth.mocks.jwt import MockJwtClient
 
 def test_tokens(self, jwt_client: MockJwtClient):
     t = jwt_client.generate()  # default claims and values
-    t = jwt_client.generate(roles=False, scps=False)  # no scopes
-    t = jwt_client.generate(roles=['MY_APP.FOO.READ', 'MY_APP.BAR.READ'], scps=['MY_APP.SOMETHING'])  # custom scopes
+    t = jwt_client.generate(roles=False, scp=False)  # no scopes
+    t = jwt_client.generate(roles=['MY_APP.FOO.READ', 'MY_APP.BAR.READ'], scp='MY_APP.SOMETHING')  # custom scopes
     t = jwt_client.generate(exp=1)  # expired token (don't use `0` as this equates to None and won't be overridden)
     t = jwt_client.generate(additional_claims={'name': 'Connie Watson', 'upn': 'conwat@bas.ac.uk'})  # additional claims
 ```

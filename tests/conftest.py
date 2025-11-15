@@ -54,43 +54,43 @@ def fx_jwt_kid(fx_jwt: MockJwtClient) -> str:
 @pytest.fixture()
 def fx_jwt_no_scopes(fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims except scopes."""
-    return fx_jwt.generate(scps=False, roles=False)
+    return fx_jwt.generate(scp=False, roles=False)
 
 
 @pytest.fixture()
-def fx_jwt_scps_and(fx_jwt: MockJwtClient) -> str:
+def fx_jwt_scp_and(fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims and all app scopes."""
     return fx_jwt.generate(roles=False)
 
 
 @pytest.fixture()
-def fx_jwt_scps_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+def fx_jwt_scp_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims and a valid choice from a set of required app scopes."""
-    return fx_jwt.generate(scps=[fx_claims.scps[0]], roles=False)
+    return fx_jwt.generate(scp=fx_claims.scp.split(" ")[0], roles=False)
 
 
 @pytest.fixture()
-def fx_jwt_scps_and_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
+def fx_jwt_scp_and_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims and a valid subset of required app scopes."""
-    return fx_jwt.generate(scps=[fx_claims.scps[0], fx_claims.scps[2]], roles=False)
+    return fx_jwt.generate(scp=" ".join([fx_claims.scp.split(" ")[0], fx_claims.scp.split(" ")[2]]), roles=False)
 
 
 @pytest.fixture()
 def fx_jwt_roles_and(fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims and all user roles."""
-    return fx_jwt.generate(scps=False)
+    return fx_jwt.generate(scp=False)
 
 
 @pytest.fixture()
 def fx_jwt_roles_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims and a valid choice from a set of required user roles."""
-    return fx_jwt.generate(scps=False, roles=[fx_claims.roles[0]])
+    return fx_jwt.generate(scp=False, roles=[fx_claims.roles[0]])
 
 
 @pytest.fixture()
 def fx_jwt_roles_and_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims and a valid subset of required user roles."""
-    return fx_jwt.generate(scps=False, roles=[fx_claims.roles[0], fx_claims.roles[2]])
+    return fx_jwt.generate(scp=False, roles=[fx_claims.roles[0], fx_claims.roles[2]])
 
 
 @pytest.fixture()
@@ -102,19 +102,22 @@ def fx_jwt_scopes_and(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
 @pytest.fixture()
 def fx_jwt_scopes_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims and a valid subset of required app and user scopes."""
-    return fx_jwt.generate(scps=[fx_claims.scps[0]], roles=[fx_claims.roles[0]])
+    return fx_jwt.generate(scp=fx_claims.scp.split(" ")[0], roles=[fx_claims.roles[0]])
 
 
 @pytest.fixture()
 def fx_jwt_scopes_or_bad(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims and an invalid subset of required app and user scopes."""
-    return fx_jwt.generate(scps=[fx_claims.scps[0]], roles=[fx_claims.roles[1]])  # intentionally don't align
+    return fx_jwt.generate(scp=fx_claims.scp.split(" ")[0], roles=[fx_claims.roles[1]])  # intentionally don't align
 
 
 @pytest.fixture()
 def fx_jwt_scopes_and_or(fx_claims: MockClaims, fx_jwt: MockJwtClient) -> str:
     """JSON Web Token (JWT) with all validated claims and a valid subset of required app and user scopes."""
-    return fx_jwt.generate(scps=[fx_claims.scps[0], fx_claims.scps[2]], roles=[fx_claims.roles[0], fx_claims.roles[2]])
+    return fx_jwt.generate(
+        scp=" ".join([fx_claims.scp.split(" ")[0], fx_claims.scp.split(" ")[2]]),
+        roles=[fx_claims.roles[0], fx_claims.roles[2]],
+    )
 
 
 @pytest.fixture()
